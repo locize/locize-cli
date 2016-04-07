@@ -1,0 +1,27 @@
+{
+  "name": "locizify-cli",
+  "version": "1.0.0",
+  "description": "locize cli to import locales",
+  "main": "index.js",
+  "bin": {
+    "locizify": "./bin/locizify"
+  },
+  "dependencies": {
+    "async": "^2.0.0-rc.2",
+    "colors": "^1.1.2",
+    "commander": "2.9.0",
+    "flat": "^2.0.0",
+    "request": "^2.70.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cli",
+    "locize",
+    "locizify"
+  ],
+  "author": "adrai",
+  "license": "MIT"
+}
