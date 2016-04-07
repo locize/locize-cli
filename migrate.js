@@ -85,7 +85,7 @@ const transfer = (opt, ns, cb) => {
 };
 
 const upload = (opt, nss, cb) => {
-  async.eachSeries(
+  async.each(
     nss,
     (ns, done) => transfer(opt, ns, done),
     cb
