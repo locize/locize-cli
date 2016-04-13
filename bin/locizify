@@ -22,7 +22,7 @@ const action = (apiKey, projectId) => {
   });
 };
 
-const addPathUrl = 'https://o1quew6170.execute-api.eu-west-1.amazonaws.com/dev/missing/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
+const addPathUrl = 'https://api-dev.locize.io/missing/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
 
 program
   .version(require('../package.json').version)
