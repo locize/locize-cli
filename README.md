@@ -1,3 +1,5 @@
+[![npm](https://img.shields.io/npm/v/locize-cli.svg)](https://npmjs.org/package/locize-cli)
+
 # Getting started with the locize-cli
 
 ## Step 1: Install the cli (preferred globally)
