@@ -22,13 +22,13 @@ const action = (apiKey, projectId) => {
   });
 };
 
-const addPathUrl = 'https://api-dev.locize.io/missing/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
+const addPathUrl = 'https://api.locize.io/missing/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
 
 program
   .version(require('../package.json').version)
   .arguments('<api-key> <project-id>')
-  .option('-p, --path <path>', `Specify the path that sould be used <${process.cwd()}>`, process.cwd())
-  .option('-a, --add-path <url>', `Specify the add-path url that sould be used <${addPathUrl}>`, addPathUrl)
+  .option('-p, --path <path>', `Specify the path that should be used <${process.cwd()}>`, process.cwd())
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used <${addPathUrl}>`, addPathUrl)
   .option('-l, --language <lng>', `Found namespaces will be matched to this language`)
   .option('-v, --ver <version>', `Found namespaces will be matched to this version`, 'latest')
   .option('-pl, --parse-language <true|false>', `Parse folders as language`, true)

@@ -85,15 +85,16 @@ const transfer = (opt, ns, cb) => {
 };
 
 const upload = (opt, nss, cb) => {
-  async.each(
+  async.eachLimit(
     nss,
+    require('os').cpus().length,
     (ns, done) => transfer(opt, ns, done),
     cb
   );
 };
 
 const migrate = (opt) => {
-  if (opt.format !== 'json') throw new Error(`Format ${opt.format} is not accepted!`)
+  if (opt.format !== 'json') throw new Error(`Format ${opt.format} is not accepted!`);
 
   if (opt.language) {
     const files = getFiles(opt.path);

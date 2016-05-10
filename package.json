@@ -1,26 +1,28 @@
 {
-  "name": "locizify-cli",
+  "name": "locize-cli",
   "version": "1.0.0",
   "description": "locize cli to import locales",
-  "main": "index.js",
+  "main": "migrate.js",
   "bin": {
-    "locizify": "./bin/locizify"
+    "locize": "./bin/locize"
   },
   "dependencies": {
-    "async": "^2.0.0-rc.2",
-    "colors": "^1.1.2",
+    "async": "^2.0.0-rc.4",
+    "colors": "1.1.2",
     "commander": "2.9.0",
-    "flat": "^2.0.0",
-    "request": "^2.70.0"
+    "flat": "2.0.0",
+    "request": "2.72.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^2.9.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint .",
+    "test": "npm run lint"
   },
   "keywords": [
     "cli",
-    "locize",
-    "locizify"
+    "locize"
   ],
   "author": "adrai",
   "license": "MIT"
