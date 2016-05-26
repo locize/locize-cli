@@ -68,7 +68,7 @@ locize --help
     -h, --help                          output usage information
     -V, --version                       output the version number
     -p, --path <path>                   Specify the path that should be used </Users/adrai/Projects/locize/locize-app>
-    -a, --add-path <url>                Specify the add-path url that should be used <https://api.locize.io/missing/{{projectId}}/{{version}}/{{lng}}/{{ns}}}>
+    -a, --add-path <url>                Specify the add-path url that should be used <https://api.locize.io/missing/{{projectId}}/{{version}}/{{lng}}/{{ns}}>
     -l, --language <lng>                Found namespaces will be matched to this language
     -v, --ver <version>                 Found namespaces will be matched to this version
     -pl, --parse-language <true|false>  Parse folders as language (default is true)
