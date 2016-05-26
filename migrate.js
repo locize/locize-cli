@@ -41,6 +41,8 @@ const parseLanguage = (p, cb) => {
     const files = getFiles(path.join(p, lng));
 
     files.forEach((file) => {
+      if (path.extname(file) !== '.json') return;
+
       namespaces.push({
         language: lng,
         namespace: path.basename(file, '.json'),
