@@ -2,14 +2,14 @@
 
 # Getting started with the locize-cli
 
-## Step 1: Install the cli (preferred globally)
+## Step 0: Install the cli (preferred globally)
 
 ```sh
 npm install -g locize-cli
 ```
 
-
-## Step 2: Go near to your translation files
+## Migration of existing i18next files
+### Step 1: Go near to your translation files
 
 At the moment only i18next translation files (json) are supported
 
@@ -18,7 +18,7 @@ cd my-awesome-project/locales
 ```
 
 
-## Step 3: Decide if you want to migrate all languages or only one
+### Step 2: Decide if you want to migrate all languages or only one
 
 If you have a directory structure like this:
 
@@ -43,37 +43,50 @@ If you have a directory structure like this:
 you can use the `--language` option to define the language.
 
 
-## Step 4: execute
+### Step 3: execute
 
 Add your api-key and your project-id and let's go...
 
 ```sh
-locize my-api-key-d9de-4f55-9855-a9ef0ed44672 my-project-id-93e1-442a-ab35-24331fa294ba --path ./en --language en
+locize migrate --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --path ./en --language en
 ```
 
-## Step 5: verify
+### Step 4: verify
 
 Navigate to your locize project and check the results => [www.locize.io](https://www.locize.io)
 
 
-## locize --help
+## Adding new keys
+### Step 1: execute
+
+Add your api-key and your project-id and let's go...
 
 ```sh
-locize --help
+locize add --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --language en namespace1 myNewKey "My new value"
+```
 
-  Usage: locize [options] <api-key> <project-id>
+## Other information
 
-  Options:
+You can define a config file in your home directory (or wherever you want (by specifying it in the command)) that contains defaults for your commands.
+i.e.
 
-    -h, --help                          output usage information
-    -V, --version                       output the version number
-    -p, --path <path>                   Specify the path that should be used </Users/adrai/Projects/locize/locize-app>
-    -a, --add-path <url>                Specify the add-path url that should be used <https://api.locize.io/missing/{{projectId}}/{{version}}/{{lng}}/{{ns}}>
-    -l, --language <lng>                Found namespaces will be matched to this language
-    -v, --ver <version>                 Found namespaces will be matched to this version
-    -pl, --parse-language <true|false>  Parse folders as language (default is true)
-    -f, --format <json>                 File format of namespaces
+```sh
+cat /Users/user/.locize
 
+apiKey = my-api-key-d9de-4f55-9855-a9ef0ed44672
+projectId = my-project-id-93e1-442a-ab35-24331fa294ba
+language = en
+version = latest
+```
 
-locize api-key project-id
+like this you can just work like this:
+
+```sh
+locize migrate
+```
+
+or
+
+```sh
+locize add common title "the title of my cool app"
 ```
