@@ -23,7 +23,7 @@ program
 program
   .command('migrate')
   .alias('m')
-  .description('executes....')
+  .description('migration of existing translation files')
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-l, --language <lng>', `Found namespaces will be matched to this language`)
@@ -79,7 +79,7 @@ program
 program
   .command('add <namespace> <key> <value>')
   .alias('a')
-  .description('executes....')
+  .description('adding new keys')
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-l, --language <lng>', `The language that should be targeted`)
