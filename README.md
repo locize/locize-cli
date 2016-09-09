@@ -56,7 +56,7 @@ locize migrate --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-
 Navigate to your locize project and check the results => [www.locize.io](https://www.locize.io)
 
 
-## Adding new keys
+## Adding/Updating new keys
 ### Step 1: execute
 
 Add your api-key and your project-id and let's go...
@@ -89,4 +89,20 @@ or
 
 ```sh
 locize add common title "the title of my cool app"
+```
+
+
+## Remove keys
+### Step 1: execute
+
+Add your api-key and your project-id and let's go...
+
+```sh
+locize remove --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --language en namespace1 myNewKey
+```
+
+or
+
+```sh
+locize remove common title
 ```

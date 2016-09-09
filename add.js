@@ -14,7 +14,7 @@ const add = (opt, cb) => {
   console.log(colors.yellow(`adding ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
 
   var data = {};
-  data[opt.key] = opt.value;
+  data[opt.key] = opt.value || null; // null will remove the key
 
   request({
     method: 'POST',
@@ -31,6 +31,7 @@ const add = (opt, cb) => {
       if (err) return console.error(colors.red(err.message));
       if (obj && obj.errorMessage) return console.error(colors.red(obj.errorMessage));
     }
+    if (res.statusCode >= 300) return console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')'));
     console.log(colors.green(`added ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
   });
 };

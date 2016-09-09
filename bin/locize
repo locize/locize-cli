@@ -8,7 +8,7 @@ const os = require('os');
 const ini = require('ini');
 
 const home = path.join(os.homedir(), '.locize');
-const addPathUrl = 'https://api.locize.io/missing/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
+const addPathUrl = 'https://api.locize.io/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
 
 const migrate = require('../migrate');
 const add = require('../add');
@@ -79,7 +79,7 @@ program
 program
   .command('add <namespace> <key> <value>')
   .alias('a')
-  .description('adding new keys')
+  .description('add a new key')
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-l, --language <lng>', `The language that should be targeted`)
@@ -128,6 +128,60 @@ program
     console.log('    $ locize add common title "the title of my cool app"');
     console.log('    $ locize add common title "the title of my cool app" --language en');
     console.log('    $ locize add common title "the title of my cool app" --api-key <apiKey> --project-id <projectId> --language en');
+    console.log();
+  });
+
+program
+  .command('remove <namespace> <key>')
+  .alias('rm')
+  .description('remove a key')
+  .option('-k, --api-key <apiKey>', `The api-key that should be used`)
+  .option('-i, --project-id <projectId>', `The project-id that should be used`)
+  .option('-l, --language <lng>', `The language that should be targeted`)
+  .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
+  .action((namespace, key, cmd) => {
+    try {
+      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+    } catch (e) {}
+
+    const apiKey = cmd.apiKey || config.apiKey;
+    if (!apiKey) {
+      console.error('  error: missing required argument `apiKey`');
+      return;
+    }
+
+    const projectId = cmd.projectId || config.projectId;
+    if (!projectId) {
+      console.error('  error: missing required argument `projectId`');
+      return;
+    }
+
+    const language = cmd.language || config.language || config.lng;
+    if (!language) {
+      console.error('  error: missing required argument `language`');
+      return;
+    }
+
+    const version = cmd.ver || config.ver || config.version || 'latest';
+
+    const addPath = cmd.addPath || config.addPath || addPathUrl;
+
+    add({
+      apiKey: apiKey,
+      projectId: projectId,
+      addPath: addPath,
+      language: language,
+      version: version,
+      namespace: namespace,
+      key: key
+    });
+  })
+  .on('--help', () => {
+    console.log('  Examples:');
+    console.log();
+    console.log('    $ locize remove common title');
+    console.log('    $ locize remove common title --language en');
+    console.log('    $ locize remove common title --api-key <apiKey> --project-id <projectId> --language en');
     console.log();
   });
 

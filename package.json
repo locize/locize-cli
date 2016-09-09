@@ -7,7 +7,7 @@
     "locize": "./bin/locize"
   },
   "dependencies": {
-    "async": "2.0.0",
+    "async": "2.0.1",
     "colors": "1.1.2",
     "commander": "2.9.0",
     "flat": "2.0.1",
@@ -15,7 +15,7 @@
     "request": "2.74.0"
   },
   "devDependencies": {
-    "eslint": "^2.9.0"
+    "eslint": "^3.5.0"
   },
   "scripts": {
     "lint": "eslint .",

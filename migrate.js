@@ -81,6 +81,7 @@ const transfer = (opt, ns, cb) => {
       if (err) return cb(err);
       if (obj && obj.errorMessage) return cb(new Error(obj.errorMessage));
     }
+    if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
     console.log(colors.green(`transfered ${opt.version}/${ns.language}/${ns.namespace}...`));
     cb(null);
   });
