@@ -1,6 +1,6 @@
 {
   "name": "locize-cli",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "locize cli to import locales",
   "main": "migrate.js",
   "bin": {
@@ -12,6 +12,7 @@
     "commander": "2.9.0",
     "flat": "2.0.1",
     "ini": "1.3.4",
+    "mkdirp": "0.5.1",
     "request": "2.74.0"
   },
   "devDependencies": {

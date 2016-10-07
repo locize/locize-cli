@@ -106,3 +106,19 @@ or
 ```sh
 locize remove common title
 ```
+
+
+## Download current published files
+### Step 1: execute
+
+Add your project-id and let's go...
+
+```sh
+locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1
+```
+
+or
+
+```sh
+locize download
+```
