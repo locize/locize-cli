@@ -114,7 +114,7 @@ locize remove common title
 Add your project-id and let's go...
 
 ```sh
-locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1
+locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1 --target ./backup
 ```
 
 or

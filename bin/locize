@@ -191,7 +191,7 @@ program
   program
     .command('download')
     .alias('dl')
-    .description('remove a key')
+    .description('download a namespace')
     .option('-i, --project-id <projectId>', `The project-id that should be used`)
     .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
     .option('-l, --language <lng>', `The language that should be targeted`)
@@ -231,8 +231,8 @@ program
       console.log('  Examples:');
       console.log();
       console.log('    $ locize download');
-      console.log('    $ locize remove --ver latest');
-      console.log('    $ locize remove --project-id <projectId> --ver latest --language en --namespace common');
+      console.log('    $ locize download --ver latest');
+      console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common');
       console.log();
     });
 
