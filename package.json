@@ -1,6 +1,6 @@
 {
   "name": "locize-cli",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "locize cli to import locales",
   "main": "migrate.js",
   "bin": {
