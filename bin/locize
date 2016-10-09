@@ -10,10 +10,12 @@ const ini = require('ini');
 
 const home = path.join(os.homedir(), '.locize');
 const addPathUrl = 'https://api.locize.io/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
+const getPathUrl = 'https://api.locize.io/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
 
 const migrate = require('../migrate');
 const add = require('../add');
 const download = require('../download');
+const get = require('../get');
 
 var config = {};
 
@@ -188,53 +190,101 @@ program
   });
 
 
-  program
-    .command('download')
-    .alias('dl')
-    .description('download a namespace')
-    .option('-i, --project-id <projectId>', `The project-id that should be used`)
-    .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
-    .option('-l, --language <lng>', `The language that should be targeted`)
-    .option('-n, --namespace <ns>', `The namespace that should be targeted`)
-    .option('-t, --target <target>', `The target directory`, process.cwd())
-    .action((cmd) => {
-      try {
-        config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
-      } catch (e) {}
+program
+  .command('download')
+  .alias('dl')
+  .description('download a namespace')
+  .option('-i, --project-id <projectId>', `The project-id that should be used`)
+  .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
+  .option('-l, --language <lng>', `The language that should be targeted`)
+  .option('-n, --namespace <ns>', `The namespace that should be targeted`)
+  .option('-t, --target <target>', `The target directory`, process.cwd())
+  .option('-g, --get-path <url>', `Specify the get-path url that should be used (default: ${getPathUrl})`)
+  .action((cmd) => {
+    try {
+      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+    } catch (e) {}
 
-      const projectId = cmd.projectId || config.projectId;
-      if (!projectId) {
-        console.error('  error: missing required argument `projectId`');
-        return;
-      }
+    const projectId = cmd.projectId || config.projectId;
+    if (!projectId) {
+      console.error('  error: missing required argument `projectId`');
+      return;
+    }
 
-      const language = cmd.language;
+    const language = cmd.language;
 
-      const version = cmd.ver;
+    const version = cmd.ver;
 
-      const namespace = cmd.namespace;
+    const namespace = cmd.namespace;
 
-      const addPath = cmd.addPath || config.addPath || addPathUrl;
+    const getPath = cmd.getPath || config.getPath || cmd.addPath || config.addPath || getPathUrl;
 
-      const target = cmd.target;
+    const target = cmd.target;
 
-      download({
-        projectId: projectId,
-        apiPath: url.parse(addPath).protocol + '//' + url.parse(addPath).host,
-        language: language,
-        version: version,
-        namespace: namespace,
-        target: target
-      });
-    })
-    .on('--help', () => {
-      console.log('  Examples:');
-      console.log();
-      console.log('    $ locize download');
-      console.log('    $ locize download --ver latest');
-      console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common');
-      console.log();
+    download({
+      projectId: projectId,
+      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
+      language: language,
+      version: version,
+      namespace: namespace,
+      target: target
     });
+  })
+  .on('--help', () => {
+    console.log('  Examples:');
+    console.log();
+    console.log('    $ locize download');
+    console.log('    $ locize download --ver latest');
+    console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common');
+    console.log();
+  });
+
+
+program
+  .command('get <namespace> <key>')
+  .alias('g')
+  .description('get a key')
+  .option('-i, --project-id <projectId>', `The project-id that should be used`)
+  .option('-l, --language <lng>', `The language that should be targeted`)
+  .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
+  .action((namespace, key, cmd) => {
+    try {
+      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+    } catch (e) {}
+
+    const projectId = cmd.projectId || config.projectId;
+    if (!projectId) {
+      console.error('  error: missing required argument `projectId`');
+      return;
+    }
+
+    const language = cmd.language || config.language || config.lng;
+    if (!language) {
+      console.error('  error: missing required argument `language`');
+      return;
+    }
+
+    const version = cmd.ver || config.ver || config.version || 'latest';
+
+    const getPath = cmd.getPath || config.getPath || cmd.addPath || config.addPath || getPathUrl;
+
+    get({
+      projectId: projectId,
+      getPath: getPath,
+      language: language,
+      version: version,
+      namespace: namespace,
+      key: key
+    });
+  })
+  .on('--help', () => {
+    console.log('  Examples:');
+    console.log();
+    console.log('    $ locize remove common title');
+    console.log('    $ locize remove common title --language en');
+    console.log('    $ locize remove common title --api-key <apiKey> --project-id <projectId> --language en');
+    console.log();
+  });
 
 
 program.parse(process.argv);
