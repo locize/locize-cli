@@ -65,32 +65,6 @@ Add your api-key and your project-id and let's go...
 locize add --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --language en namespace1 myNewKey "My new value"
 ```
 
-## Other information
-
-You can define a config file in your home directory (or wherever you want (by specifying it in the command)) that contains defaults for your commands.
-i.e.
-
-```sh
-cat /Users/user/.locize
-
-apiKey = my-api-key-d9de-4f55-9855-a9ef0ed44672
-projectId = my-project-id-93e1-442a-ab35-24331fa294ba
-language = en
-version = latest
-```
-
-like this you can just work like this:
-
-```sh
-locize migrate
-```
-
-or
-
-```sh
-locize add common title "the title of my cool app"
-```
-
 
 ## Remove keys
 ### Step 1: execute
@@ -137,4 +111,32 @@ or
 
 ```sh
 locize download
+```
+
+
+
+## Other information
+
+You can define a config file in your home directory (or wherever you want (by specifying it in the command)) that contains defaults for your commands.
+i.e.
+
+```sh
+cat /Users/user/.locize
+
+apiKey = my-api-key-d9de-4f55-9855-a9ef0ed44672
+projectId = my-project-id-93e1-442a-ab35-24331fa294ba
+language = en
+version = latest
+```
+
+like this you can just work like this:
+
+```sh
+locize migrate
+```
+
+or
+
+```sh
+locize add common title "the title of my cool app"
 ```
