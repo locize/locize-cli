@@ -2,18 +2,18 @@
   "name": "locize-cli",
   "version": "2.3.0",
   "description": "locize cli to import locales",
-  "main": "migrate.js",
+  "main": "index.js",
   "bin": {
     "locize": "./bin/locize"
   },
   "dependencies": {
-    "async": "2.0.1",
+    "async": "2.1.5",
     "colors": "1.1.2",
     "commander": "2.9.0",
     "flat": "2.0.1",
     "ini": "1.3.4",
     "mkdirp": "0.5.1",
-    "request": "2.74.0"
+    "request": "2.80.0"
   },
   "devDependencies": {
     "eslint": "^3.5.0"

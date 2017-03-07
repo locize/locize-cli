@@ -11,7 +11,7 @@ const add = (opt, cb) => {
               .replace('{{ns}}', opt.namespace)
               .replace('{{namespace}}', opt.namespace);
 
-  console.log(colors.yellow(`adding ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
+  if (!cb) console.log(colors.yellow(`adding ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
 
   var data = {};
   data[opt.key] = opt.value || null; // null will remove the key
@@ -26,13 +26,26 @@ const add = (opt, cb) => {
     }
   }, (err, res, obj) => {
     if (err || (obj && obj.errorMessage)) {
-      console.log(colors.red(`add failed for ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
+      if (!cb) console.log(colors.red(`add failed for ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
 
-      if (err) return console.error(colors.red(err.message));
-      if (obj && obj.errorMessage) return console.error(colors.red(obj.errorMessage));
+      if (err) {
+        if (!cb) console.error(colors.red(err.message));
+        if (cb) cb(err);
+        return;
+      }
+      if (obj && obj.errorMessage) {
+        if (!cb) console.error(colors.red(obj.errorMessage));
+        if (cb) cb(new Error(obj.errorMessage));
+        return;
+      }
     }
-    if (res.statusCode >= 300) return console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')'));
-    console.log(colors.green(`added ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
+    if (res.statusCode >= 300) {
+      if (!cb) console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')'));
+      if (cb) cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+      return;
+    }
+    if (!cb) console.log(colors.green(`added ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
+    if (cb) cb(null);
   });
 };
 

@@ -96,8 +96,13 @@ const upload = (opt, nss, cb) => {
   );
 };
 
-const migrate = (opt) => {
-  if (opt.format !== 'json') throw new Error(`Format ${opt.format} is not accepted!`);
+const migrate = (opt, cb) => {
+  if (opt.format !== 'json') {
+    var err = new Error(`Format ${opt.format} is not accepted!`);
+    if (!cb) throw err;
+    if (cb) cb(err);
+    return;
+  }
 
   if (opt.language) {
     const files = getFiles(opt.path);
@@ -111,14 +116,22 @@ const migrate = (opt) => {
     });
 
     load(namespaces, (err, nss) => {
-      if (err) return console.error(colors.red(err.stack));
+      if (err) {
+        if (!cb) console.error(colors.red(err.stack));
+        if (cb) cb(err);
+        return;
+      }
       upload(opt, nss, (err) => {
         if (err) {
-          console.error(colors.red(err.stack));
-          process.exit(1);
+          if (!cb) {
+            console.error(colors.red(err.stack));
+            process.exit(1);
+          }
+          if (cb) cb(err);
           return;
         }
-        console.log(colors.green('FINISHED'));
+        if (!cb) console.log(colors.green('FINISHED'));
+        if (cb) cb(null);
       });
     });
     return;
@@ -126,14 +139,22 @@ const migrate = (opt) => {
 
   if (opt.parseLanguage) {
     parseLanguage(opt.path, (err, nss) => {
-      if (err) return console.error(colors.red(err.stack));
+      if (err) {
+        if (!cb) console.error(colors.red(err.stack));
+        if (cb) cb(err);
+        return;
+      }
       upload(opt, nss, (err) => {
         if (err) {
-          console.error(colors.red(err.stack));
-          process.exit(1);
+          if (!cb) {
+            console.error(colors.red(err.stack));
+            process.exit(1);
+          }
+          if (cb) cb(err);
           return;
         }
-        console.log(colors.green('FINISHED'));
+        if (!cb) console.log(colors.green('FINISHED'));
+        if (cb) cb(null);
       });
     });
     return;
