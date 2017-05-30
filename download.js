@@ -46,7 +46,7 @@ const download = (opt, cb) => {
     }
 
     obj.forEach((entry) => {
-      let pathToLocalFile = path.join(opt.target, entry.key + (opt.extension || '.json'));
+      var pathToLocalFile = path.join(opt.target, entry.key + (opt.extension || '.json'));
       // trim the projectId
       if (pathToLocalFile.indexOf(opt.projectId + '/') > -1) pathToLocalFile = pathToLocalFile.replace(opt.projectId + '/', '');
       // trim version if specified
