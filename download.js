@@ -46,7 +46,7 @@ const download = (opt, cb) => {
     }
 
     obj.forEach((entry) => {
-      const pathToLocalFile = path.join(opt.target, entry.key);
+      const pathToLocalFile = path.join(opt.target, entry.key + '.json');
       mkdirp.sync(path.dirname(pathToLocalFile));
 
       request(entry.url).pipe(fs.createWriteStream(pathToLocalFile));
