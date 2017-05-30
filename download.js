@@ -46,7 +46,12 @@ const download = (opt, cb) => {
     }
 
     obj.forEach((entry) => {
-      const pathToLocalFile = path.join(opt.target, entry.key + '.json');
+      let pathToLocalFile = path.join(opt.target, entry.key + (opt.extension || '.json'));
+      // trim the projectId
+      if (pathToLocalFile.indexOf(opt.projectId + '/') > -1) pathToLocalFile = pathToLocalFile.replace(opt.projectId + '/', '');
+      // trim version if specified
+      if (opt.version) pathToLocalFile = pathToLocalFile.replace(opt.version + '/', '');
+
       mkdirp.sync(path.dirname(pathToLocalFile));
 
       request(entry.url).pipe(fs.createWriteStream(pathToLocalFile));
