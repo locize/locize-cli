@@ -1,3 +1,6 @@
+## 3.0.1
+- fixes path cleaning for non linux systems
+
 ## 3.0.0
 
 - download now does not provide projectId and version (if called with version param) - so downloaded structure is more useful to i18next
