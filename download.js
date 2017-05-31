@@ -48,9 +48,9 @@ const download = (opt, cb) => {
     obj.forEach((entry) => {
       var pathToLocalFile = path.join(opt.target, entry.key + (opt.extension || '.json'));
       // trim the projectId
-      if (pathToLocalFile.indexOf(opt.projectId + '/') > -1) pathToLocalFile = pathToLocalFile.replace(opt.projectId + '/', '');
+      if (pathToLocalFile.indexOf(opt.projectId + path.sep) > -1) pathToLocalFile = pathToLocalFile.replace(opt.projectId + path.sep, '');
       // trim version if specified
-      if (opt.version) pathToLocalFile = pathToLocalFile.replace(opt.version + '/', '');
+      if (opt.version) pathToLocalFile = pathToLocalFile.replace(opt.version + path.sep, '');
 
       mkdirp.sync(path.dirname(pathToLocalFile));
 
