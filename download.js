@@ -3,6 +3,11 @@ const request = require('request');
 const fs = require('fs');
 const path = require('path');
 const mkdirp = require('mkdirp');
+const async = require('async');
+const flatten = require('flat');
+const js2asr = require('android-string-resource/js2asr');
+const createxliff = require('xliff/createxliff');
+const createxliff12 = require('xliff/createxliff12');
 
 const download = (opt, cb) => {
 
@@ -45,20 +50,162 @@ const download = (opt, cb) => {
       return;
     }
 
-    obj.forEach((entry) => {
-      var pathToLocalFile = path.join(opt.target, entry.key + (opt.extension || '.json'));
-      // trim the projectId
-      if (pathToLocalFile.indexOf(opt.projectId + path.sep) > -1) pathToLocalFile = pathToLocalFile.replace(opt.projectId + path.sep, '');
-      // trim version if specified
-      if (opt.version) pathToLocalFile = pathToLocalFile.replace(opt.version + path.sep, '');
+    const localFiles = [];
 
-      mkdirp.sync(path.dirname(pathToLocalFile));
+    async.series([
+      (cb) => {
+        async.forEach(obj, (entry, cb) => {
+          var pathToLocalFile = path.join(opt.target, entry.key + (opt.extension || '.json'));
+          // trim the projectId
+          var trimmedKey = entry.key;
+          if (pathToLocalFile.indexOf(opt.projectId + path.sep) > -1) {
+            pathToLocalFile = pathToLocalFile.replace(opt.projectId + path.sep, '');
+            trimmedKey = trimmedKey.replace(opt.projectId + path.sep, '');
+          }
+          // trim version if specified
+          if (opt.version) {
+            pathToLocalFile = pathToLocalFile.replace(opt.version + path.sep, '');
+            trimmedKey = trimmedKey.replace(opt.version + path.sep, '');
+          }
 
-      request(entry.url).pipe(fs.createWriteStream(pathToLocalFile));
+          mkdirp.sync(path.dirname(pathToLocalFile));
+          localFiles.push({
+            key: entry.key,
+            trimmedKey: trimmedKey,
+            pathToLocalFile: pathToLocalFile
+          });
+
+          const fsStream = fs.createWriteStream(pathToLocalFile);
+          fsStream.on('close', cb);
+          request(entry.url).pipe(fsStream);
+        }, cb);
+      },
+      (cb) => {
+        async.parallel([
+          (cb) => {
+            if (opt.format !== 'flat') return cb();
+            async.forEach(localFiles, (f, cb) => {
+              fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+                if (err) return cb(err);
+                try {
+                  const newString = JSON.stringify(flatten(JSON.parse(data)), null, 2);
+                  fs.writeFile(f.pathToLocalFile, newString, 'utf8', cb);
+                } catch (err) {
+                  cb(err);
+                }
+              });
+            }, cb);
+          },
+          (cb) => {
+            if (opt.format !== 'android') return cb();
+            async.forEach(localFiles, (f, cb) => {
+              const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.xml';
+              fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+                if (err) return cb(err);
+                try {
+                  const js = flatten(JSON.parse(data));
+                  js2asr(js, (err, res) => {
+                    if (err) return cb(err);
+                    fs.writeFile(newFilePath, res, 'utf8', (err) => {
+                      if (err) return cb(err);
+                      fs.unlink(f.pathToLocalFile, cb);
+                    });
+                  });
+                } catch (err) {
+                  cb(err);
+                }
+              });
+            }, cb);
+          },
+          (cb) => {
+            if (opt.format !== 'xliff2' && opt.format !== 'xliff12') return cb();
+            const fn = opt.format === 'xliff12' ? createxliff12 : createxliff;
+
+            function processXliff() {
+              async.forEach(localFiles, (f, cb) => {
+                const splittedKey = f.key.split('/');
+                const ns = splittedKey[splittedKey.length - 1];
+                const lng = splittedKey[splittedKey.length - 2];
+                const version = splittedKey[splittedKey.length - 3];
+                const projId = splittedKey[splittedKey.length - 4];
+
+                request({
+                  method: 'GET',
+                  json: true,
+                  url: opt.apiPath + '/' + projId + '/' + version + '/' + opt.referenceLanguage + '/' + ns
+                }, (err, res, obj) => {
+                  if (err || (obj && obj.errorMessage)) {
+                    if (err) return cb(err);
+                    if (obj && obj.errorMessage) return cb(new Error(obj.errorMessage));
+                  }
+                  if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+
+                  const refNs = flatten(obj);
+                  const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.xliff';
+                  fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+                    if (err) return cb(err);
+                    try {
+                      const js = flatten(JSON.parse(data));
+                      fn(
+                        opt.referenceLanguage,
+                        lng,
+                        refNs,
+                        js,
+                        ns,
+                        (err, res) => {
+                          if (err) return cb(err);
+                          fs.writeFile(newFilePath, res, 'utf8', (err) => {
+                            if (err) return cb(err);
+                            fs.unlink(f.pathToLocalFile, cb);
+                          });
+                        }
+                      );
+                    } catch (err) {
+                      cb(err);
+                    }
+                  });
+                });
+              }, cb);
+            }
+
+            if (opt.referenceLanguage) return processXliff();
+
+            request({
+              method: 'GET',
+              json: true,
+              url: opt.apiPath + '/languages/' + opt.projectId
+            }, (err, res, obj) => {
+              if (err || (obj && obj.errorMessage)) {
+                if (err) return cb(err);
+                if (obj && obj.errorMessage) return cb(new Error(obj.errorMessage));
+              }
+              if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+
+              const lngs = Object.keys(obj);
+              var foundRefLng = null;
+              lngs.forEach((l) => {
+                if (obj[l].isReferenceLanguage) foundRefLng = l;
+              });
+              if (foundRefLng) {
+                opt.referenceLanguage = foundRefLng;
+                return processXliff();
+              }
+
+              cb(new Error('Please specify a referenceLanguage'));
+            });
+          }
+        ], cb);
+      }
+    ], (err) => {
+      if (err) {
+        if (!cb) console.error(colors.red(err.message));
+        if (cb) cb(err);
+        return;
+      }
+
+      if (!cb) console.log(colors.green(`downloaded ${url} to ${opt.target}...`));
+      if (cb) cb(null);
     });
-
-    if (!cb) console.log(colors.green(`downloaded ${url} to ${opt.target}...`));
-    if (cb) cb(null);
   });
 };
 

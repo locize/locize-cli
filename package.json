@@ -7,13 +7,15 @@
     "locize": "./bin/locize"
   },
   "dependencies": {
+    "android-string-resource": "1.0.0",
     "async": "2.4.1",
     "colors": "1.1.2",
     "commander": "2.9.0",
     "flat": "2.0.1",
     "ini": "1.3.4",
     "mkdirp": "0.5.1",
-    "request": "2.81.0"
+    "request": "2.81.0",
+    "xliff": "2.1.0"
   },
   "devDependencies": {
     "eslint": "^3.5.0"

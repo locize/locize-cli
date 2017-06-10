@@ -1,3 +1,6 @@
+## 3.1.0
+- download resources in different formats (json, flat, xliff2, xliff12, android)
+
 ## 3.0.1
 - fixes path cleaning for non linux systems
 

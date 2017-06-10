@@ -200,6 +200,8 @@ program
   .option('-n, --namespace <ns>', `The namespace that should be targeted`)
   .option('-t, --target <target>', `The target directory`, process.cwd())
   .option('-g, --get-path <url>', `Specify the get-path url that should be used (default: ${getPathUrl})`)
+  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android])`, 'json')
+  .option('-rl, --referenceLanguage <lng>', `The language that should be used as source (used for xliff format)`)
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -221,13 +223,19 @@ program
 
     const target = cmd.target;
 
+    const format = cmd.format;
+
+    const referenceLanguage = cmd.referenceLanguage;
+
     download({
       projectId: projectId,
       apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
       language: language,
       version: version,
       namespace: namespace,
-      target: target
+      target: target,
+      format: format,
+      referenceLanguage: referenceLanguage
     });
   })
   .on('--help', () => {
@@ -236,6 +244,8 @@ program
     console.log('    $ locize download');
     console.log('    $ locize download --ver latest');
     console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common');
+    console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common --format flat');
+    console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common --format xliff2 --referenceLanguage de');
     console.log();
   });
 
