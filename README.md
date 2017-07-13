@@ -50,6 +50,7 @@ Add your api-key and your project-id and let's go...
 ```sh
 locize migrate --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --path ./en --language en
 ```
+_Passing the argument --replace will empty the optionally existing namespace before saving the new translations. (default: false)_
 
 ### Step 4: verify
 
