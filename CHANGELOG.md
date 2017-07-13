@@ -1,3 +1,6 @@
+## 3.2.0
+- migrate has a new option --replace
+
 ## 3.1.0
 - download resources in different formats (json, flat, xliff2, xliff12, android)
 

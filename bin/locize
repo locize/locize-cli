@@ -35,6 +35,7 @@ program
   .option('-p, --path <path>', `Specify the path that should be used (default: ${process.cwd()})`, process.cwd())
   .option('-L, --parse-language <true|false>', `Parse folders as language (default: true)`, true)
   .option('-f, --format <json>', `File format of namespaces (default: json)`, 'json')
+  .option('-r, --replace <true|false>', `This will empty the optionally existing namespace before saving the new translations. (default: false)`, false)
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -68,7 +69,8 @@ program
       language: cmd.language,
       version: version,
       parseLanguage: cmd.parseLanguage,
-      format: cmd.format
+      format: cmd.format,
+      replace: cmd.replace
     });
   })
   .on('--help', () => {

@@ -70,6 +70,9 @@ const transfer = (opt, ns, cb) => {
     method: 'POST',
     json: true,
     url: url,
+    qs: {
+      replace: opt.replace
+    },
     body: ns.value,
     headers: {
       'Authorization': opt.apiKey
