@@ -78,11 +78,11 @@ const transfer = (opt, ns, cb) => {
       'Authorization': opt.apiKey
     }
   }, (err, res, obj) => {
-    if (err || (obj && obj.errorMessage)) {
+    if (err || (obj && (obj.errorMessage || obj.message))) {
       console.log(colors.red(`transfer failed for ${opt.version}/${ns.language}/${ns.namespace}...`));
 
       if (err) return cb(err);
-      if (obj && obj.errorMessage) return cb(new Error(obj.errorMessage));
+      if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
     }
     if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
     console.log(colors.green(`transfered ${opt.version}/${ns.language}/${ns.namespace}...`));

@@ -30,7 +30,7 @@ const download = (opt, cb) => {
     json: true,
     url: url
   }, (err, res, obj) => {
-    if (err || (obj && obj.errorMessage)) {
+    if (err || (obj && (obj.errorMessage || obj.message))) {
       if (!cb) console.log(colors.red(`download failed for ${url} to ${opt.target}...`));
 
       if (err) {
@@ -38,9 +38,9 @@ const download = (opt, cb) => {
         if (cb) cb(err);
         return;
       }
-      if (obj && obj.errorMessage) {
-        if (!cb) console.error(colors.red(obj.errorMessage));
-        if (cb) cb(new Error(obj.errorMessage));
+      if (obj && (obj.errorMessage || obj.message)) {
+        if (!cb) console.error(colors.red((obj.errorMessage || obj.message)));
+        if (cb) cb(new Error((obj.errorMessage || obj.message)));
         return;
       }
     }
@@ -134,9 +134,9 @@ const download = (opt, cb) => {
                   json: true,
                   url: opt.apiPath + '/' + projId + '/' + version + '/' + opt.referenceLanguage + '/' + ns
                 }, (err, res, obj) => {
-                  if (err || (obj && obj.errorMessage)) {
+                  if (err || (obj && (obj.errorMessage || obj.message))) {
                     if (err) return cb(err);
-                    if (obj && obj.errorMessage) return cb(new Error(obj.errorMessage));
+                    if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
                   }
                   if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
 
@@ -175,9 +175,9 @@ const download = (opt, cb) => {
               json: true,
               url: opt.apiPath + '/languages/' + opt.projectId
             }, (err, res, obj) => {
-              if (err || (obj && obj.errorMessage)) {
+              if (err || (obj && (obj.errorMessage || obj.message))) {
                 if (err) return cb(err);
-                if (obj && obj.errorMessage) return cb(new Error(obj.errorMessage));
+                if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
               }
               if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
 

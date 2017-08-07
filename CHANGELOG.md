@@ -1,3 +1,6 @@
+## 3.2.1
+- optimize error message handling
+
 ## 3.2.0
 - migrate has a new option --replace
 

@@ -25,7 +25,7 @@ const add = (opt, cb) => {
       'Authorization': opt.apiKey
     }
   }, (err, res, obj) => {
-    if (err || (obj && obj.errorMessage)) {
+    if (err || (obj && (obj.errorMessage || obj.message))) {
       if (!cb) console.log(colors.red(`add failed for ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
 
       if (err) {
@@ -33,9 +33,9 @@ const add = (opt, cb) => {
         if (cb) cb(err);
         return;
       }
-      if (obj && obj.errorMessage) {
-        if (!cb) console.error(colors.red(obj.errorMessage));
-        if (cb) cb(new Error(obj.errorMessage));
+      if (obj && (obj.errorMessage || obj.message)) {
+        if (!cb) console.error(colors.red((obj.errorMessage || obj.message)));
+        if (cb) cb(new Error((obj.errorMessage || obj.message)));
         return;
       }
     }
