@@ -1,3 +1,6 @@
+## 3.2.2
+- update xliff dependency
+
 ## 3.2.1
 - optimize error message handling
 
