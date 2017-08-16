@@ -1,3 +1,6 @@
+## 3.2.3
+- update android-string-resource dependency
+
 ## 3.2.2
 - update xliff dependency
 
