@@ -202,8 +202,8 @@ program
   .option('-n, --namespace <ns>', `The namespace that should be targeted`)
   .option('-t, --target <target>', `The target directory`, process.cwd())
   .option('-g, --get-path <url>', `Specify the get-path url that should be used (default: ${getPathUrl})`)
-  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android])`, 'json')
-  .option('-rl, --referenceLanguage <lng>', `The language that should be used as source (used for xliff format)`)
+  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, csv])`, 'json')
+  .option('-rl, --referenceLanguage <lng>', `The language that should be used as source (used for xliff or csv format)`)
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));

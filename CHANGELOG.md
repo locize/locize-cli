@@ -1,3 +1,6 @@
+## 3.3.0
+- add additional csv format option for download
+
 ## 3.2.3
 - update android-string-resource dependency
 

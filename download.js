@@ -8,6 +8,7 @@ const flatten = require('flat');
 const js2asr = require('android-string-resource/js2asr');
 const createxliff = require('xliff/createxliff');
 const createxliff12 = require('xliff/createxliff12');
+const csvjson = require('csvjson');
 
 const download = (opt, cb) => {
 
@@ -116,6 +117,96 @@ const download = (opt, cb) => {
                 }
               });
             }, cb);
+          },
+          (cb) => {
+            if (opt.format !== 'csv') return cb();
+
+            const options = {
+              delimiter: ',',
+              wrap: true,
+              headers: 'relative',
+              // objectDenote: '.',
+              // arrayDenote: '[]'
+            };
+
+            function processCSV() {
+              async.forEach(localFiles, (f, cb) => {
+                const splittedKey = f.key.split('/');
+                const ns = splittedKey[splittedKey.length - 1];
+                const lng = splittedKey[splittedKey.length - 2];
+                const version = splittedKey[splittedKey.length - 3];
+                const projId = splittedKey[splittedKey.length - 4];
+
+                request({
+                  method: 'GET',
+                  json: true,
+                  url: opt.apiPath + '/' + projId + '/' + version + '/' + opt.referenceLanguage + '/' + ns
+                }, (err, res, obj) => {
+                  if (err || (obj && (obj.errorMessage || obj.message))) {
+                    if (err) return cb(err);
+                    if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
+                  }
+                  if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+
+                  const refNs = flatten(obj);
+                  const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.csv';
+                  fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+                    if (err) return cb(err);
+                    try {
+                      const js = flatten(JSON.parse(data));
+
+                      const js2CsvData = Object.keys(js).reduce((mem, k) => {
+                        const refItem = refNs[k];
+                        if (!refItem) return mem;
+
+                        const value = js[k] || '';
+                        const line = { // https://en.wikipedia.org/wiki/Delimiter-separated_values
+                          key: k.replace(/"/g, '""'),
+                          [opt.referenceLanguage]: value.replace(/"/g, '""'),
+                          [lng]: value.replace(/"/g, '""')
+                        };
+                        mem.push(line);
+
+                        return mem;
+                      }, []);
+
+                      fs.writeFile(newFilePath, csvjson.toCSV(js2CsvData, options), 'utf8', (err) => {
+                        if (err) return cb(err);
+                        fs.unlink(f.pathToLocalFile, cb);
+                      });
+                    } catch (err) {
+                      cb(err);
+                    }
+                  });
+                });
+              }, cb);
+            }
+
+            if (opt.referenceLanguage) return processCSV();
+
+            request({
+              method: 'GET',
+              json: true,
+              url: opt.apiPath + '/languages/' + opt.projectId
+            }, (err, res, obj) => {
+              if (err || (obj && (obj.errorMessage || obj.message))) {
+                if (err) return cb(err);
+                if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
+              }
+              if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+
+              const lngs = Object.keys(obj);
+              var foundRefLng = null;
+              lngs.forEach((l) => {
+                if (obj[l].isReferenceLanguage) foundRefLng = l;
+              });
+              if (foundRefLng) {
+                opt.referenceLanguage = foundRefLng;
+                return processCSV();
+              }
+
+              cb(new Error('Please specify a referenceLanguage'));
+            });
           },
           (cb) => {
             if (opt.format !== 'xliff2' && opt.format !== 'xliff12') return cb();
