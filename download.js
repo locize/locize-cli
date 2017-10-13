@@ -89,7 +89,10 @@ const download = (opt, cb) => {
               fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
                 if (err) return cb(err);
                 try {
-                  const newString = JSON.stringify(flatten(JSON.parse(data)), null, 2);
+                  const flatted = flatten(JSON.parse(data));
+                  var sorted = {};
+                  Object.keys(flatted).sort().forEach((k) => sorted[k] = flatted[k]);
+                  const newString = JSON.stringify(sorted, null, 2);
                   fs.writeFile(f.pathToLocalFile, newString, 'utf8', cb);
                 } catch (err) {
                   cb(err);

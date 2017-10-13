@@ -1,3 +1,6 @@
+## 3.3.1
+- sort keys for flat json export
+
 ## 3.3.0
 - add additional csv format option for download
 
