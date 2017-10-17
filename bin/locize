@@ -33,9 +33,9 @@ program
   .option('-l, --language <lng>', `Found namespaces will be matched to this language`)
   .option('-v, --ver <version>', `Found namespaces will be matched to this version (default: latest)`)
   .option('-p, --path <path>', `Specify the path that should be used (default: ${process.cwd()})`, process.cwd())
-  .option('-L, --parse-language <true|false>', `Parse folders as language (default: true)`, true)
+  .option('-L, --parse-language <true|false>', `Parse folders as language (default: true)`, 'true')
   .option('-f, --format <json>', `File format of namespaces (default: json)`, 'json')
-  .option('-r, --replace <true|false>', `This will empty the optionally existing namespace before saving the new translations. (default: false)`, false)
+  .option('-r, --replace <true|false>', `This will empty the optionally existing namespace before saving the new translations. (default: false)`, 'false')
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -68,9 +68,9 @@ program
       path: cmd.path,
       language: cmd.language,
       version: version,
-      parseLanguage: cmd.parseLanguage,
+      parseLanguage: cmd.parseLanguage === 'true',
       format: cmd.format,
-      replace: cmd.replace
+      replace: cmd.replace === 'true'
     });
   })
   .on('--help', () => {
@@ -203,6 +203,7 @@ program
   .option('-t, --target <target>', `The target directory`, process.cwd())
   .option('-g, --get-path <url>', `Specify the get-path url that should be used (default: ${getPathUrl})`)
   .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, csv])`, 'json')
+  .option('-s, --skip-empty <true|false>', `Skips to download empty files (default: true)`, 'true')
   .option('-rl, --referenceLanguage <lng>', `The language that should be used as source (used for xliff or csv format)`)
   .action((cmd) => {
     try {
@@ -229,6 +230,8 @@ program
 
     const referenceLanguage = cmd.referenceLanguage;
 
+    const skipEmpty = cmd.skipEmpty === 'true';
+
     download({
       projectId: projectId,
       apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
@@ -237,7 +240,8 @@ program
       namespace: namespace,
       target: target,
       format: format,
-      referenceLanguage: referenceLanguage
+      referenceLanguage: referenceLanguage,
+      skipEmpty: skipEmpty
     });
   })
   .on('--help', () => {

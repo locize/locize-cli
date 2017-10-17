@@ -12,6 +12,8 @@ const csvjson = require('csvjson');
 
 const download = (opt, cb) => {
 
+  if (opt.skipEmpty === undefined) opt.skipEmpty = true;
+
   var url = opt.apiPath + '/download/' + opt.projectId;
 
   if (opt.version) {
@@ -84,12 +86,33 @@ const download = (opt, cb) => {
       (cb) => {
         async.parallel([
           (cb) => {
+            if (opt.format !== 'json' || !opt.skipEmpty) return cb();
+            async.forEach(localFiles, (f, cb) => {
+              fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+                if (err) return cb(err);
+                try {
+                  const parsedData = JSON.parse(data);
+                  if (Object.keys(parsedData).length === 0) {
+                    fs.unlink(f.pathToLocalFile, cb);
+                  } else {
+                    cb();
+                  }
+                } catch (err) {
+                  cb(err);
+                }
+              });
+            }, cb);
+          },
+          (cb) => {
             if (opt.format !== 'flat') return cb();
             async.forEach(localFiles, (f, cb) => {
               fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
                 if (err) return cb(err);
                 try {
                   const flatted = flatten(JSON.parse(data));
+                  if (opt.skipEmpty && Object.keys(flatted).length === 0) {
+                    return fs.unlink(f.pathToLocalFile, cb);
+                  }
                   var sorted = {};
                   Object.keys(flatted).sort().forEach((k) => sorted[k] = flatted[k]);
                   const newString = JSON.stringify(sorted, null, 2);
@@ -108,6 +131,9 @@ const download = (opt, cb) => {
                 if (err) return cb(err);
                 try {
                   const js = flatten(JSON.parse(data));
+                  if (opt.skipEmpty && Object.keys(js).length === 0) {
+                    return fs.unlink(f.pathToLocalFile, cb);
+                  }
                   js2asr(js, (err, res) => {
                     if (err) return cb(err);
                     fs.writeFile(newFilePath, res, 'utf8', (err) => {
@@ -157,6 +183,10 @@ const download = (opt, cb) => {
                     if (err) return cb(err);
                     try {
                       const js = flatten(JSON.parse(data));
+
+                      if (opt.skipEmpty && Object.keys(js).length === 0) {
+                        return fs.unlink(f.pathToLocalFile, cb);
+                      }
 
                       const js2CsvData = Object.keys(js).reduce((mem, k) => {
                         const refItem = refNs[k];
@@ -240,6 +270,9 @@ const download = (opt, cb) => {
                     if (err) return cb(err);
                     try {
                       const js = flatten(JSON.parse(data));
+                      if (opt.skipEmpty && Object.keys(js).length === 0) {
+                        return fs.unlink(f.pathToLocalFile, cb);
+                      }
                       fn(
                         opt.referenceLanguage,
                         lng,

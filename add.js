@@ -13,8 +13,10 @@ const add = (opt, cb) => {
 
   if (!cb) console.log(colors.yellow(`adding ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
 
-  var data = {};
-  data[opt.key] = opt.value || null; // null will remove the key
+  var data = opt.data || {};
+  if (!opt.data) {
+    data[opt.key] = opt.value || null; // null will remove the key
+  }
 
   request({
     method: 'POST',

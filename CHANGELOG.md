@@ -1,3 +1,6 @@
+## 3.4.0
+- add possibility to skip-empty namespaces
+
 ## 3.3.1
 - sort keys for flat json export
 
