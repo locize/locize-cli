@@ -1,5 +1,6 @@
 const colors = require('colors');
 const request = require('request');
+const flatten = require('flat');
 
 const add = (opt, cb) => {
   const url = opt.addPath
@@ -13,7 +14,7 @@ const add = (opt, cb) => {
 
   if (!cb) console.log(colors.yellow(`adding ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
 
-  var data = opt.data || {};
+  var data = flatten(opt.data || {});
   if (!opt.data) {
     data[opt.key] = opt.value || null; // null will remove the key
   }

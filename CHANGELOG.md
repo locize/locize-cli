@@ -1,3 +1,6 @@
+## 3.4.1
+- ensure data is flatted for add
+
 ## 3.4.0
 - add possibility to skip-empty namespaces
 
