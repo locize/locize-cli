@@ -1,3 +1,6 @@
+## 3.4.2
+- update android-string-resource dependency
+
 ## 3.4.1
 - ensure data is flatted for add
 
