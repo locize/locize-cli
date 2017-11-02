@@ -1,3 +1,6 @@
+## 3.4.3
+- add defaults for download (when calling programmatically)
+
 ## 3.4.2
 - update android-string-resource dependency
 

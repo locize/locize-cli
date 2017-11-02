@@ -13,6 +13,8 @@ const csvjson = require('csvjson');
 const download = (opt, cb) => {
 
   if (opt.skipEmpty === undefined) opt.skipEmpty = true;
+  opt.format = opt.format || 'json';
+  opt.apiPath = opt.apiPath || 'https://api.locize.io/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
 
   var url = opt.apiPath + '/download/' + opt.projectId;
 
