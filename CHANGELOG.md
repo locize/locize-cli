@@ -1,3 +1,6 @@
+## 3.5.0
+- download resources as gettext po format
+
 ## 3.4.3
 - add defaults for download (when calling programmatically)
 

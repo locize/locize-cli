@@ -9,6 +9,7 @@ const js2asr = require('android-string-resource/js2asr');
 const createxliff = require('xliff/createxliff');
 const createxliff12 = require('xliff/createxliff12');
 const csvjson = require('csvjson');
+const i18nextToPo = require('i18next-conv').i18nextToPo;
 
 const download = (opt, cb) => {
 
@@ -143,6 +144,38 @@ const download = (opt, cb) => {
                       fs.unlink(f.pathToLocalFile, cb);
                     });
                   });
+                } catch (err) {
+                  cb(err);
+                }
+              });
+            }, cb);
+          },
+          (cb) => {
+            if (opt.format !== 'po' && opt.format !== 'gettext') return cb();
+            async.forEach(localFiles, (f, cb) => {
+              const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.po';
+              fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+                if (err) return cb(err);
+                try {
+                  const js = JSON.parse(data);
+                  if (opt.skipEmpty && Object.keys(js).length === 0) {
+                    return fs.unlink(f.pathToLocalFile, cb);
+                  }
+
+                  const splittedKey = f.pathToLocalFile.split('/');
+                  const ns = splittedKey[splittedKey.length - 1];
+                  const lng = splittedKey[splittedKey.length - 2];
+                  const version = splittedKey[splittedKey.length - 3];
+                  const projId = splittedKey[splittedKey.length - 4];
+
+                  const options = { project: 'locize', language: lng };
+                  i18nextToPo(lng, data, options)
+                    .then((res) => {
+                      fs.writeFile(newFilePath, res, 'utf8', (err) => {
+                        if (err) return cb(err);
+                        fs.unlink(f.pathToLocalFile, cb);
+                      });
+                    }, (err) => cb(err));
                 } catch (err) {
                   cb(err);
                 }
