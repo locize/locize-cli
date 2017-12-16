@@ -31,5 +31,10 @@
     "locize"
   ],
   "author": "adrai",
-  "license": "MIT"
+  "license": "MIT",
+  "homepage": "http://locize.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/locize/locize-cli.git"
+  }
 }
