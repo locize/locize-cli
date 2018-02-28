@@ -202,7 +202,7 @@ program
   .option('-n, --namespace <ns>', `The namespace that should be targeted`)
   .option('-t, --target <target>', `The target directory`, process.cwd())
   .option('-g, --get-path <url>', `Specify the get-path url that should be used (default: ${getPathUrl})`)
-  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, csv, po])`, 'json')
+  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, csv, po, strings])`, 'json')
   .option('-s, --skip-empty <true|false>', `Skips to download empty files (default: true)`, 'true')
   .option('-rl, --referenceLanguage <lng>', `The language that should be used as source (used for xliff or csv format)`)
   .action((cmd) => {

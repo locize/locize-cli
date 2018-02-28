@@ -1,3 +1,6 @@
+## 3.6.0
+- download resources as strings format
+
 ## 3.5.0
 - download resources as gettext po format
 

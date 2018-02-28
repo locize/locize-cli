@@ -6,6 +6,7 @@ const mkdirp = require('mkdirp');
 const async = require('async');
 const flatten = require('flat');
 const js2asr = require('android-string-resource/js2asr');
+const stringsFile = require('strings-file');
 const createxliff = require('xliff/createxliff');
 const createxliff12 = require('xliff/createxliff12');
 const csvjson = require('csvjson');
@@ -151,6 +152,31 @@ const download = (opt, cb) => {
             }, cb);
           },
           (cb) => {
+            if (opt.format !== 'strings') return cb();
+            async.forEach(localFiles, (f, cb) => {
+              const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.xml';
+              fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+                if (err) return cb(err);
+                try {
+                  const js = flatten(JSON.parse(data));
+                  if (opt.skipEmpty && Object.keys(js).length === 0) {
+                    return fs.unlink(f.pathToLocalFile, cb);
+                  }
+                  Object.keys(js).forEach((k) => {
+                    if (js[k] === null) delete js[k];
+                  });
+                  const res = stringsFile.compile(js);
+                  fs.writeFile(newFilePath, res, 'utf8', (err) => {
+                    if (err) return cb(err);
+                    fs.unlink(f.pathToLocalFile, cb);
+                  });
+                } catch (err) {
+                  cb(err);
+                }
+              });
+            }, cb);
+          },
+          (cb) => {
             if (opt.format !== 'po' && opt.format !== 'gettext') return cb();
             async.forEach(localFiles, (f, cb) => {
               const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.po';
@@ -162,14 +188,18 @@ const download = (opt, cb) => {
                     return fs.unlink(f.pathToLocalFile, cb);
                   }
 
+                  Object.keys(js).forEach((k) => {
+                    if (js[k] === null) js[k] = '';
+                  });
+
                   const splittedKey = f.pathToLocalFile.split('/');
-                  const ns = splittedKey[splittedKey.length - 1];
+                  // const ns = splittedKey[splittedKey.length - 1];
                   const lng = splittedKey[splittedKey.length - 2];
-                  const version = splittedKey[splittedKey.length - 3];
-                  const projId = splittedKey[splittedKey.length - 4];
+                  // const version = splittedKey[splittedKey.length - 3];
+                  // const projId = splittedKey[splittedKey.length - 4];
 
                   const options = { project: 'locize', language: lng };
-                  i18nextToPo(lng, data, options)
+                  i18nextToPo(lng, JSON.stringify(js), options)
                     .then((res) => {
                       fs.writeFile(newFilePath, res, 'utf8', (err) => {
                         if (err) return cb(err);

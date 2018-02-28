@@ -4,13 +4,13 @@ const flatten = require('flat');
 
 const add = (opt, cb) => {
   const url = opt.addPath
-              .replace('{{projectId}}', opt.projectId)
-              .replace('{{ver}}', opt.version)
-              .replace('{{version}}', opt.version)
-              .replace('{{language}}', opt.language)
-              .replace('{{lng}}', opt.language)
-              .replace('{{ns}}', opt.namespace)
-              .replace('{{namespace}}', opt.namespace);
+    .replace('{{projectId}}', opt.projectId)
+    .replace('{{ver}}', opt.version)
+    .replace('{{version}}', opt.version)
+    .replace('{{language}}', opt.language)
+    .replace('{{lng}}', opt.language)
+    .replace('{{ns}}', opt.namespace)
+    .replace('{{namespace}}', opt.namespace);
 
   if (!cb) console.log(colors.yellow(`adding ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
 

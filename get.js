@@ -4,13 +4,13 @@ const flatten = require('flat');
 
 const get = (opt, cb) => {
   const url = opt.getPath
-              .replace('{{projectId}}', opt.projectId)
-              .replace('{{ver}}', opt.version)
-              .replace('{{version}}', opt.version)
-              .replace('{{language}}', opt.language)
-              .replace('{{lng}}', opt.language)
-              .replace('{{ns}}', opt.namespace)
-              .replace('{{namespace}}', opt.namespace);
+    .replace('{{projectId}}', opt.projectId)
+    .replace('{{ver}}', opt.version)
+    .replace('{{version}}', opt.version)
+    .replace('{{language}}', opt.language)
+    .replace('{{lng}}', opt.language)
+    .replace('{{ns}}', opt.namespace)
+    .replace('{{namespace}}', opt.namespace);
 
   // if (!cb) console.log(colors.yellow(`getting ${opt.key} from ${opt.version}/${opt.language}/${opt.namespace}...`));
 

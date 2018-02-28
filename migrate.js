@@ -56,13 +56,13 @@ const parseLanguage = (p, cb) => {
 
 const transfer = (opt, ns, cb) => {
   var url = opt.addPath
-              .replace('{{projectId}}', opt.projectId)
-              .replace('{{ver}}', opt.version)
-              .replace('{{version}}', opt.version)
-              .replace('{{language}}', ns.language)
-              .replace('{{lng}}', ns.language)
-              .replace('{{ns}}', ns.namespace)
-              .replace('{{namespace}}', ns.namespace);
+    .replace('{{projectId}}', opt.projectId)
+    .replace('{{ver}}', opt.version)
+    .replace('{{version}}', opt.version)
+    .replace('{{language}}', ns.language)
+    .replace('{{lng}}', ns.language)
+    .replace('{{ns}}', ns.namespace)
+    .replace('{{namespace}}', ns.namespace);
 
   console.log(colors.yellow(`transfering ${opt.version}/${ns.language}/${ns.namespace}...`));
 
