@@ -16,6 +16,7 @@ const migrate = require('../migrate');
 const add = require('../add');
 const download = require('../download');
 const get = require('../get');
+const sync = require('../sync');
 
 var config = {};
 
@@ -202,9 +203,9 @@ program
   .option('-n, --namespace <ns>', `The namespace that should be targeted`)
   .option('-t, --target <target>', `The target directory`, process.cwd())
   .option('-g, --get-path <url>', `Specify the get-path url that should be used (default: ${getPathUrl})`)
-  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, csv, po, strings])`, 'json')
+  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, csv, xlsx, po, strings, resx])`, 'json')
   .option('-s, --skip-empty <true|false>', `Skips to download empty files (default: true)`, 'true')
-  .option('-rl, --referenceLanguage <lng>', `The language that should be used as source (used for xliff or csv format)`)
+  .option('-rl, --referenceLanguage <lng>', `The language that should be used as source (used for xliff or csv or xlsx format)`)
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -299,6 +300,65 @@ program
     console.log('    $ locize remove common title');
     console.log('    $ locize remove common title --language en');
     console.log('    $ locize remove common title --api-key <apiKey> --project-id <projectId> --language en');
+    console.log();
+  });
+
+program
+  .command('sync')
+  .alias('s')
+  .description('synchronizes locize with your repository (or any other local directory)')
+  .option('-k, --api-key <apiKey>', `The api-key that should be used`)
+  .option('-i, --project-id <projectId>', `The project-id that should be used`)
+  .option('-v, --ver <version>', `Found namespaces will be matched to this version (default: latest)`)
+  .option('-p, --path <path>', `Specify the path that should be used (default: ${process.cwd()})`, process.cwd())
+  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, csv, xlsx, po, strings, resx])`, 'json')
+  .option('-c, --clean <true|false>', `Removes all local files (default: false)`, 'false')
+  .option('-d, --dry <true|false>', `Dry run (default: false)`, 'false')
+  .action((cmd) => {
+    try {
+      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+    } catch (e) {}
+    
+    const getPath = cmd.getPath || config.getPath || cmd.addPath || config.addPath || getPathUrl;
+
+    const apiKey = cmd.apiKey || config.apiKey;
+    if (!apiKey) {
+      console.error('  error: missing required argument `apiKey`');
+      return;
+    }
+
+    const projectId = cmd.projectId || config.projectId;
+    if (!projectId) {
+      console.error('  error: missing required argument `projectId`');
+      return;
+    }
+
+    const version = cmd.ver || config.ver || config.version || 'latest';
+
+    if (!path.isAbsolute(cmd.path)) {
+      cmd.path = path.join(process.cwd(), cmd.path);
+    }
+
+    const clean = cmd.clean === 'true';
+    const dry = cmd.dry === 'true';
+
+    sync({
+      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
+      apiKey: apiKey,
+      projectId: projectId,
+      version: version,
+      path: cmd.path,
+      format: cmd.format,
+      clean: clean,
+      dry: dry
+    });
+  })
+  .on('--help', () => {
+    console.log('  Examples:');
+    console.log();
+    console.log('    $ locize sync');
+    console.log('    $ locize sync --path ./locales --version production');
+    console.log('    $ locize sync --api-key <apiKey> --project-id <projectId> --path ./locales --version production --format flat');
     console.log();
   });
 

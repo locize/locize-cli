@@ -11,6 +11,10 @@ const createxliff = require('xliff/createxliff');
 const createxliff12 = require('xliff/createxliff12');
 const csvjson = require('csvjson');
 const i18nextToPo = require('i18next-conv').i18nextToPo;
+const xlsx = require('xlsx');
+const jsyaml = require('js-yaml');
+const js2resx = require('resx/js2resx');
+const js2tmx = require('tmexchange/js2tmx');
 
 const download = (opt, cb) => {
 
@@ -152,6 +156,53 @@ const download = (opt, cb) => {
             }, cb);
           },
           (cb) => {
+            if (opt.format !== 'yaml') return cb();
+            async.forEach(localFiles, (f, cb) => {
+              const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.yaml';
+              fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+                if (err) return cb(err);
+                try {
+                  const js = flatten(JSON.parse(data));
+                  if (opt.skipEmpty && Object.keys(js).length === 0) {
+                    return fs.unlink(f.pathToLocalFile, cb);
+                  }
+
+                  fs.writeFile(newFilePath, jsyaml.safeDump(js), 'utf8', (err) => {
+                    if (err) return cb(err);
+                    fs.unlink(f.pathToLocalFile, cb);
+                  });
+                } catch (err) {
+                  cb(err);
+                }
+              });
+            }, cb);
+          },
+          (cb) => {
+            if (opt.format !== 'resx') return cb();
+            async.forEach(localFiles, (f, cb) => {
+              const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.resx';
+              fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+                if (err) return cb(err);
+                try {
+                  const js = flatten(JSON.parse(data));
+                  if (opt.skipEmpty && Object.keys(js).length === 0) {
+                    return fs.unlink(f.pathToLocalFile, cb);
+                  }
+
+                  js2resx(js, (err, res) => {
+                    if (err) return cb(err);
+                    fs.writeFile(newFilePath, res, 'utf8', (err) => {
+                      if (err) return cb(err);
+                      fs.unlink(f.pathToLocalFile, cb);
+                    });
+                  });
+                } catch (err) {
+                  cb(err);
+                }
+              });
+            }, cb);
+          },
+          (cb) => {
             if (opt.format !== 'strings') return cb();
             async.forEach(localFiles, (f, cb) => {
               const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.xml';
@@ -260,7 +311,7 @@ const download = (opt, cb) => {
                         const value = js[k] || '';
                         const line = { // https://en.wikipedia.org/wiki/Delimiter-separated_values
                           key: k.replace(/"/g, '""'),
-                          [opt.referenceLanguage]: value.replace(/"/g, '""'),
+                          [opt.referenceLanguage]: (refItem[k] || '').replace(/"/g, '""'),
                           [lng]: value.replace(/"/g, '""')
                         };
                         mem.push(line);
@@ -301,6 +352,99 @@ const download = (opt, cb) => {
               if (foundRefLng) {
                 opt.referenceLanguage = foundRefLng;
                 return processCSV();
+              }
+
+              cb(new Error('Please specify a referenceLanguage'));
+            });
+          },
+          (cb) => {
+            if (opt.format !== 'xlsx') return cb();
+
+            function processXLSX() {
+              async.forEach(localFiles, (f, cb) => {
+                const splittedKey = f.key.split('/');
+                const ns = splittedKey[splittedKey.length - 1];
+                const lng = splittedKey[splittedKey.length - 2];
+                const version = splittedKey[splittedKey.length - 3];
+                const projId = splittedKey[splittedKey.length - 4];
+
+                request({
+                  method: 'GET',
+                  json: true,
+                  url: opt.apiPath + '/' + projId + '/' + version + '/' + opt.referenceLanguage + '/' + ns
+                }, (err, res, obj) => {
+                  if (err || (obj && (obj.errorMessage || obj.message))) {
+                    if (err) return cb(err);
+                    if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
+                  }
+                  if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+
+                  const refNs = flatten(obj);
+                  const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.xlsx';
+                  fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+                    if (err) return cb(err);
+                    try {
+                      const js = flatten(JSON.parse(data));
+
+                      if (opt.skipEmpty && Object.keys(js).length === 0) {
+                        return fs.unlink(f.pathToLocalFile, cb);
+                      }
+
+                      const js2XlsxData = Object.keys(js).reduce((mem, k) => {
+                        const refItem = refNs[k];
+                        if (!refItem) return mem;
+
+                        const value = js[k] || '';
+                        const line = {
+                          key: k,
+                          [opt.referenceLanguage]: refItem[k] || '',
+                          [lng]: value
+                        };
+                        mem.push(line);
+
+                        return mem;
+                      }, []);
+
+                      const worksheet = xlsx.utils.json_to_sheet(js2XlsxData);
+                      const workbook = xlsx.utils.book_new();
+                      workbook.SheetNames.push(ns);
+                      workbook.Sheets[ns] = worksheet;
+
+                      const wbout = xlsx.write(workbook, { type: 'binary' });
+
+                      fs.writeFile(newFilePath, wbout, 'utf8', (err) => {
+                        if (err) return cb(err);
+                        fs.unlink(f.pathToLocalFile, cb);
+                      });
+                    } catch (err) {
+                      cb(err);
+                    }
+                  });
+                });
+              }, cb);
+            }
+
+            if (opt.referenceLanguage) return processXLSX();
+
+            request({
+              method: 'GET',
+              json: true,
+              url: opt.apiPath + '/languages/' + opt.projectId
+            }, (err, res, obj) => {
+              if (err || (obj && (obj.errorMessage || obj.message))) {
+                if (err) return cb(err);
+                if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
+              }
+              if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+
+              const lngs = Object.keys(obj);
+              var foundRefLng = null;
+              lngs.forEach((l) => {
+                if (obj[l].isReferenceLanguage) foundRefLng = l;
+              });
+              if (foundRefLng) {
+                opt.referenceLanguage = foundRefLng;
+                return processXLSX();
               }
 
               cb(new Error('Please specify a referenceLanguage'));
@@ -381,6 +525,96 @@ const download = (opt, cb) => {
               if (foundRefLng) {
                 opt.referenceLanguage = foundRefLng;
                 return processXliff();
+              }
+
+              cb(new Error('Please specify a referenceLanguage'));
+            });
+          },
+          (cb) => {
+            if (opt.format !== 'tmx') return cb();
+
+            function processTmx() {
+              async.forEach(localFiles, (f, cb) => {
+                const splittedKey = f.key.split('/');
+                const ns = splittedKey[splittedKey.length - 1];
+                const lng = splittedKey[splittedKey.length - 2];
+                const version = splittedKey[splittedKey.length - 3];
+                const projId = splittedKey[splittedKey.length - 4];
+
+                request({
+                  method: 'GET',
+                  json: true,
+                  url: opt.apiPath + '/' + projId + '/' + version + '/' + opt.referenceLanguage + '/' + ns
+                }, (err, res, obj) => {
+                  if (err || (obj && (obj.errorMessage || obj.message))) {
+                    if (err) return cb(err);
+                    if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
+                  }
+                  if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+
+                  const refNs = flatten(obj);
+                  const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.tmx';
+                  fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+                    if (err) return cb(err);
+                    try {
+                      const js = flatten(JSON.parse(data));
+                      if (opt.skipEmpty && Object.keys(js).length === 0) {
+                        return fs.unlink(f.pathToLocalFile, cb);
+                      }
+
+                      const js2TmxData = Object.keys(js).reduce((mem, k) => {
+                        const refItem = refNs[k];
+                        if (!refItem) return mem;
+
+                        const value = js[k] || '';
+                        mem.resources[ns][k] = {};
+                        mem.resources[ns][k][opt.referenceLanguage] = refItem;
+                        mem.resources[ns][k][lng] = value;
+
+                        return mem;
+                      }, {
+                        resources: {
+                          [ns]: {}
+                        },
+                        sourceLanguage: opt.referenceLanguage
+                      });
+
+                      js2tmx(js2TmxData, (err, res) => {
+                        if (err) return cb(err);
+                        fs.writeFile(newFilePath, res, 'utf8', (err) => {
+                          if (err) return cb(err);
+                          fs.unlink(f.pathToLocalFile, cb);
+                        });
+                      });
+                    } catch (err) {
+                      cb(err);
+                    }
+                  });
+                });
+              }, cb);
+            }
+
+            if (opt.referenceLanguage) return processTmx();
+
+            request({
+              method: 'GET',
+              json: true,
+              url: opt.apiPath + '/languages/' + opt.projectId
+            }, (err, res, obj) => {
+              if (err || (obj && (obj.errorMessage || obj.message))) {
+                if (err) return cb(err);
+                if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
+              }
+              if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+
+              const lngs = Object.keys(obj);
+              var foundRefLng = null;
+              lngs.forEach((l) => {
+                if (obj[l].isReferenceLanguage) foundRefLng = l;
+              });
+              if (foundRefLng) {
+                opt.referenceLanguage = foundRefLng;
+                return processTmx();
               }
 
               cb(new Error('Please specify a referenceLanguage'));

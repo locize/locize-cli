@@ -114,11 +114,53 @@ or
 locize download
 ```
 
-or add a format like (flat, android, xliff2, xlliff12, android, csv, po, strings)
+or add a format like (flat, android, xliff2, xliff12, android, yaml, csv, xlsx, po, strings, resx)
 
 ```sh
 locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1 --target ./backup --format android
 ```
+
+
+## Synchronize locize with your repository (or any other local directory)
+### Step 1: Go near to your translation files
+
+```sh
+cd my-awesome-project/locales
+```
+
+Make sure you have this type of tree structure:
+Each language should be a directory and each namespace should be a file
+
+    locales
+    ├── en
+    │   ├── namespace1.extension
+    │   ├── namespace2.extension
+    │   ├── ...
+    ├── de
+    │   ├── ...
+
+the cli by will use the directory name as language and the filename (without extension as namespace name).
+
+
+### Step 3: execute
+
+Add your api-key and your project-id and let's go...
+
+```sh
+locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba
+```
+
+**‼️ The reference language in your local repository is the master ‼️**
+
+- if you have new keys in your local namespace it will add the missing one to locize
+- if you have new namespaces in your local language directory it will add the missing one to locize
+- if you have less keys (you have deleted some keys) in your local namespace it will remove them in locize too
+- all non reference languages will always be just locally replaced by what is published on locize
+
+
+### Step 4: verify
+
+Navigate to your locize project and check the results => [www.locize.io](https://www.locize.io)
 
 
 
