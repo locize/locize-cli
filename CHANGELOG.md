@@ -1,3 +1,6 @@
+## 3.7.0
+- introduce sync command
+
 ## 3.6.0
 - download resources as strings format
 
