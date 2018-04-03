@@ -1,3 +1,6 @@
+## 3.7.1
+- make sure we get a non-cached version of available languages request
+
 ## 3.7.0
 - introduce sync command
 

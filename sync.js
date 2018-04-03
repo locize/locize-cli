@@ -308,7 +308,7 @@ const getRemoteLanguage = (opt, cb) => {
   request({
     method: 'GET',
     json: true,
-    url: opt.apiPath + '/languages/' + opt.projectId
+    url: opt.apiPath + '/languages/' + opt.projectId + '?ts=' + Date.now()
   }, (err, res, obj) => {
     if (err || (obj && (obj.errorMessage || obj.message))) {
       if (err) return cb(err);
