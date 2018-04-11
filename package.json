@@ -7,7 +7,7 @@
     "locize": "./bin/locize"
   },
   "dependencies": {
-    "android-string-resource": "1.1.1",
+    "android-string-resource": "1.1.2",
     "async": "2.6.0",
     "colors": "1.2.1",
     "commander": "2.15.1",
@@ -23,10 +23,10 @@
     "strings-file": "0.0.5",
     "tmexchange": "1.1.0",
     "xliff": "3.0.0",
-    "xlsx": "0.12.6"
+    "xlsx": "0.12.8"
   },
   "devDependencies": {
-    "eslint": "4.19.0"
+    "eslint": "4.19.1"
   },
   "scripts": {
     "lint": "eslint .",

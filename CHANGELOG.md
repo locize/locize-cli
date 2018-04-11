@@ -1,3 +1,6 @@
+## 3.7.2
+- update dependencies
+
 ## 3.7.1
 - make sure we get a non-cached version of available languages request
 
