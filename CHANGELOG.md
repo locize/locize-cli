@@ -1,3 +1,7 @@
+## 3.8.0
+- copy version
+- publish version
+
 ## 3.7.3
 - update dependencies
 

@@ -17,6 +17,8 @@ const add = require('../add');
 const download = require('../download');
 const get = require('../get');
 const sync = require('../sync');
+const copyVersion = require('../copyVersion');
+const publishVersion = require('../publishVersion');
 
 var config = {};
 
@@ -359,6 +361,95 @@ program
     console.log('    $ locize sync');
     console.log('    $ locize sync --path ./locales --version production');
     console.log('    $ locize sync --api-key <apiKey> --project-id <projectId> --path ./locales --version production --format flat');
+    console.log();
+  });
+
+program
+  .command('copy-version <fromVersion>')
+  .alias('cv')
+  .description('copy version')
+  .option('-k, --api-key <apiKey>', `The api-key that should be used`)
+  .option('-v, --ver <version>', `The target version to be used to copy to (default: latest)`)
+  .option('-i, --project-id <projectId>', `The project-id that should be used`)
+  .action((fromVersion, cmd) => {
+    try {
+      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+    } catch (e) {}
+
+    const apiKey = cmd.apiKey || config.apiKey;
+    if (!apiKey) {
+      console.error('  error: missing required argument `apiKey`');
+      return;
+    }
+
+    const projectId = cmd.projectId || config.projectId;
+    if (!projectId) {
+      console.error('  error: missing required argument `projectId`');
+      return;
+    }
+
+    const version = cmd.ver || config.ver || config.version || 'latest';
+
+    const getPath = cmd.getPath || config.getPath || getPathUrl;
+
+    copyVersion({
+      apiKey: apiKey,
+      projectId: projectId,
+      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
+      fromVersion: fromVersion,
+      toVersion: version
+    });
+  })
+  .on('--help', () => {
+    console.log('  Examples:');
+    console.log();
+    console.log('    $ locize copy-version latest"');
+    console.log('    $ locize copy-version latest --ver production"');
+    console.log('    $ locize copy-version latest production --api-key <apiKey> --project-id <projectId> --ver <version>');
+    console.log();
+  });
+
+program
+  .command('publish-version')
+  .alias('pv')
+  .description('publish version')
+  .option('-k, --api-key <apiKey>', `The api-key that should be used`)
+  .option('-v, --ver <version>', `The version to be used to publish (default: latest)`)
+  .option('-i, --project-id <projectId>', `The project-id that should be used`)
+  .action((cmd) => {
+    try {
+      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+    } catch (e) {}
+
+    const apiKey = cmd.apiKey || config.apiKey;
+    if (!apiKey) {
+      console.error('  error: missing required argument `apiKey`');
+      return;
+    }
+
+    const projectId = cmd.projectId || config.projectId;
+    if (!projectId) {
+      console.error('  error: missing required argument `projectId`');
+      return;
+    }
+
+    const version = cmd.ver || config.ver || config.version || 'latest';
+
+    const getPath = cmd.getPath || config.getPath || getPathUrl;
+
+    publishVersion({
+      apiKey: apiKey,
+      projectId: projectId,
+      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
+      version: version
+    });
+  })
+  .on('--help', () => {
+    console.log('  Examples:');
+    console.log();
+    console.log('    $ locize publish-version"');
+    console.log('    $ locize publish-version --ver production"');
+    console.log('    $ locize publish-version --api-key <apiKey> --project-id <projectId> --ver <version>');
     console.log();
   });
 
