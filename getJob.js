@@ -11,7 +11,7 @@ const getJob = (opt, jobId, cb) => {
     }
   }, (err, res, obj) => {
     if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (!cb) console.log(colors.red(`getting job failed for ${opt.version}...`));
+      if (!cb) console.log(colors.red('getting job failed...'));
 
       if (err) {
         if (!cb) console.error(colors.red(err.message));
@@ -34,7 +34,7 @@ const getJob = (opt, jobId, cb) => {
       if (cb) cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
       return;
     }
-    if (!cb) console.log(colors.green(`getting job for ${opt.version} succesfull`));
+    if (!cb) console.log(colors.green('getting job succesfull'));
     if (cb) cb(null, obj);
   });
 };
