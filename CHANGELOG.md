@@ -1,3 +1,6 @@
+## 3.9.1
+- fix return of job object
+
 ## 3.9.0
 - wait for async action for copy & publish version completes
 

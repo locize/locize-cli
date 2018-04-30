@@ -35,7 +35,7 @@ const getJob = (opt, jobId, cb) => {
       return;
     }
     if (!cb) console.log(colors.green(`getting job for ${opt.version} succesfull`));
-    if (cb) cb(null);
+    if (cb) cb(null, obj);
   });
 };
 
