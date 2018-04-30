@@ -1,3 +1,6 @@
+## 3.9.0
+- wait for async action for copy & publish version completes
+
 ## 3.8.0
 - copy version
 - publish version

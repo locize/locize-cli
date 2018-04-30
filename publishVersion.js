@@ -1,5 +1,6 @@
 const colors = require('colors');
 const request = require('request');
+const getJob = require('./getJob');
 
 const publishVersion = (opt, cb) => {
   request({
@@ -29,8 +30,36 @@ const publishVersion = (opt, cb) => {
       if (cb) cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
       return;
     }
-    if (!cb) console.log(colors.green(`publishing for ${opt.version} succesfully requested`));
-    if (cb) cb(null);
+
+    if (!obj || !obj.jobId) {
+      if (!cb) console.error(colors.red('No jobId! Something went wrong!'));
+      if (cb) cb(new Error('No jobId! Something went wrong!'));
+      return;
+    }
+
+    (function waitForJob() {
+      getJob(opt, obj.jobId, (err, job) => {
+        if (err) {
+          if (!cb) console.error(colors.red(err.message));
+          if (cb) cb(err);
+          return;
+        }
+
+        if (job && !job.timeouted) {
+          setTimeout(waitForJob, 2000);
+          return;
+        }
+
+        if (job && job.timeouted) {
+          if (!cb) console.error(colors.red('Job timeouted!'));
+          if (cb) cb(new Error('Job timeouted!'));
+          return;
+        }
+
+        if (!cb) console.log(colors.green(`publishing for ${opt.version} succesfully requested`));
+        if (cb) cb(null);
+      });
+    })();
   });
 };
 
