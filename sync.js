@@ -483,7 +483,7 @@ const cleanupLanguages = (opt, remoteLanguages) => {
 };
 
 const handleError = (err, cb) => {
-  if (!cb) {
+  if (!cb && err) {
     console.error(colors.red(err.stack));
     process.exit(1);
   }

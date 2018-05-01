@@ -1,3 +1,6 @@
+## 3.9.3
+- fix exit code on error in bin too
+
 ## 3.9.2
 - fix exit code on error
 

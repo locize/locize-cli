@@ -49,12 +49,14 @@ program
     const apiKey = cmd.apiKey || config.apiKey;
     if (!apiKey) {
       console.error('  error: missing required argument `apiKey`');
+      process.exit(1);
       return;
     }
 
     const projectId = cmd.projectId || config.projectId;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
+      process.exit(1);
       return;
     }
 
@@ -101,18 +103,21 @@ program
     const apiKey = cmd.apiKey || config.apiKey;
     if (!apiKey) {
       console.error('  error: missing required argument `apiKey`');
+      process.exit(1);
       return;
     }
 
     const projectId = cmd.projectId || config.projectId;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
+      process.exit(1);
       return;
     }
 
     const language = cmd.language || config.language || config.lng;
     if (!language) {
       console.error('  error: missing required argument `language`');
+      process.exit(1);
       return;
     }
 
@@ -156,18 +161,21 @@ program
     const apiKey = cmd.apiKey || config.apiKey;
     if (!apiKey) {
       console.error('  error: missing required argument `apiKey`');
+      process.exit(1);
       return;
     }
 
     const projectId = cmd.projectId || config.projectId;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
+      process.exit(1);
       return;
     }
 
     const language = cmd.language || config.language || config.lng;
     if (!language) {
       console.error('  error: missing required argument `language`');
+      process.exit(1);
       return;
     }
 
@@ -216,6 +224,7 @@ program
     const projectId = cmd.projectId || config.projectId;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
+      process.exit(1);
       return;
     }
 
@@ -274,12 +283,14 @@ program
     const projectId = cmd.projectId || config.projectId;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
+      process.exit(1);
       return;
     }
 
     const language = cmd.language || config.language || config.lng;
     if (!language) {
       console.error('  error: missing required argument `language`');
+      process.exit(1);
       return;
     }
 
@@ -326,12 +337,14 @@ program
     const apiKey = cmd.apiKey || config.apiKey;
     if (!apiKey) {
       console.error('  error: missing required argument `apiKey`');
+      process.exit(1);
       return;
     }
 
     const projectId = cmd.projectId || config.projectId;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
+      process.exit(1);
       return;
     }
 
@@ -379,12 +392,14 @@ program
     const apiKey = cmd.apiKey || config.apiKey;
     if (!apiKey) {
       console.error('  error: missing required argument `apiKey`');
+      process.exit(1);
       return;
     }
 
     const projectId = cmd.projectId || config.projectId;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
+      process.exit(1);
       return;
     }
 
@@ -424,12 +439,14 @@ program
     const apiKey = cmd.apiKey || config.apiKey;
     if (!apiKey) {
       console.error('  error: missing required argument `apiKey`');
+      process.exit(1);
       return;
     }
 
     const projectId = cmd.projectId || config.projectId;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
+      process.exit(1);
       return;
     }
 
