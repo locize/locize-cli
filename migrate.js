@@ -120,7 +120,7 @@ const migrate = (opt, cb) => {
 
     load(namespaces, (err, nss) => {
       if (err) {
-        if (!cb) console.error(colors.red(err.stack));
+        if (!cb) { console.error(colors.red(err.stack)); process.exit(1); }
         if (cb) cb(err);
         return;
       }
@@ -143,7 +143,7 @@ const migrate = (opt, cb) => {
   if (opt.parseLanguage) {
     parseLanguage(opt.path, (err, nss) => {
       if (err) {
-        if (!cb) console.error(colors.red(err.stack));
+        if (!cb) console.error(colors.red(err.stack)); process.exit(1);
         if (cb) cb(err);
         return;
       }

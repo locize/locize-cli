@@ -1,3 +1,6 @@
+## 3.9.2
+- fix exit code on error
+
 ## 3.9.1
 - fix return of job object
 

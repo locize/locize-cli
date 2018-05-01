@@ -15,24 +15,24 @@ const publishVersion = (opt, cb) => {
       if (!cb) console.log(colors.red(`publishing failed for ${opt.version}...`));
 
       if (err) {
-        if (!cb) console.error(colors.red(err.message));
+        if (!cb) { console.error(colors.red(err.message)); process.exit(1); }
         if (cb) cb(err);
         return;
       }
       if (obj && (obj.errorMessage || obj.message)) {
-        if (!cb) console.error(colors.red((obj.errorMessage || obj.message)));
+        if (!cb) { console.error(colors.red((obj.errorMessage || obj.message))); process.exit(1); }
         if (cb) cb(new Error((obj.errorMessage || obj.message)));
         return;
       }
     }
     if (res.statusCode >= 300) {
-      if (!cb) console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')'));
+      if (!cb) { console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')')); process.exit(1); }
       if (cb) cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
       return;
     }
 
     if (!obj || !obj.jobId) {
-      if (!cb) console.error(colors.red('No jobId! Something went wrong!'));
+      if (!cb) { console.error(colors.red('No jobId! Something went wrong!')); process.exit(1); }
       if (cb) cb(new Error('No jobId! Something went wrong!'));
       return;
     }
@@ -40,7 +40,7 @@ const publishVersion = (opt, cb) => {
     (function waitForJob() {
       getJob(opt, obj.jobId, (err, job) => {
         if (err) {
-          if (!cb) console.error(colors.red(err.message));
+          if (!cb) { console.error(colors.red(err.message)); process.exit(1); }
           if (cb) cb(err);
           return;
         }
@@ -51,7 +51,7 @@ const publishVersion = (opt, cb) => {
         }
 
         if (job && job.timeouted) {
-          if (!cb) console.error(colors.red('Job timeouted!'));
+          if (!cb) { console.error(colors.red('Job timeouted!')); process.exit(1); }
           if (cb) cb(new Error('Job timeouted!'));
           return;
         }

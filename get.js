@@ -22,13 +22,13 @@ const get = (opt, cb) => {
     if (err) {
       if (!cb) console.log(colors.red(`get failed for ${opt.key} from ${opt.version}/${opt.language}/${opt.namespace}...`));
       if (err) {
-        if (!cb) console.error(colors.red(err.message));
+        if (!cb) { console.error(colors.red(err.message)); process.exit(1); }
         if (cb) cb(err);
         return;
       }
     }
     if (res.statusCode >= 300) {
-      if (!cb) console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')'));
+      if (!cb) { console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')')); process.exit(1); }
       if (cb) cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
       return;
     }
@@ -36,7 +36,7 @@ const get = (opt, cb) => {
 
     const flat = flatten(obj);
     if (!flat[opt.key]) {
-      if (!cb) console.error(colors.red(`${opt.key} not found in ${opt.version}/${opt.language}/${opt.namespace} => ${JSON.stringify(obj, null, 2)}`));
+      if (!cb) { console.error(colors.red(`${opt.key} not found in ${opt.version}/${opt.language}/${opt.namespace} => ${JSON.stringify(obj, null, 2)}`)); process.exit(1); }
       if (cb) cb(new Error(`${opt.key} not found in ${opt.version}/${opt.language}/${opt.namespace} => ${JSON.stringify(obj, null, 2)}`));
       return;
     }
