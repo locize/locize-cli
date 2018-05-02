@@ -24,8 +24,8 @@ var config = {};
 
 program
   .version(require('../package.json').version)
-  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
-  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`, home);
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`);
+// .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`);
 
 program
   .command('migrate')
@@ -39,6 +39,7 @@ program
   .option('-L, --parse-language <true|false>', `Parse folders as language (default: true)`, 'true')
   .option('-f, --format <json>', `File format of namespaces (default: json)`, 'json')
   .option('-r, --replace <true|false>', `This will empty the optionally existing namespace before saving the new translations. (default: false)`, 'false')
+  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -46,21 +47,21 @@ program
 
     const addPath = cmd.addPath || config.addPath || addPathUrl;
 
-    const apiKey = cmd.apiKey || config.apiKey;
+    const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
     if (!apiKey) {
       console.error('  error: missing required argument `apiKey`');
       process.exit(1);
       return;
     }
 
-    const projectId = cmd.projectId || config.projectId;
+    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
       process.exit(1);
       return;
     }
 
-    const version = cmd.ver || config.ver || config.version || 'latest';
+    const version = cmd.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
 
     if (!path.isAbsolute(cmd.path)) {
       cmd.path = path.join(process.cwd(), cmd.path);
@@ -71,7 +72,7 @@ program
       projectId: projectId,
       addPath: addPath,
       path: cmd.path,
-      language: cmd.language,
+      language: cmd.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG,
       version: version,
       parseLanguage: cmd.parseLanguage === 'true',
       format: cmd.format,
@@ -95,33 +96,34 @@ program
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-l, --language <lng>', `The language that should be targeted`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
+  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((namespace, key, value, cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
     } catch (e) {}
 
-    const apiKey = cmd.apiKey || config.apiKey;
+    const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
     if (!apiKey) {
       console.error('  error: missing required argument `apiKey`');
       process.exit(1);
       return;
     }
 
-    const projectId = cmd.projectId || config.projectId;
+    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
       process.exit(1);
       return;
     }
 
-    const language = cmd.language || config.language || config.lng;
+    const language = cmd.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
     if (!language) {
       console.error('  error: missing required argument `language`');
       process.exit(1);
       return;
     }
 
-    const version = cmd.ver || config.ver || config.version || 'latest';
+    const version = cmd.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
 
     const addPath = cmd.addPath || config.addPath || addPathUrl;
 
@@ -153,33 +155,34 @@ program
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-l, --language <lng>', `The language that should be targeted`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
+  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((namespace, key, cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
     } catch (e) {}
 
-    const apiKey = cmd.apiKey || config.apiKey;
+    const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
     if (!apiKey) {
       console.error('  error: missing required argument `apiKey`');
       process.exit(1);
       return;
     }
 
-    const projectId = cmd.projectId || config.projectId;
+    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
       process.exit(1);
       return;
     }
 
-    const language = cmd.language || config.language || config.lng;
+    const language = cmd.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
     if (!language) {
       console.error('  error: missing required argument `language`');
       process.exit(1);
       return;
     }
 
-    const version = cmd.ver || config.ver || config.version || 'latest';
+    const version = cmd.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
 
     const addPath = cmd.addPath || config.addPath || addPathUrl;
 
@@ -216,21 +219,22 @@ program
   .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, csv, xlsx, po, strings, resx])`, 'json')
   .option('-s, --skip-empty <true|false>', `Skips to download empty files (default: true)`, 'true')
   .option('-rl, --referenceLanguage <lng>', `The language that should be used as source (used for xliff or csv or xlsx format)`)
+  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
     } catch (e) {}
 
-    const projectId = cmd.projectId || config.projectId;
+    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
       process.exit(1);
       return;
     }
 
-    const language = cmd.language;
+    const language = cmd.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
 
-    const version = cmd.ver;
+    const version = cmd.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
 
     const namespace = cmd.namespace;
 
@@ -275,26 +279,27 @@ program
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-l, --language <lng>', `The language that should be targeted`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
+  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((namespace, key, cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
     } catch (e) {}
 
-    const projectId = cmd.projectId || config.projectId;
+    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
       process.exit(1);
       return;
     }
 
-    const language = cmd.language || config.language || config.lng;
+    const language = cmd.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
     if (!language) {
       console.error('  error: missing required argument `language`');
       process.exit(1);
       return;
     }
 
-    const version = cmd.ver || config.ver || config.version || 'latest';
+    const version = cmd.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
 
     const getPath = cmd.getPath || config.getPath || cmd.addPath || config.addPath || getPathUrl;
 
@@ -327,6 +332,7 @@ program
   .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, csv, xlsx, po, strings, resx])`, 'json')
   .option('-c, --clean <true|false>', `Removes all local files (default: false)`, 'false')
   .option('-d, --dry <true|false>', `Dry run (default: false)`, 'false')
+  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -334,21 +340,21 @@ program
     
     const getPath = cmd.getPath || config.getPath || cmd.addPath || config.addPath || getPathUrl;
 
-    const apiKey = cmd.apiKey || config.apiKey;
+    const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
     if (!apiKey) {
       console.error('  error: missing required argument `apiKey`');
       process.exit(1);
       return;
     }
 
-    const projectId = cmd.projectId || config.projectId;
+    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
       process.exit(1);
       return;
     }
 
-    const version = cmd.ver || config.ver || config.version || 'latest';
+    const version = cmd.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
 
     if (!path.isAbsolute(cmd.path)) {
       cmd.path = path.join(process.cwd(), cmd.path);
@@ -384,26 +390,27 @@ program
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-v, --ver <version>', `The target version to be used to copy to (default: latest)`)
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
+  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((fromVersion, cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
     } catch (e) {}
 
-    const apiKey = cmd.apiKey || config.apiKey;
+    const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
     if (!apiKey) {
       console.error('  error: missing required argument `apiKey`');
       process.exit(1);
       return;
     }
 
-    const projectId = cmd.projectId || config.projectId;
+    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
       process.exit(1);
       return;
     }
 
-    const version = cmd.ver || config.ver || config.version || 'latest';
+    const version = cmd.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
 
     const getPath = cmd.getPath || config.getPath || getPathUrl;
 
@@ -431,26 +438,27 @@ program
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-v, --ver <version>', `The version to be used to publish (default: latest)`)
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
+  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
     } catch (e) {}
 
-    const apiKey = cmd.apiKey || config.apiKey;
+    const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
     if (!apiKey) {
       console.error('  error: missing required argument `apiKey`');
       process.exit(1);
       return;
     }
 
-    const projectId = cmd.projectId || config.projectId;
+    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
       process.exit(1);
       return;
     }
 
-    const version = cmd.ver || config.ver || config.version || 'latest';
+    const version = cmd.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
 
     const getPath = cmd.getPath || config.getPath || getPathUrl;
 

@@ -1,3 +1,7 @@
+## 3.9.4
+- fix -c argument
+- possibility to define env vars
+
 ## 3.9.3
 - fix exit code on error in bin too
 
