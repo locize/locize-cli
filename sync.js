@@ -6,6 +6,7 @@ const async = require('async');
 const colors = require('colors');
 const request = require('request');
 const flatten = require('flat');
+const cloneDeep = require('lodash.clonedeep');
 const gettextToI18next = require('i18next-conv').gettextToI18next;
 const i18nextToPo = require('i18next-conv').i18nextToPo;
 const csvjson = require('csvjson');
@@ -275,9 +276,12 @@ const convertToDesiredFormat = (opt, namespace, lng, data, cb) => {
 };
 
 const parseLocalReference = (opt, cb) => {
-  mkdirp.sync(path.join(opt.path, opt.referenceLanguage));
+  if (!opt.dry) mkdirp.sync(path.join(opt.path, opt.referenceLanguage));
 
-  const files = getFiles(path.join(opt.path, opt.referenceLanguage));
+  var files = [];
+  try {
+    files = getFiles(path.join(opt.path, opt.referenceLanguage));
+  } catch (err) {}
   async.map(files, (file, clb) => {
     fs.readFile(path.join(opt.path, opt.referenceLanguage, file), (err, data) => {
       if (err) return clb(err);
@@ -538,7 +542,10 @@ const sync = (opt, cb) => {
           update(opt, opt.referenceLanguage, ns, (err) => {
             if (err) return clb(err);
             if (ns.diff.toRemove.length === 0) return clb();
-            async.each(remoteLanguages, (lng, clb) => update(opt, lng, ns, clb), clb);
+            const nsOnlyRemove = cloneDeep(ns);
+            nsOnlyRemove.diff.toAdd = [];
+            nsOnlyRemove.diff.toUpdate = [];
+            async.each(remoteLanguages, (lng, clb) => update(opt, lng, nsOnlyRemove, clb), clb);
           });
         }, (err) => {
           if (err) return handleError(err);

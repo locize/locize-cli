@@ -8,22 +8,23 @@
   },
   "dependencies": {
     "android-string-resource": "1.1.2",
-    "async": "2.6.0",
-    "colors": "1.2.1",
+    "async": "2.6.1",
+    "colors": "1.3.0",
     "commander": "2.15.1",
     "csvjson": "5.0.0",
     "flat": "4.0.0",
-    "i18next-conv": "6.0.0",
+    "i18next-conv": "6.0.1",
     "ini": "1.3.5",
     "js-yaml": "3.11.0",
+    "lodash.clonedeep": "4.5.0",
     "mkdirp": "0.5.1",
-    "request": "2.85.0",
+    "request": "2.87.0",
     "resx": "1.1.0",
     "rimraf": "2.6.2",
     "strings-file": "0.0.5",
     "tmexchange": "1.1.0",
     "xliff": "3.0.1",
-    "xlsx": "0.12.8"
+    "xlsx": "0.12.13"
   },
   "devDependencies": {
     "eslint": "4.19.1"

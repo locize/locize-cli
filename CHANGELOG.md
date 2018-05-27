@@ -1,3 +1,6 @@
+## 3.9.5
+- fix a bug when adding and removing keys with the same sync call (keys are not added anymore to all languages)
+
 ## 3.9.4
 - fix -c argument
 - possibility to define env vars
