@@ -1,3 +1,6 @@
+## 3.9.6
+- Support for HTML strings for Android #4
+
 ## 3.9.5
 - fix a bug when adding and removing keys with the same sync call (keys are not added anymore to all languages)
 

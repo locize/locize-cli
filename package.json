@@ -7,7 +7,7 @@
     "locize": "./bin/locize"
   },
   "dependencies": {
-    "android-string-resource": "1.1.2",
+    "android-string-resource": "1.1.3",
     "async": "2.6.1",
     "colors": "1.3.0",
     "commander": "2.15.1",
@@ -15,7 +15,7 @@
     "flat": "4.0.0",
     "i18next-conv": "6.0.1",
     "ini": "1.3.5",
-    "js-yaml": "3.11.0",
+    "js-yaml": "3.12.0",
     "lodash.clonedeep": "4.5.0",
     "mkdirp": "0.5.1",
     "request": "2.87.0",
@@ -24,7 +24,7 @@
     "strings-file": "0.0.5",
     "tmexchange": "1.1.0",
     "xliff": "3.0.1",
-    "xlsx": "0.12.13"
+    "xlsx": "0.13.0"
   },
   "devDependencies": {
     "eslint": "4.19.1"
