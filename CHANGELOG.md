@@ -1,3 +1,6 @@
+## 3.10.0
+- Support for private published files
+
 ## 3.9.6
 - Support for HTML strings for Android #4
 

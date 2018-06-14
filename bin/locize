@@ -216,6 +216,7 @@ program
   .option('-n, --namespace <ns>', `The namespace that should be targeted`)
   .option('-t, --target <target>', `The target directory`, process.cwd())
   .option('-g, --get-path <url>', `Specify the get-path url that should be used (default: ${getPathUrl})`)
+  .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, csv, xlsx, po, strings, resx])`, 'json')
   .option('-s, --skip-empty <true|false>', `Skips to download empty files (default: true)`, 'true')
   .option('-rl, --referenceLanguage <lng>', `The language that should be used as source (used for xliff or csv or xlsx format)`)
@@ -231,6 +232,8 @@ program
       process.exit(1);
       return;
     }
+
+    const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
 
     const language = cmd.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
 
@@ -249,6 +252,7 @@ program
     const skipEmpty = cmd.skipEmpty === 'true';
 
     download({
+      apiKey: apiKey,
       projectId: projectId,
       apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
       language: language,
@@ -337,7 +341,7 @@ program
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
     } catch (e) {}
-    
+
     const getPath = cmd.getPath || config.getPath || cmd.addPath || config.addPath || getPathUrl;
 
     const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
