@@ -459,7 +459,9 @@ const update = (opt, lng, ns, cb) => {
   var data = {};
   ns.diff.toRemove.forEach((k) => data[k] = null);
   ns.diff.toAdd.forEach((k) => data[k] = ns.content[k]);
-  // ns.diff.toUpdate.forEach((k) => data[k] = ns.content[k]);
+  if (opt.updateValues) {
+    ns.diff.toUpdate.forEach((k) => data[k] = ns.content[k]);
+  }
 
   if (Object.keys(data).length === 0) return cb(null);
 
@@ -543,10 +545,12 @@ const sync = (opt, cb) => {
                 console.log(colors.green(`adding ${ns.diff.toAdd.length} keys in ${ns.namespace}...`));
                 if (opt.dry) console.log(colors.green(`would add ${ns.diff.toAdd.join(', ')} in ${ns.namespace}...`));
               }
-              // if (ns.diff.toUpdate.length > 0) {
-              //   console.log(colors.yellow(`updating ${ns.diff.toUpdate.length} keys in ${ns.namespace}...`));
-              //   if (opt.dry) console.log(colors.yellow(`would update ${ns.diff.toUpdate.join(', ')} in ${ns.namespace}...`));
-              // }
+              if (opt.updateValues) {
+                if (ns.diff.toUpdate.length > 0) {
+                  console.log(colors.yellow(`updating ${ns.diff.toUpdate.length} keys in ${ns.namespace}...`));
+                  if (opt.dry) console.log(colors.yellow(`would update ${ns.diff.toUpdate.join(', ')} in ${ns.namespace}...`));
+                }
+              }
               const somethingToUpdate = ns.diff.toAdd.concat(ns.diff.toRemove)/*.concat(ns.diff.toUpdate)*/.length > 0;
               if (!somethingToUpdate) console.log(colors.grey(`nothing to update for ${ns.namespace}`));
               if (!wasThereSomethingToUpdate && somethingToUpdate) wasThereSomethingToUpdate = true;

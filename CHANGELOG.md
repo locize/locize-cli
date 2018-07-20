@@ -1,8 +1,11 @@
+## 3.11.0
+- introduce --update-values flag for sync command
+
 ## 3.10.0
-- Support for private published files
+- support for private published files
 
 ## 3.9.6
-- Support for HTML strings for Android #4
+- support for HTML strings for Android #4
 
 ## 3.9.5
 - fix a bug when adding and removing keys with the same sync call (keys are not added anymore to all languages)

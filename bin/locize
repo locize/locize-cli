@@ -335,6 +335,7 @@ program
   .option('-p, --path <path>', `Specify the path that should be used (default: ${process.cwd()})`, process.cwd())
   .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, csv, xlsx, po, strings, resx])`, 'json')
   .option('-c, --clean <true|false>', `Removes all local files (default: false)`, 'false')
+  .option('-u, --update-values <true|false>', `This will update values of existing translations. (default: false)`, 'false')
   .option('-d, --dry <true|false>', `Dry run (default: false)`, 'false')
   .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((cmd) => {
@@ -366,6 +367,7 @@ program
 
     const clean = cmd.clean === 'true';
     const dry = cmd.dry === 'true';
+    const updateValues = cmd.updateValues === 'true';
 
     sync({
       apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
@@ -374,6 +376,7 @@ program
       version: version,
       path: cmd.path,
       format: cmd.format,
+      updateValues: updateValues,
       clean: clean,
       dry: dry
     });
