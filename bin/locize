@@ -19,6 +19,7 @@ const get = require('../get');
 const sync = require('../sync');
 const copyVersion = require('../copyVersion');
 const publishVersion = require('../publishVersion');
+const deleteNamespace = require('../deleteNamespace');
 
 var config = {};
 
@@ -319,9 +320,9 @@ program
   .on('--help', () => {
     console.log('  Examples:');
     console.log();
-    console.log('    $ locize remove common title');
-    console.log('    $ locize remove common title --language en');
-    console.log('    $ locize remove common title --api-key <apiKey> --project-id <projectId> --language en');
+    console.log('    $ locize get common title');
+    console.log('    $ locize get common title --language en');
+    console.log('    $ locize get common title --api-key <apiKey> --project-id <projectId> --language en');
     console.log();
   });
 
@@ -482,6 +483,53 @@ program
     console.log('    $ locize publish-version"');
     console.log('    $ locize publish-version --ver production"');
     console.log('    $ locize publish-version --api-key <apiKey> --project-id <projectId> --ver <version>');
+    console.log();
+  });
+
+program
+  .command('delete-namespace <namespace>')
+  .alias('dn')
+  .description('delete a namespace')
+  .option('-k, --api-key <apiKey>', `The api-key that should be used`)
+  .option('-i, --project-id <projectId>', `The project-id that should be used`)
+  .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
+  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .action((namespace, cmd) => {
+    try {
+      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+    } catch (e) {}
+
+    const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    if (!apiKey) {
+      console.error('  error: missing required argument `apiKey`');
+      process.exit(1);
+      return;
+    }
+
+    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    if (!projectId) {
+      console.error('  error: missing required argument `projectId`');
+      process.exit(1);
+      return;
+    }
+
+    const version = cmd.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
+
+    const addPath = cmd.addPath || config.addPath || addPathUrl;
+
+    deleteNamespace({
+      apiKey: apiKey,
+      projectId: projectId,
+      apiPath: url.parse(addPath).protocol + '//' + url.parse(addPath).host,
+      version: version,
+      namespace: namespace
+    });
+  })
+  .on('--help', () => {
+    console.log('  Examples:');
+    console.log();
+    console.log('    $ locize delete-namespace common');
+    console.log('    $ locize delete-namespace common --api-key <apiKey> --project-id <projectId>');
     console.log();
   });
 

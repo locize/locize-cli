@@ -1,3 +1,6 @@
+## 3.12.0
+- introduce delete-namespace
+
 ## 3.11.0
 - introduce --update-values flag for sync command
 
