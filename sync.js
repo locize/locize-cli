@@ -490,7 +490,7 @@ const update = (opt, lng, ns, cb) => {
 };
 
 const cleanupLanguages = (opt, remoteLanguages) => {
-  const dirs = getDirectories(opt.path);
+  const dirs = getDirectories(opt.path).filter((dir) => dir.indexOf('.') !== 0);
   dirs.filter((lng) => lng !== opt.referenceLanguage).forEach((lng) => rimraf.sync(path.join(opt.path, lng)));
   remoteLanguages.forEach((lng) => mkdirp.sync(path.join(opt.path, lng)));
 };

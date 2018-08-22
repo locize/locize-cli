@@ -1,3 +1,6 @@
+## 3.12.1
+- do not delete hidden folders
+
 ## 3.12.0
 - introduce delete-namespace
 
