@@ -1,3 +1,6 @@
+## 3.13.0
+- support yaml-rails format
+
 ## 3.12.1
 - do not delete hidden folders
 

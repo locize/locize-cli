@@ -164,6 +164,32 @@ function handleDownload(opt, url, err, res, obj, cb) {
           }, cb);
         },
         (cb) => {
+          if (opt.format !== 'yaml-rails') return cb();
+          async.forEach(localFiles, (f, cb) => {
+            const splittedKey = f.key.split('/');
+            const lng = splittedKey[splittedKey.length - 2];
+            const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.yaml';
+            fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+              if (err) return cb(err);
+              try {
+                const js = flatten(JSON.parse(data));
+                if (opt.skipEmpty && Object.keys(js).length === 0) {
+                  return fs.unlink(f.pathToLocalFile, cb);
+                }
+
+                var extendedJs = {};
+                extendedJs[lng] = js;
+                fs.writeFile(newFilePath, jsyaml.safeDump(extendedJs), 'utf8', (err) => {
+                  if (err) return cb(err);
+                  fs.unlink(f.pathToLocalFile, cb);
+                });
+              } catch (err) {
+                cb(err);
+              }
+            });
+          }, cb);
+        },
+        (cb) => {
           if (opt.format !== 'resx') return cb();
           async.forEach(localFiles, (f, cb) => {
             const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.resx';

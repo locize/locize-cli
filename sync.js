@@ -29,7 +29,7 @@ const fileExtensionsMap = {
   '.xml': ['strings', 'android'],
   '.csv': ['csv'],
   '.resx': ['resx'],
-  '.yaml': ['yaml'],
+  '.yaml': ['yaml', 'yaml-rails'],
   '.xlsx': ['xlsx'],
   '.xliff': ['xliff2', 'xliff12']
 };
@@ -140,6 +140,10 @@ const convertToFlatFormat = (opt, data, cb) => {
       cb(null, flatten(jsyaml.safeLoad(data)));
       return;
     }
+    if (opt.format === 'yaml-rails') {
+      cb(null, flatten(jsyaml.safeLoad(data)[opt.referenceLanguage]));
+      return;
+    }
     if (opt.format === 'android') {
       asr2js(data.toString(), cb);
       return;
@@ -241,6 +245,12 @@ const convertToDesiredFormat = (opt, namespace, lng, data, cb) => {
     }
     if (opt.format === 'yaml') {
       cb(null, jsyaml.safeDump(flatten(data)));
+      return;
+    }
+    if (opt.format === 'yaml-rails') {
+      var newData = {};
+      newData[lng] = flatten(data);
+      cb(null, jsyaml.safeDump(newData));
       return;
     }
     if (opt.format === 'android') {
