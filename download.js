@@ -167,6 +167,7 @@ function handleDownload(opt, url, err, res, obj, cb) {
           if (opt.format !== 'yaml-rails') return cb();
           async.forEach(localFiles, (f, cb) => {
             const splittedKey = f.key.split('/');
+            const ns = splittedKey[splittedKey.length - 1];
             const lng = splittedKey[splittedKey.length - 2];
             const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.yaml';
             fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
@@ -178,7 +179,8 @@ function handleDownload(opt, url, err, res, obj, cb) {
                 }
 
                 var extendedJs = {};
-                extendedJs[lng] = js;
+                extendedJs[lng] = {};
+                extendedJs[lng][ns] = js;
                 fs.writeFile(newFilePath, jsyaml.safeDump(extendedJs), 'utf8', (err) => {
                   if (err) return cb(err);
                   fs.unlink(f.pathToLocalFile, cb);

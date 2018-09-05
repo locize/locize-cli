@@ -141,7 +141,8 @@ const convertToFlatFormat = (opt, data, cb) => {
       return;
     }
     if (opt.format === 'yaml-rails') {
-      cb(null, flatten(jsyaml.safeLoad(data)[opt.referenceLanguage]));
+      const jsObj = jsyaml.safeLoad(data);
+      cb(null, flatten(jsObj[Object.keys(jsObj)[0]][Object.keys(jsObj[Object.keys(jsObj)[0]])[0]]));
       return;
     }
     if (opt.format === 'android') {
@@ -249,7 +250,8 @@ const convertToDesiredFormat = (opt, namespace, lng, data, cb) => {
     }
     if (opt.format === 'yaml-rails') {
       var newData = {};
-      newData[lng] = flatten(data);
+      newData[lng] = {};
+      newData[lng][namespace] = flatten(data);
       cb(null, jsyaml.safeDump(newData));
       return;
     }

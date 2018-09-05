@@ -1,3 +1,6 @@
+## 3.13.1
+- fix yaml-rails format
+
 ## 3.13.0
 - support yaml-rails format
 
