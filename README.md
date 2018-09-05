@@ -114,7 +114,7 @@ or
 locize download
 ```
 
-or add a format like (flat, android, xliff2, xliff12, android, yaml, csv, xlsx, po, strings, resx)
+or add a format like (flat, android, xliff2, xliff12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx)
 
 ```sh
 locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1 --target ./backup --format android
