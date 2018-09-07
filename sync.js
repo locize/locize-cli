@@ -43,6 +43,22 @@ acceptedFileExtensions.forEach((ext) => {
   });
 });
 
+// rails seems to start date relevant information in an array with 1 instead of 0
+function removeUndefinedFromArrays(obj) {
+  if (!obj) return obj;
+
+  const propNames = Object.keys(obj);
+  propNames.forEach((propName) => {
+    if (Array.isArray(obj[propName]) && obj[propName][0] === undefined) {
+      obj[propName].shift();
+    } else if (typeof obj[propName] === 'object') {
+      removeUndefinedFromArrays(obj[propName]);
+    }
+  });
+
+  return obj;
+}
+
 const getFiles = (srcpath) => {
   return fs.readdirSync(srcpath).filter(function(file) {
     return !fs.statSync(path.join(srcpath, file)).isDirectory();
@@ -252,7 +268,7 @@ const convertToDesiredFormat = (opt, namespace, lng, data, cb) => {
       var newData = {};
       newData[lng] = {};
       newData[lng][namespace] = unflatten(data);
-      cb(null, jsyaml.safeDump(newData));
+      cb(null, jsyaml.safeDump(removeUndefinedFromArrays(newData)));
       return;
     }
     if (opt.format === 'android') {

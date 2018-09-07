@@ -16,6 +16,22 @@ const jsyaml = require('js-yaml');
 const js2resx = require('resx/js2resx');
 const js2tmx = require('tmexchange/js2tmx');
 
+// rails seems to start date relevant information in an array with 1 instead of 0
+function removeUndefinedFromArrays(obj) {
+  if (!obj) return obj;
+
+  const propNames = Object.keys(obj);
+  propNames.forEach((propName) => {
+    if (Array.isArray(obj[propName]) && obj[propName][0] === undefined) {
+      obj[propName].shift();
+    } else if (typeof obj[propName] === 'object') {
+      removeUndefinedFromArrays(obj[propName]);
+    }
+  });
+
+  return obj;
+}
+
 function handleDownload(opt, url, err, res, obj, cb) {
   if (err || (obj && (obj.errorMessage || obj.message))) {
     if (!cb) console.log(colors.red(`download failed for ${url} to ${opt.target}...`));
@@ -181,7 +197,7 @@ function handleDownload(opt, url, err, res, obj, cb) {
                 var extendedJs = {};
                 extendedJs[lng] = {};
                 extendedJs[lng][ns] = js;
-                fs.writeFile(newFilePath, jsyaml.safeDump(extendedJs), 'utf8', (err) => {
+                fs.writeFile(newFilePath, jsyaml.safeDump(removeUndefinedFromArrays(extendedJs)), 'utf8', (err) => {
                   if (err) return cb(err);
                   fs.unlink(f.pathToLocalFile, cb);
                 });
