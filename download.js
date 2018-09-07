@@ -173,7 +173,7 @@ function handleDownload(opt, url, err, res, obj, cb) {
             fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
               if (err) return cb(err);
               try {
-                const js = flatten(JSON.parse(data));
+                const js = JSON.parse(data);
                 if (opt.skipEmpty && Object.keys(js).length === 0) {
                   return fs.unlink(f.pathToLocalFile, cb);
                 }

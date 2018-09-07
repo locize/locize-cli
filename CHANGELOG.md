@@ -1,3 +1,6 @@
+## 3.13.2
+- fix yaml-rails format nesting
+
 ## 3.13.1
 - fix yaml-rails format
 

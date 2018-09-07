@@ -251,7 +251,7 @@ const convertToDesiredFormat = (opt, namespace, lng, data, cb) => {
     if (opt.format === 'yaml-rails') {
       var newData = {};
       newData[lng] = {};
-      newData[lng][namespace] = flatten(data);
+      newData[lng][namespace] = unflatten(data);
       cb(null, jsyaml.safeDump(newData));
       return;
     }
