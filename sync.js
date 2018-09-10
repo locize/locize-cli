@@ -25,7 +25,7 @@ const resx2js = require('resx/resx2js');
 
 const fileExtensionsMap = {
   '.json': ['json', 'flat'],
-  '.po': ['po', 'gettext'],
+  '.po': ['po', 'gettext', 'po_i18next', 'gettext_i18next'],
   '.xml': ['strings', 'android'],
   '.csv': ['csv'],
   '.resx': ['resx'],
@@ -200,8 +200,14 @@ const convertToDesiredFormat = (opt, namespace, lng, data, cb) => {
       return;
     }
     if (opt.format === 'po' || opt.format === 'gettext') {
-      const options = { project: 'locize', language: lng };
-      i18nextToPo(lng, JSON.stringify(flatten(data)), options)
+      i18nextToPo(lng, JSON.stringify(flatten(data)), { project: 'locize', language: lng, ctxSeparator: '_ is default but we set it to something that is never found!!!', ignorePlurals: true })
+        .then((ret) => {
+          cb(null, ret.toString());
+        }, cb);
+      return;
+    }
+    if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
+      i18nextToPo(lng, JSON.stringify(flatten(data)), { project: 'locize', language: lng })
         .then((ret) => {
           cb(null, ret.toString());
         }, cb);

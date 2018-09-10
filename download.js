@@ -258,7 +258,7 @@ function handleDownload(opt, url, err, res, obj, cb) {
           }, cb);
         },
         (cb) => {
-          if (opt.format !== 'po' && opt.format !== 'gettext') return cb();
+          if (opt.format !== 'po' && opt.format !== 'gettext' && opt.format !== 'po_i18next' && opt.format !== 'gettext_i18next') return cb();
           async.forEach(localFiles, (f, cb) => {
             const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.po';
             fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
@@ -279,7 +279,11 @@ function handleDownload(opt, url, err, res, obj, cb) {
                 // const version = splittedKey[splittedKey.length - 3];
                 // const projId = splittedKey[splittedKey.length - 4];
 
-                const options = { project: 'locize', language: lng };
+                var options = { project: 'locize', language: lng, ctxSeparator: '_ is default but we set it to something that is never found!!!', ignorePlurals: true };
+                if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
+                  delete options.ctxSeparator;
+                  delete options.ignorePlurals;
+                }
                 i18nextToPo(lng, JSON.stringify(js), options)
                   .then((res) => {
                     fs.writeFile(newFilePath, res, 'utf8', (err) => {

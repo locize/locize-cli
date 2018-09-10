@@ -1,3 +1,6 @@
+## 3.13.4
+- fix gettext format
+
 ## 3.13.3
 - fix yaml-rails format
 
