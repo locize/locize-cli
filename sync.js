@@ -22,6 +22,8 @@ const xliff12ToJs = require('xliff/xliff12ToJs');
 const targetOfjs = require('xliff/targetOfjs');
 const js2resx = require('resx/js2resx');
 const resx2js = require('resx/resx2js');
+const js2ftl = require('fluent_conv/js2ftl');
+const ftl2js = require('fluent_conv/ftl2js');
 
 const fileExtensionsMap = {
   '.json': ['json', 'flat'],
@@ -31,7 +33,8 @@ const fileExtensionsMap = {
   '.resx': ['resx'],
   '.yaml': ['yaml', 'yaml-rails'],
   '.xlsx': ['xlsx'],
-  '.xliff': ['xliff2', 'xliff12']
+  '.xliff': ['xliff2', 'xliff12'],
+  '.ftl': ['fluent']
 };
 
 const acceptedFileExtensions = Object.keys(fileExtensionsMap);
@@ -183,6 +186,10 @@ const convertToFlatFormat = (opt, data, cb) => {
       resx2js(data.toString(), cb);
       return;
     }
+    if (opt.format === 'fluent') {
+      cb(null, flatten(ftl2js(data.toString())));
+      return;
+    }
   } catch (err) { cb(err); }
 };
 
@@ -309,6 +316,10 @@ const convertToDesiredFormat = (opt, namespace, lng, data, cb) => {
       js2resx(flatten(data), cb);
       return;
     }
+    if (opt.format === 'fluent') {
+      js2ftl(unflatten(data), cb);
+      return;
+    }
   } catch (err) { cb(err); }
 };
 
@@ -329,7 +340,7 @@ const parseLocalReference = (opt, cb) => {
 
       convertToFlatFormat(opt, data, (err, content) => {
         if (err) {
-          err.message = err.message || '';
+          err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
           err.message += '\n' + path.join(opt.path, opt.referenceLanguage, file);
           return clb(err);
         }
@@ -479,7 +490,10 @@ const downloadAll = (opt, remoteLanguages, omitRef, cb) => {
         if (err) return clb(err);
 
         convertToDesiredFormat(opt, namespace, lng, ns, (err, converted) => {
-          if (err) return clb(err);
+          if (err) {
+            err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
+            return clb(err);
+          }
 
           if (opt.dry) return clb(null);
           fs.writeFile(path.join(opt.path, lng, namespace + reversedFileExtensionsMap[opt.format]), converted, clb);

@@ -15,6 +15,7 @@ const xlsx = require('xlsx');
 const jsyaml = require('js-yaml');
 const js2resx = require('resx/js2resx');
 const js2tmx = require('tmexchange/js2tmx');
+const js2ftl = require('fluent_conv/js2ftl');
 
 // rails seems to start date relevant information in an array with 1 instead of 0
 function removeUndefinedFromArrays(obj) {
@@ -198,6 +199,28 @@ function handleDownload(opt, url, err, res, obj, cb) {
                 extendedJs[lng] = {};
                 extendedJs[lng][ns] = js;
                 fs.writeFile(newFilePath, jsyaml.safeDump(removeUndefinedFromArrays(extendedJs)), 'utf8', (err) => {
+                  if (err) return cb(err);
+                  fs.unlink(f.pathToLocalFile, cb);
+                });
+              } catch (err) {
+                cb(err);
+              }
+            });
+          }, cb);
+        },
+        (cb) => {
+          if (opt.format !== 'fluent') return cb();
+          async.forEach(localFiles, (f, cb) => {
+            const newFilePath = f.pathToLocalFile.substring(0, f.pathToLocalFile.lastIndexOf('.')) + '.ftl';
+            fs.readFile(f.pathToLocalFile, 'utf8', (err, data) => {
+              if (err) return cb(err);
+              try {
+                const js = JSON.parse(data);
+                if (opt.skipEmpty && Object.keys(js).length === 0) {
+                  return fs.unlink(f.pathToLocalFile, cb);
+                }
+
+                fs.writeFile(newFilePath, js2ftl(js), 'utf8', (err) => {
                   if (err) return cb(err);
                   fs.unlink(f.pathToLocalFile, cb);
                 });
@@ -658,7 +681,11 @@ function handleDownload(opt, url, err, res, obj, cb) {
     }
   ], (err) => {
     if (err) {
-      if (!cb) { console.error(colors.red(err.message)); process.exit(1); }
+      if (!cb) {
+        console.error(colors.red(err.message));
+        console.error(colors.red('Invalid content for "' + opt.format + '" format!'));
+        process.exit(1);
+      }
       if (cb) cb(err);
       return;
     }

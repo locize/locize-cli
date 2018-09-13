@@ -1,3 +1,6 @@
+## 3.14.0
+- support fluent format
+
 ## 3.13.4
 - fix gettext format
 
