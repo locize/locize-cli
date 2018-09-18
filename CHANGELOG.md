@@ -1,3 +1,7 @@
+## 3.14.1
+- ignore comments for fluent format
+- update deps
+
 ## 3.14.0
 - support fluent format
 

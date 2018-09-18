@@ -187,7 +187,11 @@ const convertToFlatFormat = (opt, data, cb) => {
       return;
     }
     if (opt.format === 'fluent') {
-      cb(null, flatten(ftl2js(data.toString())));
+      const fluentJS = ftl2js(data.toString());
+      Object.keys(fluentJS).forEach((prop) => {
+        if (fluentJS[prop] && fluentJS[prop].comment) delete fluentJS[prop].comment;
+      });
+      cb(null, flatten(fluentJS));
       return;
     }
   } catch (err) { cb(err); }
