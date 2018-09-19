@@ -411,6 +411,8 @@ const compareNamespace = (local, remote) => {
     toUpdate: [],
     toRemove: []
   };
+  local = local || {};
+  remote = remote || {};
   Object.keys(local).forEach((k) => {
     if (!remote[k]) diff.toAdd.push(k);
     if (remote[k] && remote[k] !== local[k]) diff.toUpdate.push(k);

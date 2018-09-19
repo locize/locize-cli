@@ -1,3 +1,6 @@
+## 3.14.2
+- catch edge case when file has no content
+
 ## 3.14.1
 - ignore comments for fluent format
 - update deps
