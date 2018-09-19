@@ -328,14 +328,14 @@ const convertToDesiredFormat = (opt, namespace, lng, data, cb) => {
 };
 
 const parseLocalReference = (opt, cb) => {
-  if (!opt.dry) mkdirp.sync(path.join(opt.path, opt.referenceLanguage));
+  if (!opt.dry) mkdirp.sync(path.join(opt.path, opt.languageFolderPrefix + opt.referenceLanguage));
 
   var files = [];
   try {
-    files = getFiles(path.join(opt.path, opt.referenceLanguage));
+    files = getFiles(path.join(opt.path, opt.languageFolderPrefix + opt.referenceLanguage));
   } catch (err) {}
   async.map(files, (file, clb) => {
-    fs.readFile(path.join(opt.path, opt.referenceLanguage, file), (err, data) => {
+    fs.readFile(path.join(opt.path, opt.languageFolderPrefix + opt.referenceLanguage, file), (err, data) => {
       if (err) return clb(err);
 
       if (fileExtensionsMap[path.extname(file)].indexOf(opt.format) < 0) {
@@ -345,13 +345,13 @@ const parseLocalReference = (opt, cb) => {
       convertToFlatFormat(opt, data, (err, content) => {
         if (err) {
           err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
-          err.message += '\n' + path.join(opt.path, opt.referenceLanguage, file);
+          err.message += '\n' + path.join(opt.path, opt.languageFolderPrefix + opt.referenceLanguage, file);
           return clb(err);
         }
 
         clb(null, {
           namespace: path.basename(file, path.extname(file)),
-          path: path.join(opt.path, opt.referenceLanguage, file),
+          path: path.join(opt.path, opt.languageFolderPrefix + opt.referenceLanguage, file),
           extension: path.extname(file),
           content: content
         });
@@ -502,7 +502,7 @@ const downloadAll = (opt, remoteLanguages, omitRef, cb) => {
           }
 
           if (opt.dry) return clb(null);
-          fs.writeFile(path.join(opt.path, lng, namespace + reversedFileExtensionsMap[opt.format]), converted, clb);
+          fs.writeFile(path.join(opt.path, opt.languageFolderPrefix + lng, namespace + reversedFileExtensionsMap[opt.format]), converted, clb);
         });
       });
     }, cb);
@@ -545,8 +545,8 @@ const update = (opt, lng, ns, cb) => {
 
 const cleanupLanguages = (opt, remoteLanguages) => {
   const dirs = getDirectories(opt.path).filter((dir) => dir.indexOf('.') !== 0);
-  dirs.filter((lng) => lng !== opt.referenceLanguage).forEach((lng) => rimraf.sync(path.join(opt.path, lng)));
-  remoteLanguages.forEach((lng) => mkdirp.sync(path.join(opt.path, lng)));
+  dirs.filter((lng) => lng !== opt.referenceLanguage).forEach((lng) => rimraf.sync(path.join(opt.path, opt.languageFolderPrefix + lng)));
+  remoteLanguages.forEach((lng) => mkdirp.sync(path.join(opt.path, opt.languageFolderPrefix + lng)));
 };
 
 const handleError = (err, cb) => {

@@ -1,3 +1,6 @@
+## 3.15.0
+- introduce --language-folder-prefix parameter for sync command
+
 ## 3.14.2
 - catch edge case when file has no content
 

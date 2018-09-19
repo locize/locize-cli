@@ -337,6 +337,7 @@ program
   .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx, fluent])`, 'json')
   .option('-c, --clean <true|false>', `Removes all local files (default: false)`, 'false')
   .option('-u, --update-values <true|false>', `This will update values of existing translations. (default: false)`, 'false')
+  .option('-P, --language-folder-prefix <prefix>', `This will be added as a local folder name prefix in front of the language.`, '')
   .option('-d, --dry <true|false>', `Dry run (default: false)`, 'false')
   .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((cmd) => {
@@ -369,6 +370,7 @@ program
     const clean = cmd.clean === 'true';
     const dry = cmd.dry === 'true';
     const updateValues = cmd.updateValues === 'true';
+    const languageFolderPrefix = cmd.languageFolderPrefix || '';
 
     sync({
       apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
@@ -378,6 +380,7 @@ program
       path: cmd.path,
       format: cmd.format,
       updateValues: updateValues,
+      languageFolderPrefix: languageFolderPrefix,
       clean: clean,
       dry: dry
     });
