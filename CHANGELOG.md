@@ -1,3 +1,7 @@
+## 4.0.0
+- refactoring of sync and download command
+- introduce tmx format
+
 ## 3.15.0
 - introduce --language-folder-prefix parameter for sync command
 

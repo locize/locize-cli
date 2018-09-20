@@ -26,7 +26,7 @@ var config = {};
 program
   .version(require('../package.json').version)
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`);
-// .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`);
+// .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`);
 
 program
   .command('migrate')
@@ -40,7 +40,7 @@ program
   .option('-L, --parse-language <true|false>', `Parse folders as language (default: true)`, 'true')
   .option('-f, --format <json>', `File format of namespaces (default: json)`, 'json')
   .option('-r, --replace <true|false>', `This will empty the optionally existing namespace before saving the new translations. (default: false)`, 'false')
-  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -97,7 +97,7 @@ program
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-l, --language <lng>', `The language that should be targeted`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
-  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((namespace, key, value, cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -156,7 +156,7 @@ program
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-l, --language <lng>', `The language that should be targeted`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
-  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((namespace, key, cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -215,13 +215,13 @@ program
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
   .option('-l, --language <lng>', `The language that should be targeted`)
   .option('-n, --namespace <ns>', `The namespace that should be targeted`)
-  .option('-t, --target <target>', `The target directory`, process.cwd())
+  .option('-p, --path <path>', `Specify the path that should be used (default: ${process.cwd()})`, process.cwd())
   .option('-g, --get-path <url>', `Specify the get-path url that should be used (default: ${getPathUrl})`)
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
-  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx, fluent])`, 'json')
+  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx, fluent, tmx])`, 'json')
   .option('-s, --skip-empty <true|false>', `Skips to download empty files (default: true)`, 'true')
-  .option('-rl, --referenceLanguage <lng>', `The language that should be used as source (used for xliff or csv or xlsx format)`)
-  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-c, --clean <true|false>', `Removes all local files (default: false)`, 'false')
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -244,13 +244,11 @@ program
 
     const getPath = cmd.getPath || config.getPath || cmd.addPath || config.addPath || getPathUrl;
 
-    const target = cmd.target;
-
     const format = cmd.format;
 
-    const referenceLanguage = cmd.referenceLanguage;
-
     const skipEmpty = cmd.skipEmpty === 'true';
+
+    const clean = cmd.clean === 'true';
 
     download({
       apiKey: apiKey,
@@ -259,10 +257,10 @@ program
       language: language,
       version: version,
       namespace: namespace,
-      target: target,
+      path: cmd.path,
       format: format,
-      referenceLanguage: referenceLanguage,
-      skipEmpty: skipEmpty
+      skipEmpty: skipEmpty,
+      clean: clean
     });
   })
   .on('--help', () => {
@@ -272,7 +270,6 @@ program
     console.log('    $ locize download --ver latest');
     console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common');
     console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common --format flat');
-    console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common --format xliff2 --referenceLanguage de');
     console.log();
   });
 
@@ -284,7 +281,7 @@ program
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-l, --language <lng>', `The language that should be targeted`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
-  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((namespace, key, cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -334,12 +331,13 @@ program
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-v, --ver <version>', `Found namespaces will be matched to this version (default: latest)`)
   .option('-p, --path <path>', `Specify the path that should be used (default: ${process.cwd()})`, process.cwd())
-  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx, fluent])`, 'json')
+  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx, fluent, tmx])`, 'json')
+  .option('-s, --skip-empty <true|false>', `Skips to download empty files (default: false)`, 'false')
   .option('-c, --clean <true|false>', `Removes all local files (default: false)`, 'false')
   .option('-u, --update-values <true|false>', `This will update values of existing translations. (default: false)`, 'false')
   .option('-P, --language-folder-prefix <prefix>', `This will be added as a local folder name prefix in front of the language.`, '')
   .option('-d, --dry <true|false>', `Dry run (default: false)`, 'false')
-  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -371,6 +369,7 @@ program
     const dry = cmd.dry === 'true';
     const updateValues = cmd.updateValues === 'true';
     const languageFolderPrefix = cmd.languageFolderPrefix || '';
+    const skipEmpty = cmd.skipEmpty === 'true';
 
     sync({
       apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
@@ -382,6 +381,7 @@ program
       updateValues: updateValues,
       languageFolderPrefix: languageFolderPrefix,
       clean: clean,
+      skipEmpty: skipEmpty,
       dry: dry
     });
   })
@@ -401,7 +401,7 @@ program
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-v, --ver <version>', `The target version to be used to copy to (default: latest)`)
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
-  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((fromVersion, cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -449,7 +449,7 @@ program
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-v, --ver <version>', `The version to be used to publish (default: latest)`)
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
-  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
@@ -496,7 +496,7 @@ program
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
-  .option('-c, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
   .action((namespace, cmd) => {
     try {
       config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));

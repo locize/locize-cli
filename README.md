@@ -105,7 +105,7 @@ locize get common title
 Add your project-id and let's go...
 
 ```sh
-locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1 --target ./backup
+locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1 --path ./backup
 ```
 
 or
@@ -114,10 +114,10 @@ or
 locize download
 ```
 
-or add a format like (json, flat, xliff2, xliff12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx, fluent)
+or add a format like (json, flat, xliff2, xliff12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx, fluent, tmx)
 
 ```sh
-locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1 --target ./backup --format android
+locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1 --path ./backup --format android
 ```
 
 
@@ -150,7 +150,7 @@ Add your api-key and your project-id and let's go...
 locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba
 ```
 
-or add a format like (json, flat, xliff2, xliff12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx, fluent)
+or add a format like (json, flat, xliff2, xliff12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx, fluent, tmx)
 
 ```sh
 locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --format android

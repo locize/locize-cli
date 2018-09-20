@@ -8,59 +8,24 @@ const request = require('request');
 const flatten = require('flat');
 const cloneDeep = require('lodash.clonedeep');
 const gettextToI18next = require('i18next-conv').gettextToI18next;
-const i18nextToPo = require('i18next-conv').i18nextToPo;
 const csvjson = require('csvjson');
 const xlsx = require('xlsx');
 const jsyaml = require('js-yaml');
-const js2asr = require('android-string-resource/js2asr');
 const asr2js = require('android-string-resource/asr2js');
 const stringsFile = require('strings-file');
-const createxliff = require('xliff/createxliff');
-const createxliff12 = require('xliff/createxliff12');
 const xliff2js = require('xliff/xliff2js');
 const xliff12ToJs = require('xliff/xliff12ToJs');
 const targetOfjs = require('xliff/targetOfjs');
-const js2resx = require('resx/js2resx');
 const resx2js = require('resx/resx2js');
-const js2ftl = require('fluent_conv/js2ftl');
 const ftl2js = require('fluent_conv/ftl2js');
-
-const fileExtensionsMap = {
-  '.json': ['json', 'flat'],
-  '.po': ['po', 'gettext', 'po_i18next', 'gettext_i18next'],
-  '.xml': ['strings', 'android'],
-  '.csv': ['csv'],
-  '.resx': ['resx'],
-  '.yaml': ['yaml', 'yaml-rails'],
-  '.xlsx': ['xlsx'],
-  '.xliff': ['xliff2', 'xliff12'],
-  '.ftl': ['fluent']
-};
-
-const acceptedFileExtensions = Object.keys(fileExtensionsMap);
-
-const reversedFileExtensionsMap = {};
-acceptedFileExtensions.forEach((ext) => {
-  fileExtensionsMap[ext].forEach((format) => {
-    reversedFileExtensionsMap[format] = ext;
-  });
-});
-
-// rails seems to start date relevant information in an array with 1 instead of 0
-function removeUndefinedFromArrays(obj) {
-  if (!obj) return obj;
-
-  const propNames = Object.keys(obj);
-  propNames.forEach((propName) => {
-    if (Array.isArray(obj[propName]) && obj[propName][0] === undefined) {
-      obj[propName].shift();
-    } else if (typeof obj[propName] === 'object') {
-      removeUndefinedFromArrays(obj[propName]);
-    }
-  });
-
-  return obj;
-}
+const tmx2js = require('tmexchange/tmx2js');
+const getRemoteNamespace = require('./getRemoteNamespace');
+const getRemoteLanguages = require('./getRemoteLanguages');
+const convertToDesiredFormat = require('./convertToDesiredFormat');
+const formats = require('./formats');
+const fileExtensionsMap = formats.fileExtensionsMap;
+const acceptedFileExtensions = formats.acceptedFileExtensions;
+const reversedFileExtensionsMap = formats.reversedFileExtensionsMap;
 
 const getFiles = (srcpath) => {
   return fs.readdirSync(srcpath).filter(function(file) {
@@ -72,43 +37,6 @@ const getDirectories = (srcpath) => {
   return fs.readdirSync(srcpath).filter(function(file) {
     return fs.statSync(path.join(srcpath, file)).isDirectory();
   });
-};
-
-const getRemoteNamespace = (opt, lng, ns, cb) => {
-  request({
-    method: 'GET',
-    json: true,
-    url: opt.apiPath + (opt.isPrivate ? '/private' : '') + '/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns,
-    headers: opt.isPrivate ? {
-      'Authorization': opt.apiKey
-    } : undefined
-  }, (err, res, obj) => {
-    if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (err) return cb(err);
-      if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
-    }
-    if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
-    cb(null, flatten(obj));
-  });
-};
-
-const unflatten = (data) => {
-  const result = {};
-  for (var i in data) {
-    const keys = i.split('.');
-    keys.reduce((r, e, j) => {
-      const isNumber = !isNaN(Number(keys[j + 1]));
-      // if assumed to be an array, but now see a key wih non number value => transform to an object
-      if (Array.isArray(r[e]) && !isNumber) {
-        r[e] = r[e].reduce((mem, item, ind) => {
-          mem[ind] = item;
-          return mem;
-        }, {});
-      }
-      return r[e] || (r[e] = !isNumber ? (keys.length - 1 == j ? data[i] : {}) : []);
-    }, result);
-  }
-  return result;
 };
 
 const convertToFlatFormat = (opt, data, cb) => {
@@ -194,136 +122,21 @@ const convertToFlatFormat = (opt, data, cb) => {
       cb(null, flatten(fluentJS));
       return;
     }
-  } catch (err) { cb(err); }
-};
-
-const convertToDesiredFormat = (opt, namespace, lng, data, cb) => {
-  try {
-    if (opt.format === 'json') {
-      try {
-        data = unflatten(data);
-      } catch (err) {}
-      cb(null, JSON.stringify(data, null, 2));
-      return;
-    }
-    if (opt.format === 'flat') {
-      cb(null, JSON.stringify(flatten(data), null, 2));
-      return;
-    }
-    if (opt.format === 'po' || opt.format === 'gettext') {
-      i18nextToPo(lng, JSON.stringify(flatten(data)), { project: 'locize', language: lng, ctxSeparator: '_ is default but we set it to something that is never found!!!', ignorePlurals: true })
-        .then((ret) => {
-          cb(null, ret.toString());
-        }, cb);
-      return;
-    }
-    if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
-      i18nextToPo(lng, JSON.stringify(flatten(data)), { project: 'locize', language: lng })
-        .then((ret) => {
-          cb(null, ret.toString());
-        }, cb);
-      return;
-    }
-    if (opt.format === 'csv') {
-      getRemoteNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
+    if (opt.format === 'tmx') {
+      tmx2js(data.toString(), (err, jsonData) => {
         if (err) return cb(err);
-
-        const js2CsvData = Object.keys(flatten(data)).reduce((mem, k) => {
-          const value = data[k] || '';
-          const line = { // https://en.wikipedia.org/wiki/Delimiter-separated_values
-            key: k.replace(/"/g, '""'),
-            [opt.referenceLanguage]: refNs[k] || '',
-            [lng]: value.replace(/"/g, '""')
-          };
-          mem.push(line);
-
-          return mem;
-        }, []);
-        const options = {
-          delimiter: ',',
-          wrap: true,
-          headers: 'relative',
-          // objectDenote: '.',
-          // arrayDenote: '[]'
-        };
-        cb(null, csvjson.toCSV(js2CsvData, options));
+        const tmxJsRes = jsonData.resources[Object.keys(jsonData.resources)[0]];
+        const res = {};
+        if (tmxJsRes) {
+          Object.keys(tmxJsRes).forEach((k) => {
+            res[k] = tmxJsRes[k][opt.referenceLanguage];
+          });
+        }
+        cb(null, res);
       });
       return;
     }
-    if (opt.format === 'xlsx') {
-      getRemoteNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
-        if (err) return cb(err);
-
-        const js2XlsxData = Object.keys(flatten(data)).reduce((mem, k) => {
-          const value = data[k] || '';
-          const line = {
-            key: k,
-            [opt.referenceLanguage]: refNs[k] || '',
-            [lng]: value
-          };
-          mem.push(line);
-
-          return mem;
-        }, []);
-
-        const worksheet = xlsx.utils.json_to_sheet(js2XlsxData);
-        const workbook = xlsx.utils.book_new();
-        workbook.SheetNames.push(namespace);
-        workbook.Sheets[namespace] = worksheet;
-
-        const wbout = xlsx.write(workbook, { type: 'buffer' });
-
-        cb(null, wbout);
-      });
-      return;
-    }
-    if (opt.format === 'yaml') {
-      cb(null, jsyaml.safeDump(flatten(data)));
-      return;
-    }
-    if (opt.format === 'yaml-rails') {
-      var newData = {};
-      newData[lng] = {};
-      newData[lng][namespace] = unflatten(data);
-      cb(null, jsyaml.safeDump(removeUndefinedFromArrays(newData)));
-      return;
-    }
-    if (opt.format === 'android') {
-      js2asr(flatten(data), cb);
-      return;
-    }
-    if (opt.format === 'strings') {
-      Object.keys(data).forEach((k) => {
-        if (data[k] === null) delete data[k];
-      });
-      data = stringsFile.compile(data);
-      cb(null, data);
-      return;
-    }
-    if (opt.format === 'xliff2' || opt.format === 'xliff12') {
-      const fn = opt.format === 'xliff12' ? createxliff12 : createxliff;
-      getRemoteNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
-        if (err) return cb(err);
-
-        fn(
-          opt.referenceLanguage,
-          lng,
-          refNs,
-          flatten(data),
-          namespace,
-          cb
-        );
-      });
-      return;
-    }
-    if (opt.format === 'resx') {
-      js2resx(flatten(data), cb);
-      return;
-    }
-    if (opt.format === 'fluent') {
-      js2ftl(unflatten(data), cb);
-      return;
-    }
+    cb(new Error(`${opt.format} is not a valid format!`));
   } catch (err) { cb(err); }
 };
 
@@ -358,32 +171,6 @@ const parseLocalReference = (opt, cb) => {
       });
     });
   }, cb);
-};
-
-const getRemoteLanguage = (opt, cb) => {
-  request({
-    method: 'GET',
-    json: true,
-    url: opt.apiPath + '/languages/' + opt.projectId + '?ts=' + Date.now()
-  }, (err, res, obj) => {
-    if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (err) return cb(err);
-      if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
-    }
-    if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
-
-    const lngs = Object.keys(obj);
-    var foundRefLng = null;
-    lngs.forEach((l) => {
-      if (obj[l].isReferenceLanguage) foundRefLng = l;
-    });
-    if (!foundRefLng) {
-      return cb(new Error('Reference language not found!'));
-    }
-    opt.referenceLanguage = foundRefLng;
-
-    cb(null, lngs);
-  });
 };
 
 const getDownloads = (opt, cb) => {
@@ -492,10 +279,14 @@ const downloadAll = (opt, remoteLanguages, omitRef, cb) => {
       const lng = splitted[download.isPrivate ? 3 : 2];
       const namespace = splitted[download.isPrivate ? 4 : 3];
       opt.isPrivate = download.isPrivate;
-      getRemoteNamespace(opt, lng, namespace, (err, ns) => {
+      getRemoteNamespace(opt, lng, namespace, (err, ns, lastModified) => {
         if (err) return clb(err);
 
-        convertToDesiredFormat(opt, namespace, lng, ns, (err, converted) => {
+        if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
+          return clb(null);
+        }
+
+        convertToDesiredFormat(opt, namespace, lng, ns, lastModified, (err, converted) => {
           if (err) {
             err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
             return clb(err);
@@ -565,7 +356,7 @@ const sync = (opt, cb) => {
   if (!opt.dry && opt.clean) rimraf.sync(path.join(opt.path, '*'));
   if (!opt.dry) mkdirp.sync(opt.path);
 
-  getRemoteLanguage(opt, (err, remoteLanguages) => {
+  getRemoteLanguages(opt, (err, remoteLanguages) => {
     if (err) return handleError(err);
 
     parseLocalReference(opt, (err, localNamespaces) => {
