@@ -1,5 +1,6 @@
 ## 4.0.1
 - handle edge case for fluent format
+- update deps
 
 ## 4.0.0
 - refactoring of sync and download command
