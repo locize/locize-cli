@@ -138,6 +138,10 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
       return;
     }
     if (opt.format === 'fluent') {
+      Object.keys(data).forEach((k) => {
+        if (!data[k] || data[k] === '') delete data[k];
+        data[k] = data[k].replace(new RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32));
+      });
       js2ftl(unflatten(data), cb);
       return;
     }

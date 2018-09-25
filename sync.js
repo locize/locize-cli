@@ -115,7 +115,7 @@ const convertToFlatFormat = (opt, data, cb) => {
       return;
     }
     if (opt.format === 'fluent') {
-      const fluentJS = ftl2js(data.toString());
+      const fluentJS = ftl2js(data.toString().replace(new RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)));
       Object.keys(fluentJS).forEach((prop) => {
         if (fluentJS[prop] && fluentJS[prop].comment) delete fluentJS[prop].comment;
       });
