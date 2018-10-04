@@ -1,3 +1,6 @@
+## 4.1.0
+- looking for the config file in the current directory first
+
 ## 4.0.1
 - handle edge case for fluent format
 - update deps

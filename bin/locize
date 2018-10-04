@@ -9,6 +9,7 @@ const url = require('url');
 const ini = require('ini');
 
 const home = path.join(os.homedir(), '.locize');
+const workingDirectory = path.join(process.cwd(), '.locize');
 const addPathUrl = 'https://api.locize.io/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
 const getPathUrl = 'https://api.locize.io/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
 
@@ -26,7 +27,7 @@ var config = {};
 program
   .version(require('../package.json').version)
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`);
-// .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`);
+// .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`);
 
 program
   .command('migrate')
@@ -40,11 +41,15 @@ program
   .option('-L, --parse-language <true|false>', `Parse folders as language (default: true)`, 'true')
   .option('-f, --format <json>', `File format of namespaces (default: json)`, 'json')
   .option('-r, --replace <true|false>', `This will empty the optionally existing namespace before saving the new translations. (default: false)`, 'false')
-  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((cmd) => {
     try {
-      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
-    } catch (e) {}
+      config = ini.parse(fs.readFileSync(cmd.configPath || workingDirectory, 'utf-8'));
+    } catch (e) {
+      try {
+        config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+      } catch (e) {}
+    }
 
     const addPath = cmd.addPath || config.addPath || addPathUrl;
 
@@ -97,11 +102,15 @@ program
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-l, --language <lng>', `The language that should be targeted`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
-  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((namespace, key, value, cmd) => {
     try {
-      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
-    } catch (e) {}
+      config = ini.parse(fs.readFileSync(cmd.configPath || workingDirectory, 'utf-8'));
+    } catch (e) {
+      try {
+        config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+      } catch (e) {}
+    }
 
     const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
     if (!apiKey) {
@@ -156,11 +165,15 @@ program
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-l, --language <lng>', `The language that should be targeted`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
-  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((namespace, key, cmd) => {
     try {
-      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
-    } catch (e) {}
+      config = ini.parse(fs.readFileSync(cmd.configPath || workingDirectory, 'utf-8'));
+    } catch (e) {
+      try {
+        config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+      } catch (e) {}
+    }
 
     const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
     if (!apiKey) {
@@ -221,11 +234,15 @@ program
   .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx, fluent, tmx])`, 'json')
   .option('-s, --skip-empty <true|false>', `Skips to download empty files (default: true)`, 'true')
   .option('-c, --clean <true|false>', `Removes all local files (default: false)`, 'false')
-  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((cmd) => {
     try {
-      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
-    } catch (e) {}
+      config = ini.parse(fs.readFileSync(cmd.configPath || workingDirectory, 'utf-8'));
+    } catch (e) {
+      try {
+        config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+      } catch (e) {}
+    }
 
     const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
     if (!projectId) {
@@ -281,11 +298,15 @@ program
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-l, --language <lng>', `The language that should be targeted`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
-  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((namespace, key, cmd) => {
     try {
-      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
-    } catch (e) {}
+      config = ini.parse(fs.readFileSync(cmd.configPath || workingDirectory, 'utf-8'));
+    } catch (e) {
+      try {
+        config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+      } catch (e) {}
+    }
 
     const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
     if (!projectId) {
@@ -337,11 +358,15 @@ program
   .option('-u, --update-values <true|false>', `This will update values of existing translations. (default: false)`, 'false')
   .option('-P, --language-folder-prefix <prefix>', `This will be added as a local folder name prefix in front of the language.`, '')
   .option('-d, --dry <true|false>', `Dry run (default: false)`, 'false')
-  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((cmd) => {
     try {
-      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
-    } catch (e) {}
+      config = ini.parse(fs.readFileSync(cmd.configPath || workingDirectory, 'utf-8'));
+    } catch (e) {
+      try {
+        config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+      } catch (e) {}
+    }
 
     const getPath = cmd.getPath || config.getPath || cmd.addPath || config.addPath || getPathUrl;
 
@@ -401,11 +426,15 @@ program
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-v, --ver <version>', `The target version to be used to copy to (default: latest)`)
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
-  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((fromVersion, cmd) => {
     try {
-      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
-    } catch (e) {}
+      config = ini.parse(fs.readFileSync(cmd.configPath || workingDirectory, 'utf-8'));
+    } catch (e) {
+      try {
+        config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+      } catch (e) {}
+    }
 
     const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
     if (!apiKey) {
@@ -449,11 +478,15 @@ program
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-v, --ver <version>', `The version to be used to publish (default: latest)`)
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
-  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((cmd) => {
     try {
-      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
-    } catch (e) {}
+      config = ini.parse(fs.readFileSync(cmd.configPath || workingDirectory, 'utf-8'));
+    } catch (e) {
+      try {
+        config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+      } catch (e) {}
+    }
 
     const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
     if (!apiKey) {
@@ -496,11 +529,15 @@ program
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
-  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${home})`)
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((namespace, cmd) => {
     try {
-      config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
-    } catch (e) {}
+      config = ini.parse(fs.readFileSync(cmd.configPath || workingDirectory, 'utf-8'));
+    } catch (e) {
+      try {
+        config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+      } catch (e) {}
+    }
 
     const apiKey = cmd.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
     if (!apiKey) {
