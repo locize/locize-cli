@@ -1,6 +1,6 @@
 {
   "name": "locize-cli",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "description": "locize cli to import locales",
   "main": "index.js",
   "bin": {
