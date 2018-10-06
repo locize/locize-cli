@@ -22,6 +22,10 @@ const getRemoteLanguages = (opt, cb) => {
     }
     opt.referenceLanguage = foundRefLng;
 
+    // reflng first
+    lngs.splice(lngs.indexOf(opt.referenceLanguage), 1);
+    lngs.unshift(opt.referenceLanguage);
+
     cb(null, lngs);
   });
 };

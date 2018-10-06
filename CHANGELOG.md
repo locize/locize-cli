@@ -1,3 +1,7 @@
+## 4.2.0
+- introduce "reference-language-only" argument for sync command
+- introduce "compare-modification-time" argument for sync command
+
 ## 4.1.0
 - looking for the config file in the current directory first
 

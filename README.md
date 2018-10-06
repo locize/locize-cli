@@ -108,13 +108,15 @@ or add a format like (json, flat, xliff2, xliff12, android, yaml, yaml-rails, cs
 locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --format android
 ```
 
-**‼️ The reference language in your local repository is the master ‼️**
+**‼️ By default: The reference language in your local repository is the master ‼️**
 
 - if you have new keys in your local namespace it will add the missing one to locize
 - if you have new namespaces in your local language directory it will add the missing one to locize
 - if you have less keys (you have deleted some keys) in your local namespace it will remove them in locize too
 - all non reference languages will always be just locally replaced by what is published on locize
 - if you change the values of existing keys in the reference language, it will not change them in locize (to change the existing values you have to change it directly in locize)
+- **if you want to take into account all languages instead of the reference language only while comparing the namespace content between local and remote, you can use the command argument *--reference-language-only false***
+- **if you want to take into account the modification time while comparing the namespace content between local and remote, you can use the command argument *--compare-modification-time true***
 
 
 ### Step 4: verify
@@ -154,6 +156,9 @@ locize delete-namespace common --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 
 
 
 ## Migration of existing i18next files
+We suggest to use the sync command instead of the migrate command.
+The migrate command is older and only works with json files.
+
 ### Step 1: Go near to your translation files
 
 At the moment only i18next translation files (json) are supported

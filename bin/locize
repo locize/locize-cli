@@ -358,6 +358,8 @@ program
   .option('-u, --update-values <true|false>', `This will update values of existing translations. (default: false)`, 'false')
   .option('-P, --language-folder-prefix <prefix>', `This will be added as a local folder name prefix in front of the language.`, '')
   .option('-d, --dry <true|false>', `Dry run (default: false)`, 'false')
+  .option('-R, --reference-language-only <true|false>', `Check for changes in reference language only. (default: true)`, 'true')
+  .option('-t, --compare-modification-time <true|false>', `while comparing the namespace content between local and remote, take the modification time of the local file and the last modified time of the remote namespace into account. (default: false)`, 'false')
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((cmd) => {
     try {
@@ -377,7 +379,7 @@ program
       return;
     }
 
-    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
       process.exit(1);
@@ -395,6 +397,8 @@ program
     const updateValues = cmd.updateValues === 'true';
     const languageFolderPrefix = cmd.languageFolderPrefix || '';
     const skipEmpty = cmd.skipEmpty === 'true';
+    const referenceLanguageOnly = cmd.referenceLanguageOnly === 'false' ? false : true;
+    const compareModificationTime = cmd.compareModificationTime === 'true';
 
     sync({
       apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
@@ -407,6 +411,8 @@ program
       languageFolderPrefix: languageFolderPrefix,
       clean: clean,
       skipEmpty: skipEmpty,
+      referenceLanguageOnly: referenceLanguageOnly,
+      compareModificationTime: compareModificationTime,
       dry: dry
     });
   })
