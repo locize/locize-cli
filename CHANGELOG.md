@@ -1,3 +1,6 @@
+## 4.2.1
+- paged update for sync command
+
 ## 4.2.0
 - introduce "reference-language-only" argument for sync command
 - introduce "compare-modification-time" argument for sync command

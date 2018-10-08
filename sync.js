@@ -356,26 +356,54 @@ const update = (opt, lng, ns, cb) => {
 
   if (opt.dry) return cb(null);
 
-  request({
-    method: 'POST',
-    json: true,
-    url: opt.apiPath + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace,
-    body: data,
-    headers: {
-      'Authorization': opt.apiKey
-    }
-  }, (err, res, obj) => {
-    if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (err) return cb(err);
-      if (obj && (obj.errorMessage || obj.message)) {
-        return cb(new Error((obj.errorMessage || obj.message)));
+  var payloadKeysLimit = 1000;
+
+  function send(d, clb) {
+    request({
+      method: 'POST',
+      json: true,
+      url: opt.apiPath + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace,
+      body: d,
+      headers: {
+        'Authorization': opt.apiKey
       }
+    }, (err, res, obj) => {
+      if (err || (obj && (obj.errorMessage || obj.message))) {
+        if (err) return clb(err);
+        if (obj && (obj.errorMessage || obj.message)) {
+          return clb(new Error((obj.errorMessage || obj.message)));
+        }
+      }
+      if (res.statusCode >= 300) {
+        return clb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+      }
+      clb(null);
+    });
+  }
+
+  if (Object.keys(data).length > payloadKeysLimit) {
+    var tasks = [];
+    var keysInObj = Object.keys(data);
+
+    while (keysInObj.length > payloadKeysLimit) {
+      (function() {
+        var pagedData = {};
+        keysInObj.splice(0, payloadKeysLimit).forEach((k) => pagedData[k] = data[k]);
+        tasks.push((c) => send(pagedData, c));
+      })();
     }
-    if (res.statusCode >= 300) {
-      return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
-    }
-    cb(null);
-  });
+
+    if (keysInObj.length === 0) return cb(null);
+
+    var finalPagedData = {};
+    keysInObj.splice(0, keysInObj.length).forEach((k) => finalPagedData[k] = data[k]);
+    tasks.push((c) => send(finalPagedData, c));
+
+    async.series(tasks, cb);
+    return;
+  }
+
+  send(data, cb);
 };
 
 const cleanupLanguages = (opt, remoteLanguages) => {
