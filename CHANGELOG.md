@@ -1,3 +1,6 @@
+## 4.2.2
+- throttle the update requests in the sync command
+
 ## 4.2.1
 - paged update for sync command
 

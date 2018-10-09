@@ -377,7 +377,7 @@ const update = (opt, lng, ns, cb) => {
       if (res.statusCode >= 300) {
         return clb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
       }
-      clb(null);
+      setTimeout(() => clb(null), 1000);
     });
   }
 
