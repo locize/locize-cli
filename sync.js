@@ -439,7 +439,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
       if (err) return handleError(err);
 
       var wasThereSomethingToUpdate = false;
-      async.eachLimit(compared, require('os').cpus().length, (ns, clb) => {
+      async.eachLimit(compared, Math.round(require('os').cpus().length / 2), (ns, clb) => {
         if (!cb) {
           if (ns.diff.toRemove.length > 0) {
             console.log(colors.red(`removing ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`));
@@ -477,7 +477,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
           const nsOnlyRemove = cloneDeep(ns);
           nsOnlyRemove.diff.toAdd = [];
           nsOnlyRemove.diff.toUpdate = [];
-          async.eachLimit(remoteLanguages, require('os').cpus().length, (lng, clb) => update(opt, lng, nsOnlyRemove, clb), clb);
+          async.eachLimit(remoteLanguages, Math.round(require('os').cpus().length / 2), (lng, clb) => update(opt, lng, nsOnlyRemove, clb), clb);
         });
       }, (err) => {
         if (err) return handleError(err);
