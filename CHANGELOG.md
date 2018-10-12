@@ -1,3 +1,6 @@
+## 4.3.0
+- add possibility to download only a dedicated namespace in all languages
+
 ## 4.2.3
 - throttle the update requests in the sync command
 

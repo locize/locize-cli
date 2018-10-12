@@ -39,6 +39,9 @@ function handleDownload(opt, url, err, res, downloads, cb) {
     const lng = splitted[download.isPrivate ? 3 : 2];
     const namespace = splitted[download.isPrivate ? 4 : 3];
     opt.isPrivate = download.isPrivate;
+
+    if (opt.namespace && opt.namespace !== namespace) return clb(null);
+
     getRemoteNamespace(opt, lng, namespace, (err, ns, lastModified) => {
       if (err) return clb(err);
 
