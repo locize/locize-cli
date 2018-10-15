@@ -1,3 +1,6 @@
+## 4.3.1
+- add possibility to download multiple namespaces in all languages
+
 ## 4.3.0
 - add possibility to download only a dedicated namespace in all languages
 

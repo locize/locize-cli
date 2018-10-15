@@ -41,6 +41,7 @@ function handleDownload(opt, url, err, res, downloads, cb) {
     opt.isPrivate = download.isPrivate;
 
     if (opt.namespace && opt.namespace !== namespace) return clb(null);
+    if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return clb(null);
 
     getRemoteNamespace(opt, lng, namespace, (err, ns, lastModified) => {
       if (err) return clb(err);
@@ -104,6 +105,11 @@ const download = (opt, cb) => {
   opt.path = opt.path || opt.target;
 
   var url = opt.apiPath + '/download/' + opt.projectId;
+
+  if (opt.namespace && opt.namespace.indexOf(',') > 0) {
+    opt.namespaces = opt.namespace.split(',');
+    delete opt.namespace;
+  }
 
   if (opt.version) {
     url += '/' + opt.version;
