@@ -358,7 +358,7 @@ const update = (opt, lng, ns, cb) => {
 
   var payloadKeysLimit = 1000;
 
-  function send(d, clb) {
+  function send(d, clb, isRetrying) {
     request({
       method: 'POST',
       json: true,
@@ -371,6 +371,9 @@ const update = (opt, lng, ns, cb) => {
       if (err || (obj && (obj.errorMessage || obj.message))) {
         if (err) return clb(err);
         if (obj && (obj.errorMessage || obj.message)) {
+          if (res.statusCode === 504 && !isRetrying) {
+            return setTimeout(() => send(d, clb, true), 3000);
+          }
           return clb(new Error((obj.errorMessage || obj.message)));
         }
       }

@@ -1,3 +1,6 @@
+## 4.3.3
+- retry post call once on gateway timeout
+
 ## 4.3.2
 - fix sync command when project/version is empty
 
