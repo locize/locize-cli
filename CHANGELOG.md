@@ -1,3 +1,6 @@
+## 4.3.2
+- fix sync command when project/version is empty
+
 ## 4.3.1
 - add possibility to download multiple namespaces in all languages
 
