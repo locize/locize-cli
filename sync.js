@@ -204,12 +204,13 @@ const getDownloads = (opt, cb) => {
       'Authorization': opt.apiKey
     } : undefined
   }, (err, res, obj) => {
-    if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (err) return cb(err);
-      if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
+    if (err) return cb(err);
+    if (res.statusCode >= 300) {
+      if (obj && (obj.errorMessage || obj.message)) {
+        return cb(new Error((obj.errorMessage || obj.message)));
+      }
+      return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
     }
-    if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
-
     cb(null, obj);
   });
 };
@@ -368,16 +369,14 @@ const update = (opt, lng, ns, cb) => {
         'Authorization': opt.apiKey
       }
     }, (err, res, obj) => {
-      if (err || (obj && (obj.errorMessage || obj.message))) {
-        if (err) return clb(err);
-        if (obj && (obj.errorMessage || obj.message)) {
-          if (res.statusCode === 504 && !isRetrying) {
-            return setTimeout(() => send(d, clb, true), 3000);
-          }
-          return clb(new Error((obj.errorMessage || obj.message)));
-        }
+      if (err) return clb(err);
+      if (res.statusCode === 504 && !isRetrying) {
+        return setTimeout(() => send(d, clb, true), 3000);
       }
       if (res.statusCode >= 300) {
+        if (obj && (obj.errorMessage || obj.message)) {
+          return clb(new Error((obj.errorMessage || obj.message)));
+        }
         return clb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
       }
       setTimeout(() => clb(null), 1000);

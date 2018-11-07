@@ -1,3 +1,6 @@
+## 4.3.4
+- fix strange error handling #16
+
 ## 4.3.3
 - retry post call once on gateway timeout
 
