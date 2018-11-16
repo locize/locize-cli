@@ -25,7 +25,7 @@
     "rimraf": "2.6.2",
     "strings-file": "0.0.5",
     "tmexchange": "1.1.1",
-    "xliff": "4.1.1",
+    "xliff": "4.1.2",
     "xlsx": "0.14.1"
   },
   "devDependencies": {

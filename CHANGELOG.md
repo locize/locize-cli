@@ -1,3 +1,6 @@
+## 4.4.2
+- update dependencies
+
 ## 4.4.1
 - update dependencies
 
