@@ -1,3 +1,6 @@
+## 4.4.0
+- introduce laravel format
+
 ## 4.3.4
 - fix strange error handling #16
 

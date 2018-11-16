@@ -8,7 +8,8 @@ const fileExtensionsMap = {
   '.xlsx': ['xlsx'],
   '.xliff': ['xliff2', 'xliff12'],
   '.ftl': ['fluent'],
-  '.tmx': ['tmx']
+  '.tmx': ['tmx'],
+  '.php': ['laravel']
 };
 
 const acceptedFileExtensions = Object.keys(fileExtensionsMap);

@@ -19,6 +19,7 @@ const targetOfjs = require('xliff/targetOfjs');
 const resx2js = require('resx/resx2js');
 const ftl2js = require('fluent_conv/ftl2js');
 const tmx2js = require('tmexchange/tmx2js');
+const laravel2js = require('laravelphp/laravel2js');
 const getRemoteNamespace = require('./getRemoteNamespace');
 const getRemoteLanguages = require('./getRemoteLanguages');
 const convertToDesiredFormat = require('./convertToDesiredFormat');
@@ -134,6 +135,10 @@ const convertToFlatFormat = (opt, data, cb) => {
         }
         cb(null, res);
       });
+      return;
+    }
+    if (opt.format === 'laravel') {
+      laravel2js(data.toString(), cb);
       return;
     }
     cb(new Error(`${opt.format} is not a valid format!`));

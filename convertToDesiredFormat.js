@@ -10,6 +10,7 @@ const createxliff12 = require('xliff/createxliff12');
 const js2resx = require('resx/js2resx');
 const js2ftl = require('fluent_conv/js2ftl');
 const js2tmx = require('tmexchange/js2tmx');
+const js2laravel = require('laravelphp/js2laravel');
 const unflatten = require('./unflatten');
 const getRemoteNamespace = require('./getRemoteNamespace');
 const removeUndefinedFromArrays = require('./removeUndefinedFromArrays');
@@ -168,6 +169,10 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
         });
         js2tmx(js2TmxData, cb);
       });
+      return;
+    }
+    if (opt.format === 'laravel') {
+      js2laravel(flatten(data), cb);
       return;
     }
     cb(new Error(`${opt.format} is not a valid format!`));
