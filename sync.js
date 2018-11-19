@@ -153,27 +153,30 @@ const parseLocalLanguage = (opt, lng, cb) => {
     files = getFiles(path.join(opt.path, opt.languageFolderPrefix + lng));
   } catch (err) {}
   async.map(files, (file, clb) => {
-    fs.readFile(path.join(opt.path, opt.languageFolderPrefix + lng, file), (err, data) => {
+    const fExt = path.extname(file);
+    const namespace = path.basename(file, fExt);
+    const fPath = path.join(opt.path, opt.languageFolderPrefix + lng, file);
+    fs.readFile(fPath, (err, data) => {
       if (err) return clb(err);
 
-      if (fileExtensionsMap[path.extname(file)].indexOf(opt.format) < 0) {
-        return clb(new Error(`Format mismatch! Found ${fileExtensionsMap[path.extname(file)][0]} but requested ${opt.format}!`));
+      if (fileExtensionsMap[fExt].indexOf(opt.format) < 0) {
+        return clb(new Error(`Format mismatch! Found ${fileExtensionsMap[fExt][0]} but requested ${opt.format}!`));
       }
 
       convertToFlatFormat(opt, data, (err, content) => {
         if (err) {
           err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
-          err.message += '\n' + path.join(opt.path, opt.languageFolderPrefix + lng, file);
+          err.message += '\n' + fPath;
           return clb(err);
         }
 
-        fs.stat(path.join(opt.path, opt.languageFolderPrefix + lng, file), (err, stat) => {
+        fs.stat(fPath, (err, stat) => {
           if (err) return clb(err);
 
           clb(null, {
-            namespace: path.basename(file, path.extname(file)),
-            path: path.join(opt.path, opt.languageFolderPrefix + lng, file),
-            extension: path.extname(file),
+            namespace: namespace,
+            path: fPath,
+            extension: fExt,
             content: content,
             language: lng,
             mtime: stat.mtime
@@ -189,8 +192,17 @@ const parseLocalReference = (opt, cb) => parseLocalLanguage(opt, opt.referenceLa
 const parseLocalLanguages = (opt, lngs, cb) => {
   var res = [];
   async.each(lngs, (lng, clb) => {
+    if (opt.language && (lng !== opt.language && lng !== opt.referenceLanguage)) {
+      return clb();
+    }
     parseLocalLanguage(opt, lng, (err, nss) => {
       if (err) return clb(err);
+      if (opt.namespace) {
+        nss = nss.filter((ns) => ns.namespace === opt.namespace);
+      }
+      if (opt.namespaces && opt.namespaces.length > 0) {
+        nss = nss.filter((ns) => opt.namespaces.indexOf(ns.namespace) > -1);
+      }
       res = res.concat(nss);
       clb();
     });
@@ -329,6 +341,11 @@ const downloadAll = (opt, remoteLanguages, omitRef, cb) => {
       const lng = splitted[download.isPrivate ? 3 : 2];
       const namespace = splitted[download.isPrivate ? 4 : 3];
       opt.isPrivate = download.isPrivate;
+
+      if (opt.language && opt.language !== lng && lng !== opt.referenceLanguage) return clb(null);
+      if (opt.namespace && opt.namespace !== namespace) return clb(null);
+      if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return clb(null);
+
       getRemoteNamespace(opt, lng, namespace, (err, ns, lastModified) => {
         if (err) return clb(err);
 
@@ -416,7 +433,10 @@ const update = (opt, lng, ns, cb) => {
 const cleanupLanguages = (opt, remoteLanguages) => {
   const dirs = getDirectories(opt.path).filter((dir) => dir.indexOf('.') !== 0);
   dirs.filter((lng) => lng !== opt.referenceLanguage).forEach((lng) => rimraf.sync(path.join(opt.path, opt.languageFolderPrefix + lng)));
-  remoteLanguages.forEach((lng) => mkdirp.sync(path.join(opt.path, opt.languageFolderPrefix + lng)));
+  remoteLanguages.forEach((lng) => {
+    if (opt.language && opt.language !== lng) return;
+    mkdirp.sync(path.join(opt.path, opt.languageFolderPrefix + lng));
+  });
 };
 
 const handleError = (err, cb) => {
@@ -509,6 +529,11 @@ const sync = (opt, cb) => {
 
   if (!opt.dry && opt.clean) rimraf.sync(path.join(opt.path, '*'));
   if (!opt.dry) mkdirp.sync(opt.path);
+
+  if (opt.namespace && opt.namespace.indexOf(',') > 0) {
+    opt.namespaces = opt.namespace.split(',');
+    delete opt.namespace;
+  }
 
   getRemoteLanguages(opt, (err, remoteLanguages) => {
     if (err) return handleError(err);

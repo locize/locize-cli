@@ -1,3 +1,6 @@
+## 4.5.0
+- introduce language and namespace argument for sync command
+
 ## 4.4.2
 - update dependencies
 

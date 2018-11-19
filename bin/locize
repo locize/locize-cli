@@ -360,6 +360,8 @@ program
   .option('-d, --dry <true|false>', `Dry run (default: false)`, 'false')
   .option('-R, --reference-language-only <true|false>', `Check for changes in reference language only. (default: true)`, 'true')
   .option('-t, --compare-modification-time <true|false>', `while comparing the namespace content between local and remote, take the modification time of the local file and the last modified time of the remote namespace into account. (default: false)`, 'false')
+  .option('-l, --language <lng>', `The language that should be targeted`)
+  .option('-n, --namespace <ns>', `The namespace that should be targeted`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((cmd) => {
     try {
@@ -388,6 +390,10 @@ program
 
     const version = cmd.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
 
+    const language = cmd.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
+
+    const namespace = cmd.namespace;
+
     if (!path.isAbsolute(cmd.path)) {
       cmd.path = path.join(process.cwd(), cmd.path);
     }
@@ -413,6 +419,8 @@ program
       skipEmpty: skipEmpty,
       referenceLanguageOnly: referenceLanguageOnly,
       compareModificationTime: compareModificationTime,
+      language: language,
+      namespace: namespace,
       dry: dry
     });
   })
