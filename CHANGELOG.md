@@ -1,3 +1,6 @@
+## 4.5.1
+- added support for nested laravel format
+
 ## 4.5.0
 - introduce language and namespace argument for sync command
 
