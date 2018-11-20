@@ -172,7 +172,7 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
       return;
     }
     if (opt.format === 'laravel') {
-      js2laravel(flatten(data), cb);
+      js2laravel(unflatten(data), cb);
       return;
     }
     cb(new Error(`${opt.format} is not a valid format!`));

@@ -138,7 +138,7 @@ const convertToFlatFormat = (opt, data, cb) => {
       return;
     }
     if (opt.format === 'laravel') {
-      laravel2js(data.toString(), cb);
+      cb(null, flatten(laravel2js(data.toString())));
       return;
     }
     cb(new Error(`${opt.format} is not a valid format!`));
@@ -432,7 +432,7 @@ const update = (opt, lng, ns, cb) => {
 
 const cleanupLanguages = (opt, remoteLanguages) => {
   const dirs = getDirectories(opt.path).filter((dir) => dir.indexOf('.') !== 0);
-  dirs.filter((lng) => lng !== opt.referenceLanguage).forEach((lng) => rimraf.sync(path.join(opt.path, opt.languageFolderPrefix + lng)));
+  if (!opt.language && !opt.namespace && !opt.namespaces) dirs.filter((lng) => lng !== opt.referenceLanguage).forEach((lng) => rimraf.sync(path.join(opt.path, opt.languageFolderPrefix + lng)));
   remoteLanguages.forEach((lng) => {
     if (opt.language && opt.language !== lng) return;
     mkdirp.sync(path.join(opt.path, opt.languageFolderPrefix + lng));
