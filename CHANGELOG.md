@@ -1,3 +1,6 @@
+## 4.5.2
+- locize sync: fix callback in case of error
+
 ## 4.5.1
 - added support for nested laravel format
 
