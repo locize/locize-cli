@@ -458,7 +458,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
   }
 
   getDownloads(opt, (err, downloads) => {
-    if (err) return cb(err);
+    if (err) return handleError(err);
 
     opt.isPrivate = downloads.length > 0 && downloads[0].isPrivate;
 
