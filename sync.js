@@ -245,6 +245,7 @@ const compareNamespace = (local, remote, lastModifiedLocal, lastModifiedRemote) 
   local = local || {};
   remote = remote || {};
   Object.keys(local).forEach((k) => {
+    if (remote[k] === '' && local[k] === '') return;
     if (!remote[k]) {
       if (wasLastChangedRemote) {
         diff.toRemoveLocally.push(k); // will download later
@@ -261,6 +262,7 @@ const compareNamespace = (local, remote, lastModifiedLocal, lastModifiedRemote) 
     }
   });
   Object.keys(remote).forEach((k) => {
+    if (local[k] === '' && remote[k] === '') return;
     if (!local[k]) {
       if (wasLastChangedRemote) {
         diff.toAddLocally.push(k); // will download later

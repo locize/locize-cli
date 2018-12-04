@@ -1,3 +1,6 @@
+## 4.5.3
+- locize sync: fix edge case comparison when local key and remote key are empty
+
 ## 4.5.2
 - locize sync: fix callback in case of error
 
