@@ -24,6 +24,7 @@ const getRemoteNamespace = require('./getRemoteNamespace');
 const getRemoteLanguages = require('./getRemoteLanguages');
 const convertToDesiredFormat = require('./convertToDesiredFormat');
 const formats = require('./formats');
+const lngCodes = require('./lngs.json');
 const fileExtensionsMap = formats.fileExtensionsMap;
 const acceptedFileExtensions = formats.acceptedFileExtensions;
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap;
@@ -434,7 +435,12 @@ const update = (opt, lng, ns, cb) => {
 
 const cleanupLanguages = (opt, remoteLanguages) => {
   const dirs = getDirectories(opt.path).filter((dir) => dir.indexOf('.') !== 0);
-  if (!opt.language && !opt.namespace && !opt.namespaces) dirs.filter((lng) => lng !== opt.referenceLanguage).forEach((lng) => rimraf.sync(path.join(opt.path, opt.languageFolderPrefix + lng)));
+  if (!opt.language && !opt.namespace && !opt.namespaces) {
+    dirs
+      .filter((lng) => lng !== opt.referenceLanguage)
+      .filter((lng) => !!lngCodes.find((c) => lng === c || lng.indexOf(c + '-') === 0))
+      .forEach((lng) => rimraf.sync(path.join(opt.path, opt.languageFolderPrefix + lng)));
+  }
   remoteLanguages.forEach((lng) => {
     if (opt.language && opt.language !== lng) return;
     mkdirp.sync(path.join(opt.path, opt.languageFolderPrefix + lng));

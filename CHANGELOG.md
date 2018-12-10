@@ -1,3 +1,6 @@
+## 4.5.4
+- locize sync: make it a bit safer #19
+
 ## 4.5.3
 - locize sync: fix edge case comparison when local key and remote key are empty
 
