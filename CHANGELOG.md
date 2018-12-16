@@ -1,3 +1,6 @@
+## 4.5.5
+- update dependencies
+
 ## 4.5.4
 - locize sync: make it a bit safer #19
 
