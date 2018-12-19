@@ -1,5 +1,6 @@
 const request = require('request');
 const flatten = require('flat');
+const sortFlatResources = require('./sortFlatResources');
 
 const getRemoteNamespace = (opt, lng, ns, cb) => {
   request({
@@ -17,7 +18,7 @@ const getRemoteNamespace = (opt, lng, ns, cb) => {
       }
       return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
     }
-    cb(null, flatten(obj), res.headers['last-modified'] ? new Date(res.headers['last-modified']) : undefined);
+    cb(null, sortFlatResources(flatten(obj)), res.headers['last-modified'] ? new Date(res.headers['last-modified']) : undefined);
   });
 };
 

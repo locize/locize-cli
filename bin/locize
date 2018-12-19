@@ -21,6 +21,7 @@ const sync = require('../sync');
 const copyVersion = require('../copyVersion');
 const publishVersion = require('../publishVersion');
 const deleteNamespace = require('../deleteNamespace');
+const formatFn = require('../format');
 
 var config = {};
 
@@ -223,7 +224,7 @@ program
 program
   .command('download')
   .alias('dl')
-  .description('download a namespace')
+  .description('download namespaces')
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
   .option('-l, --language <lng>', `The language that should be targeted`)
@@ -244,7 +245,7 @@ program
       } catch (e) {}
     }
 
-    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = cmd.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
     if (!projectId) {
       console.error('  error: missing required argument `projectId`');
       process.exit(1);
@@ -584,6 +585,53 @@ program
     console.log();
     console.log('    $ locize delete-namespace common');
     console.log('    $ locize delete-namespace common --api-key <apiKey> --project-id <projectId>');
+    console.log();
+  });
+
+
+program
+  .command('format [fileOrDirectory]')
+  .alias('ft')
+  .description('format local files')
+  .option('-f, --format <json>', `File format of namespaces (default: json; [flat, xliff2, xliff12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx, fluent, tmx, laravel])`,)
+  .option('-l, --reference-language <lng>', `Some format conversions need to know the reference language.`, 'en')
+  .option('-d, --dry <true|false>', `Dry run (default: false)`, 'false')
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
+  .action((fileOrDirectory, cmd) => {
+    try {
+      config = ini.parse(fs.readFileSync(cmd.configPath || workingDirectory, 'utf-8'));
+    } catch (e) {
+      try {
+        config = ini.parse(fs.readFileSync(cmd.configPath || home, 'utf-8'));
+      } catch (e) {}
+    }
+
+    fileOrDirectory = fileOrDirectory || '.';
+
+    if (!path.isAbsolute(fileOrDirectory)) {
+      fileOrDirectory = path.join(process.cwd(), fileOrDirectory);
+    }
+
+    const format = cmd.format;
+    const dry = cmd.dry === 'true';
+    const referenceLanguage = cmd.referenceLanguage;
+
+    formatFn({
+      fileOrDirectory: fileOrDirectory,
+      format: format,
+      referenceLanguage: referenceLanguage,
+      dry: dry
+    });
+  })
+  .on('--help', () => {
+    console.log('  Examples:');
+    console.log();
+    console.log('    $ locize format');
+    console.log('    $ locize format path/to/file');
+    console.log('    $ locize format path/to/dictionary');
+    console.log('    $ locize format path/to/dictionary --format android');
+    console.log('    $ locize format path/to/dictionary --format android --dry true');
+    console.log('    $ locize format path/to/dictionary --format xliff2 --reference-language en');
     console.log();
   });
 

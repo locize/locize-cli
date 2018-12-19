@@ -16,6 +16,7 @@ const getRemoteNamespace = require('./getRemoteNamespace');
 const removeUndefinedFromArrays = require('./removeUndefinedFromArrays');
 
 const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => {
+  opt.getNamespace = opt.getNamespace || getRemoteNamespace;
   try {
     if (opt.format === 'json') {
       try {
@@ -43,7 +44,7 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
       return;
     }
     if (opt.format === 'csv') {
-      getRemoteNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
+      opt.getNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
         if (err) return cb(err);
 
         const js2CsvData = Object.keys(flatten(data)).reduce((mem, k) => {
@@ -69,7 +70,7 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
       return;
     }
     if (opt.format === 'xlsx') {
-      getRemoteNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
+      opt.getNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
         if (err) return cb(err);
 
         const js2XlsxData = Object.keys(flatten(data)).reduce((mem, k) => {
@@ -120,7 +121,7 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
     }
     if (opt.format === 'xliff2' || opt.format === 'xliff12') {
       const fn = opt.format === 'xliff12' ? createxliff12 : createxliff;
-      getRemoteNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
+      opt.getNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
         if (err) return cb(err);
 
         fn(
@@ -147,7 +148,7 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
       return;
     }
     if (opt.format === 'tmx') {
-      getRemoteNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
+      opt.getNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
         if (err) return cb(err);
 
         const js = flatten(data);

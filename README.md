@@ -208,6 +208,17 @@ Navigate to your locize project and check the results => [www.locize.io](https:/
 
 
 
+## Format local files (i.e. in combination with download command)
+### Step 1: execute
+
+Add your api-key and your project-id and let's go...
+
+```sh
+locize format path/to/dictionary --format android
+```
+
+
+
 ## Other information
 
 You can define a config file in your home directory (or wherever you want (by specifying it in the command)) that contains defaults for your commands.

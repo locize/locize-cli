@@ -1,3 +1,6 @@
+## 4.6.0
+- introduce format command
+
 ## 4.5.5
 - update dependencies
 
