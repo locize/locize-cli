@@ -71,7 +71,22 @@ const parseLocalLanguage = (opt, lng, cb) => {
   }, cb);
 };
 
-const parseLocalReference = (opt, cb) => parseLocalLanguage(opt, opt.referenceLanguage, cb);
+const filterNamespaces = (opt, nss) => {
+  if (opt.namespace) {
+    nss = nss.filter((ns) => ns.namespace === opt.namespace);
+  }
+  if (opt.namespaces && opt.namespaces.length > 0) {
+    nss = nss.filter((ns) => opt.namespaces.indexOf(ns.namespace) > -1);
+  }
+
+  return nss;
+};
+
+const parseLocalReference = (opt, cb) => parseLocalLanguage(opt, opt.referenceLanguage, (err, nss) => {
+  if (err) return cb(err);
+
+  cb(err, filterNamespaces(opt, nss));
+});
 
 const parseLocalLanguages = (opt, lngs, cb) => {
   var res = [];
@@ -81,13 +96,7 @@ const parseLocalLanguages = (opt, lngs, cb) => {
     }
     parseLocalLanguage(opt, lng, (err, nss) => {
       if (err) return clb(err);
-      if (opt.namespace) {
-        nss = nss.filter((ns) => ns.namespace === opt.namespace);
-      }
-      if (opt.namespaces && opt.namespaces.length > 0) {
-        nss = nss.filter((ns) => opt.namespaces.indexOf(ns.namespace) > -1);
-      }
-      res = res.concat(nss);
+      res = res.concat(filterNamespaces(opt, nss));
       clb();
     });
   }, (err) => {
