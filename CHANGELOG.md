@@ -1,3 +1,6 @@
+## 4.6.1
+- filter namespaces based on options when reference-language-only is false (#21 #22) thanks to [Joe Holdcroft](https://github.com/joeholdcroft)
+
 ## 4.6.0
 - introduce format command
 
