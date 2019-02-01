@@ -247,10 +247,10 @@ locize add common title "the title of my cool app"
 
 ### Additionally if these environment variables are set:
 
-LOCIZE_PROJECTID or LOCIZE_PID
-LOCIZE_API_KEY or LOCIZE_KEY
-LOCIZE_VERSION or LOCIZE_VER
-LOCIZE_LANGUAGE or LOCIZE_LANG or LOCIZE_LNG
+- LOCIZE_PROJECTID or LOCIZE_PID
+- LOCIZE_API_KEY or LOCIZE_KEY
+- LOCIZE_VERSION or LOCIZE_VER
+- LOCIZE_LANGUAGE or LOCIZE_LANG or LOCIZE_LNG
 
 they will also be considered with this priority:
 
