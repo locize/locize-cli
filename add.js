@@ -12,7 +12,13 @@ const add = (opt, cb) => {
     .replace('{{ns}}', opt.namespace)
     .replace('{{namespace}}', opt.namespace);
 
-  if (!cb) console.log(colors.yellow(`adding ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
+  if (!cb) {
+    if (opt.value === undefined || opt.value === null) {
+      console.log(colors.yellow(`removing ${opt.key} from ${opt.version}/${opt.language}/${opt.namespace}...`));
+    } else {
+      console.log(colors.yellow(`adding ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
+    }
+  }
 
   var data = flatten(opt.data || {});
   if (!opt.data) {
