@@ -13,7 +13,7 @@ const add = (opt, cb) => {
     .replace('{{namespace}}', opt.namespace);
 
   if (!cb) {
-    if (opt.value === undefined || opt.value === null) {
+    if (!opt.data && (opt.value === undefined || opt.value === null)) {
       console.log(colors.yellow(`removing ${opt.key} from ${opt.version}/${opt.language}/${opt.namespace}...`));
     } else {
       console.log(colors.yellow(`adding ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
@@ -35,7 +35,11 @@ const add = (opt, cb) => {
     }
   }, (err, res, obj) => {
     if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (!cb) console.log(colors.red(`add failed for ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
+      if (!opt.data && (opt.value === undefined || opt.value === null)) {
+        console.log(colors.red(`remove failed for ${opt.key} from ${opt.version}/${opt.language}/${opt.namespace}...`));
+      } else {
+        console.log(colors.red(`add failed for ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
+      }
 
       if (err) {
         if (!cb) { console.error(colors.red(err.message)); process.exit(1); }
@@ -53,7 +57,13 @@ const add = (opt, cb) => {
       if (cb) cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
       return;
     }
-    if (!cb) console.log(colors.green(`added ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
+    if (!cb) {
+      if (!opt.data && (opt.value === undefined || opt.value === null)) {
+        console.log(colors.green(`removed ${opt.key} from ${opt.version}/${opt.language}/${opt.namespace}...`));
+      } else {
+        console.log(colors.green(`added ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`));
+      }
+    }
     if (cb) cb(null);
   });
 };
