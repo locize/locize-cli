@@ -123,6 +123,8 @@ const download = (opt, cb) => {
 
   if (opt.clean) rimraf.sync(path.join(opt.path, '*'));
 
+  mkdirp.sync(opt.path);
+
   if (!cb) console.log(colors.yellow(`downloading ${url} to ${opt.path}...`));
 
   getRemoteLanguages(opt, (err) => {

@@ -1,3 +1,7 @@
+## 4.6.2
+- optimize log message for remove key
+- make sure download path exists
+
 ## 4.6.1
 - filter namespaces based on options when reference-language-only is false (#21 #22) thanks to [Joe Holdcroft](https://github.com/joeholdcroft)
 
