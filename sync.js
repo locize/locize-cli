@@ -369,8 +369,13 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
       async.eachLimit(compared, Math.round(require('os').cpus().length / 2), (ns, clb) => {
         if (!cb) {
           if (ns.diff.toRemove.length > 0) {
-            console.log(colors.red(`removing ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`));
-            if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`));
+            if (opt.skipDelete) {
+              console.log(colors.bgRed(`skipping the removal of ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`));
+              if (opt.dry) console.log(colors.bgRed(`skipped to remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`));
+            } else {
+              console.log(colors.red(`removing ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`));
+              if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`));
+            }
           }
           if (ns.diff.toRemoveLocally.length > 0) {
             console.log(colors.red(`removing ${ns.diff.toRemoveLocally.length} keys in ${ns.language}/${ns.namespace} locally...`));

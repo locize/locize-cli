@@ -1,3 +1,6 @@
+## 4.7.0
+- locize sync: introduce --skip-delete parameter #24
+
 ## 4.6.3
 - optimize log message for remove key
 - make sure download path exists

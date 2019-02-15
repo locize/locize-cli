@@ -357,6 +357,7 @@ program
   .option('-s, --skip-empty <true|false>', `Skips to download empty files (default: false)`, 'false')
   .option('-c, --clean <true|false>', `Removes all local files (default: false)`, 'false')
   .option('-u, --update-values <true|false>', `This will update values of existing translations. (default: false)`, 'false')
+  .option('-S, --skip-delete <true|false>', `This will skip the removal of keys on locize. (default: false)`, 'false')
   .option('-P, --language-folder-prefix <prefix>', `This will be added as a local folder name prefix in front of the language.`, '')
   .option('-d, --dry <true|false>', `Dry run (default: false)`, 'false')
   .option('-R, --reference-language-only <true|false>', `Check for changes in reference language only. (default: true)`, 'true')
@@ -402,6 +403,7 @@ program
     const clean = cmd.clean === 'true';
     const dry = cmd.dry === 'true';
     const updateValues = cmd.updateValues === 'true';
+    const skipDelete = cmd.skipDelete === 'true';
     const languageFolderPrefix = cmd.languageFolderPrefix || '';
     const skipEmpty = cmd.skipEmpty === 'true';
     const referenceLanguageOnly = cmd.referenceLanguageOnly === 'false' ? false : true;
@@ -415,6 +417,7 @@ program
       path: cmd.path,
       format: cmd.format,
       updateValues: updateValues,
+      skipDelete: skipDelete,
       languageFolderPrefix: languageFolderPrefix,
       clean: clean,
       skipEmpty: skipEmpty,
