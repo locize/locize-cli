@@ -264,7 +264,9 @@ const downloadAll = (opt, remoteLanguages, omitRef, cb) => {
 
 const update = (opt, lng, ns, cb) => {
   var data = {};
-  ns.diff.toRemove.forEach((k) => data[k] = null);
+  if (!opt.skipDelete) {
+    ns.diff.toRemove.forEach((k) => data[k] = null);
+  }
   ns.diff.toAdd.forEach((k) => data[k] = ns.content[k]);
   if (opt.updateValues) {
     ns.diff.toUpdate.forEach((k) => data[k] = ns.content[k]);

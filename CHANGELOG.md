@@ -1,3 +1,6 @@
+## 4.7.1
+- locize sync: fix --skip-delete parameter #24
+
 ## 4.7.0
 - locize sync: introduce --skip-delete parameter #24
 
