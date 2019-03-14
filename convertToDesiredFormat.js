@@ -54,6 +54,8 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
             [opt.referenceLanguage]: refNs[k] || '',
             [lng]: value.replace(/"/g, '""')
           };
+          line[opt.referenceLanguage] = line[opt.referenceLanguage].replace(/\n/g, '\\NeWlInE\\');
+          line[lng] = line[lng].replace(/\n/g, '\\NeWlInE\\');
           mem.push(line);
 
           return mem;
@@ -65,7 +67,7 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
           // objectDenote: '.',
           // arrayDenote: '[]'
         };
-        cb(null, csvjson.toCSV(js2CsvData, options));
+        cb(null, `\ufeff${csvjson.toCSV(js2CsvData, options).replace(/\\NeWlInE\\/g, '\n')}`);
       });
       return;
     }

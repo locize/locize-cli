@@ -1,3 +1,6 @@
+## 4.7.2
+- locize sync: optimize csv multiline handling
+
 ## 4.7.1
 - locize sync: fix --skip-delete parameter #24
 

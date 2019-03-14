@@ -20,12 +20,14 @@ const convertToFlatFormat = (opt, data, cb) => {
       return;
     }
     if (opt.format === 'po' || opt.format === 'gettext') {
-      gettextToI18next(opt.referenceLanguage, data.toString())
-        .then((ret) => {
-          try {
-            cb(null, flatten(JSON.parse(ret.toString())));
-          } catch (err) { cb(err); }
-        }, cb);
+      try {
+        gettextToI18next(opt.referenceLanguage, data.toString())
+          .then((ret) => {
+            try {
+              cb(null, flatten(JSON.parse(ret.toString())));
+            } catch (err) { cb(err); }
+          }, cb);
+      } catch (err) { cb(err); }
       return;
     }
     if (opt.format === 'csv') {
@@ -33,12 +35,38 @@ const convertToFlatFormat = (opt, data, cb) => {
         delimiter: ',',
         quote: '"'
       };
+
+      // CRLF => LF
+      var text = data.toString().replace(/\r\n/g, '\n');
+
+      // handle multiline stuff
+      const lines = text.split('\n');
+      const toHandle = [];
+      lines.forEach((l) => {
+        const amountOfOccurrencies = l.split('"').length - 1;
+        if (amountOfOccurrencies % 2 === 1) toHandle.push(l);
+      });
+      while (toHandle.length > 1) {
+        var firstToHandle = toHandle.shift();
+        const secondToHandle = toHandle.shift();
+        const indexOfFirst = lines.indexOf(firstToHandle);
+        const indexOfSecond = lines.indexOf(secondToHandle);
+        var handlingIndex = indexOfFirst;
+        while (handlingIndex < indexOfSecond) {
+          firstToHandle += `\\NeWlInE\\${lines[handlingIndex + 1]}`;
+          handlingIndex++;
+        }
+        lines[indexOfFirst] = firstToHandle;
+        lines.splice(indexOfFirst + 1, indexOfSecond - indexOfFirst);
+      }
+      text = lines.join('\n');
+
       // https://en.wikipedia.org/wiki/Delimiter-separated_values
       // temporary replace "" with \_\" so we can revert this 3 lines after
-      const jsonData = csvjson.toObject(data.toString().replace(/""/g, '\\_\\"'), options);
+      const jsonData = csvjson.toObject(text.replace(/""/g, '\\_\\"'), options);
       data = jsonData.reduce((mem, entry) => {
         if (entry.key && typeof entry[opt.referenceLanguage] === 'string') {
-          mem[entry.key.replace(/\\_\\"/g, '"')] = entry[opt.referenceLanguage].replace(/\\_\\"/g, '"');
+          mem[entry.key.replace(/\\_\\"/g, '"').replace(/\\NeWlInE\\/g, '\n')] = entry[opt.referenceLanguage].replace(/\\_\\"/g, '"').replace(/\\NeWlInE\\/g, '\n');
         }
         return mem;
       }, {});
