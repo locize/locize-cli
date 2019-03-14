@@ -1,4 +1,4 @@
-## 4.7.2
+## 4.7.3
 - locize sync: optimize csv multiline handling
 
 ## 4.7.1

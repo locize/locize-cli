@@ -54,6 +54,7 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
             [opt.referenceLanguage]: refNs[k] || '',
             [lng]: value.replace(/"/g, '""')
           };
+          line.key = line.key.replace(/\n/g, '\\NeWlInE\\');
           line[opt.referenceLanguage] = line[opt.referenceLanguage].replace(/\n/g, '\\NeWlInE\\');
           line[lng] = line[lng].replace(/\n/g, '\\NeWlInE\\');
           mem.push(line);
