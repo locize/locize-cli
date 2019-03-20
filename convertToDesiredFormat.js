@@ -122,8 +122,8 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
       cb(null, data);
       return;
     }
-    if (opt.format === 'xliff2' || opt.format === 'xliff12') {
-      const fn = opt.format === 'xliff12' ? createxliff12 : createxliff;
+    if (opt.format === 'xliff2' || opt.format === 'xliff12' || opt.format === 'xlf2' || opt.format === 'xlf12') {
+      const fn = (opt.format === 'xliff12' || opt.format === 'xlf12') ? createxliff12 : createxliff;
       opt.getNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
         if (err) return cb(err);
 

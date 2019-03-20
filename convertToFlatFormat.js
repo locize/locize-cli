@@ -105,8 +105,8 @@ const convertToFlatFormat = (opt, data, cb) => {
       cb(null, data);
       return;
     }
-    if (opt.format === 'xliff2' || opt.format === 'xliff12') {
-      const fn = opt.format === 'xliff12' ? xliff12ToJs : xliff2js;
+    if (opt.format === 'xliff2' || opt.format === 'xliff12' || opt.format === 'xlf2' || opt.format === 'xlf12') {
+      const fn = (opt.format === 'xliff12' || opt.format === 'xlf12') ? xliff12ToJs : xliff2js;
       fn(data.toString(), (err, res) => {
         if (err) return cb(err);
         if (!res.targetLanguage) {

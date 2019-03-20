@@ -1,3 +1,6 @@
+## 4.7.5
+- xliff: file extenstion xlf
+
 ## 4.7.4
 - xliff: added a first fallback for angular format
 

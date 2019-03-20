@@ -7,6 +7,7 @@ const fileExtensionsMap = {
   '.yaml': ['yaml', 'yaml-rails'],
   '.xlsx': ['xlsx'],
   '.xliff': ['xliff2', 'xliff12'],
+  '.xlf': ['xlf2', 'xlf12'],
   '.ftl': ['fluent'],
   '.tmx': ['tmx'],
   '.php': ['laravel']
