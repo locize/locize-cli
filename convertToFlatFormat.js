@@ -7,6 +7,7 @@ const stringsFile = require('strings-file');
 const xliff2js = require('xliff/xliff2js');
 const xliff12ToJs = require('xliff/xliff12ToJs');
 const targetOfjs = require('xliff/targetOfjs');
+const sourceOfjs = require('xliff/sourceOfjs');
 const resx2js = require('resx/resx2js');
 const ftl2js = require('fluent_conv/ftl2js');
 const tmx2js = require('tmexchange/tmx2js');
@@ -108,7 +109,11 @@ const convertToFlatFormat = (opt, data, cb) => {
       const fn = opt.format === 'xliff12' ? xliff12ToJs : xliff2js;
       fn(data.toString(), (err, res) => {
         if (err) return cb(err);
-        targetOfjs(res, cb);
+        if (!res.targetLanguage) {
+          sourceOfjs(res, cb);
+        } else {
+          targetOfjs(res, cb);
+        }
       });
       return;
     }

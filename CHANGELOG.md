@@ -1,3 +1,6 @@
+## 4.7.4
+- xliff: added a first fallback for angular format
+
 ## 4.7.3
 - locize sync: optimize csv multiline handling
 
