@@ -1,3 +1,6 @@
+## 4.7.6
+- sync and migrate: ignore "Unnecessary Request" advice
+
 ## 4.7.5
 - xliff: file extenstion xlf
 

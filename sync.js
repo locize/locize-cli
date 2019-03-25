@@ -292,7 +292,7 @@ const update = (opt, lng, ns, cb) => {
       if (res.statusCode === 504 && !isRetrying) {
         return setTimeout(() => send(d, clb, true), 3000);
       }
-      if (res.statusCode >= 300) {
+      if (res.statusCode >= 300 && res.statusCode !== 412) {
         if (obj && (obj.errorMessage || obj.message)) {
           return clb(new Error((obj.errorMessage || obj.message)));
         }
