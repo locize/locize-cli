@@ -1,3 +1,6 @@
+## 4.7.7
+- update dependencies
+
 ## 4.7.6
 - sync and migrate: ignore "Unnecessary Request" advice
 
