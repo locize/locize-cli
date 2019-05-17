@@ -14,6 +14,7 @@ const js2laravel = require('laravelphp/js2laravel');
 const unflatten = require('./unflatten');
 const getRemoteNamespace = require('./getRemoteNamespace');
 const removeUndefinedFromArrays = require('./removeUndefinedFromArrays');
+const shouldUnflatten = require('./shouldUnflatten');
 
 const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => {
   opt.getNamespace = opt.getNamespace || getRemoteNamespace;
@@ -106,7 +107,7 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
     if (opt.format === 'yaml-rails') {
       var newData = {};
       newData[lng] = {};
-      newData[lng][namespace] = unflatten(data);
+      newData[lng][namespace] = shouldUnflatten(data) ? unflatten(data) : data;
       cb(null, jsyaml.safeDump(removeUndefinedFromArrays(newData)));
       return;
     }
