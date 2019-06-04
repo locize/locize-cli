@@ -1,3 +1,6 @@
+## 4.7.9
+- update dependencies
+
 ## 4.7.8
 - optimize convert to yaml-rails (check if should unflatten first)
 
