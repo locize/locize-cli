@@ -11,6 +11,7 @@ const js2resx = require('resx/js2resx');
 const js2ftl = require('fluent_conv/js2ftl');
 const js2tmx = require('tmexchange/js2tmx');
 const js2laravel = require('laravelphp/js2laravel');
+const javaProperties = require('@js.properties/properties');
 const unflatten = require('./unflatten');
 const getRemoteNamespace = require('./getRemoteNamespace');
 const removeUndefinedFromArrays = require('./removeUndefinedFromArrays');
@@ -178,6 +179,10 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
     }
     if (opt.format === 'laravel') {
       js2laravel(unflatten(data), cb);
+      return;
+    }
+    if (opt.format === 'properties') {
+      cb(null, javaProperties.stringifyFromProperties(data, { eol: '\n' }));
       return;
     }
     cb(new Error(`${opt.format} is not a valid format!`));

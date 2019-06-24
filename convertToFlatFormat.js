@@ -12,6 +12,7 @@ const resx2js = require('resx/resx2js');
 const ftl2js = require('fluent_conv/ftl2js');
 const tmx2js = require('tmexchange/tmx2js');
 const laravel2js = require('laravelphp/laravel2js');
+const javaProperties = require('@js.properties/properties');
 const flatten = require('flat');
 
 const convertToFlatFormat = (opt, data, cb) => {
@@ -145,6 +146,10 @@ const convertToFlatFormat = (opt, data, cb) => {
     }
     if (opt.format === 'laravel') {
       cb(null, flatten(laravel2js(data.toString())));
+      return;
+    }
+    if (opt.format === 'properties') {
+      cb(null, javaProperties.parseToProperties(data.toString()));
       return;
     }
     cb(new Error(`${opt.format} is not a valid format!`));

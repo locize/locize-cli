@@ -1,3 +1,6 @@
+## 4.8.0
+- introduce (Java-)properties format
+
 ## 4.7.9
 - update dependencies
 

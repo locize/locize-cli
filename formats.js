@@ -10,7 +10,8 @@ const fileExtensionsMap = {
   '.xlf': ['xlf2', 'xlf12'],
   '.ftl': ['fluent'],
   '.tmx': ['tmx'],
-  '.php': ['laravel']
+  '.php': ['laravel'],
+  '.properties': ['properties']
 };
 
 const acceptedFileExtensions = Object.keys(fileExtensionsMap);
