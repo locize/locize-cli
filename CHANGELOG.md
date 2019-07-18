@@ -1,3 +1,6 @@
+## 4.8.1
+- gettext format: check if it's i18next format
+
 ## 4.8.0
 - introduce (Java-)properties format
 
