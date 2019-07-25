@@ -1,3 +1,6 @@
+## 4.8.2
+- locize get: ability to get multiple keys
+
 ## 4.8.1
 - gettext format: check if it's i18next format
 

@@ -106,7 +106,7 @@ const download = (opt, cb) => {
 
   var url = opt.apiPath + '/download/' + opt.projectId;
 
-  if (opt.namespace && opt.namespace.indexOf(',') > 0) {
+  if (opt.namespace && opt.namespace.indexOf(',') > 0 && opt.namespace.indexOf(' ') < 0) {
     opt.namespaces = opt.namespace.split(',');
     delete opt.namespace;
   }
