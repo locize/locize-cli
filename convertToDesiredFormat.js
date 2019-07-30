@@ -33,10 +33,9 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
     }
     if (opt.format === 'po' || opt.format === 'gettext') {
       const flatData = flatten(data);
-      const seemsi18next = !!Object.keys(flatData).find((k) => k.indexOf('_plural') === k.length - 7);
+      const needsPluralHandling = !!Object.keys(flatData).find((k) => k.indexOf('_plural') === k.length - 7);
       const gettextOpt = { project: 'locize', language: lng, potCreationDate: lastModified, poRevisionDate: lastModified, ctxSeparator: '_ is default but we set it to something that is never found!!!', ignorePlurals: true };
-      if (seemsi18next) {
-        delete gettextOpt.ctxSeparator;
+      if (needsPluralHandling) {
         delete gettextOpt.ignorePlurals;
       }
       i18nextToPo(lng, JSON.stringify(flatData), gettextOpt)

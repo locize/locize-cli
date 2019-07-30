@@ -1,3 +1,6 @@
+## 4.8.3
+- gettext format: don't assume i18next -> handle just plurals for non gettext_i18next format
+
 ## 4.8.2
 - locize get: ability to get multiple keys
 
