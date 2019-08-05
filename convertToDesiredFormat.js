@@ -17,7 +17,14 @@ const getRemoteNamespace = require('./getRemoteNamespace');
 const removeUndefinedFromArrays = require('./removeUndefinedFromArrays');
 const shouldUnflatten = require('./shouldUnflatten');
 
-const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => {
+const convertToDesiredFormat = (
+  opt,
+  namespace,
+  lng,
+  data,
+  lastModified,
+  cb
+) => {
   opt.getNamespace = opt.getNamespace || getRemoteNamespace;
   try {
     if (opt.format === 'json') {
@@ -33,22 +40,30 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
     }
     if (opt.format === 'po' || opt.format === 'gettext') {
       const flatData = flatten(data);
-      const needsPluralHandling = !!Object.keys(flatData).find((k) => k.indexOf('_plural') === k.length - 7);
-      const gettextOpt = { project: 'locize', language: lng, potCreationDate: lastModified, poRevisionDate: lastModified, ctxSeparator: '_ is default but we set it to something that is never found!!!', ignorePlurals: true };
-      if (needsPluralHandling) {
-        delete gettextOpt.ignorePlurals;
-      }
-      i18nextToPo(lng, JSON.stringify(flatData), gettextOpt)
-        .then((ret) => {
-          cb(null, ret.toString());
-        }, cb);
+
+      const gettextOpt = {
+        project: 'locize',
+        language: lng,
+        potCreationDate: lastModified,
+        poRevisionDate: lastModified,
+        ctxSeparator:
+          '_ is default but we set it to something that is never found!!!',
+        persistMsgIdPlural: true
+      };
+      i18nextToPo(lng, JSON.stringify(flatData), gettextOpt).then((ret) => {
+        cb(null, ret.toString());
+      }, cb);
       return;
     }
     if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
-      i18nextToPo(lng, JSON.stringify(flatten(data)), { project: 'locize', language: lng, potCreationDate: lastModified, poRevisionDate: lastModified })
-        .then((ret) => {
-          cb(null, ret.toString());
-        }, cb);
+      i18nextToPo(lng, JSON.stringify(flatten(data)), {
+        project: 'locize',
+        language: lng,
+        potCreationDate: lastModified,
+        poRevisionDate: lastModified
+      }).then((ret) => {
+        cb(null, ret.toString());
+      }, cb);
       return;
     }
     if (opt.format === 'csv') {
@@ -57,13 +72,17 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
 
         const js2CsvData = Object.keys(flatten(data)).reduce((mem, k) => {
           const value = data[k] || '';
-          const line = { // https://en.wikipedia.org/wiki/Delimiter-separated_values
+          const line = {
+            // https://en.wikipedia.org/wiki/Delimiter-separated_values
             key: k.replace(/"/g, '""'),
             [opt.referenceLanguage]: refNs[k] || '',
             [lng]: value.replace(/"/g, '""')
           };
           line.key = line.key.replace(/\n/g, '\\NeWlInE\\');
-          line[opt.referenceLanguage] = line[opt.referenceLanguage].replace(/\n/g, '\\NeWlInE\\');
+          line[opt.referenceLanguage] = line[opt.referenceLanguage].replace(
+            /\n/g,
+            '\\NeWlInE\\'
+          );
           line[lng] = line[lng].replace(/\n/g, '\\NeWlInE\\');
           mem.push(line);
 
@@ -72,11 +91,16 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
         const options = {
           delimiter: ',',
           wrap: true,
-          headers: 'relative',
+          headers: 'relative'
           // objectDenote: '.',
           // arrayDenote: '[]'
         };
-        cb(null, `\ufeff${csvjson.toCSV(js2CsvData, options).replace(/\\NeWlInE\\/g, '\n')}`);
+        cb(
+          null,
+          `\ufeff${csvjson
+            .toCSV(js2CsvData, options)
+            .replace(/\\NeWlInE\\/g, '\n')}`
+        );
       });
       return;
     }
@@ -130,19 +154,20 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
       cb(null, data);
       return;
     }
-    if (opt.format === 'xliff2' || opt.format === 'xliff12' || opt.format === 'xlf2' || opt.format === 'xlf12') {
-      const fn = (opt.format === 'xliff12' || opt.format === 'xlf12') ? createxliff12 : createxliff;
+    if (
+      opt.format === 'xliff2' ||
+      opt.format === 'xliff12' ||
+      opt.format === 'xlf2' ||
+      opt.format === 'xlf12'
+    ) {
+      const fn =
+        opt.format === 'xliff12' || opt.format === 'xlf12'
+          ? createxliff12
+          : createxliff;
       opt.getNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
         if (err) return cb(err);
 
-        fn(
-          opt.referenceLanguage,
-          lng,
-          refNs,
-          flatten(data),
-          namespace,
-          cb
-        );
+        fn(opt.referenceLanguage, lng, refNs, flatten(data), namespace, cb);
       });
       return;
     }
@@ -153,7 +178,10 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
     if (opt.format === 'fluent') {
       Object.keys(data).forEach((k) => {
         if (!data[k] || data[k] === '') delete data[k];
-        data[k] = data[k].replace(new RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32));
+        data[k] = data[k].replace(
+          new RegExp(String.fromCharCode(160), 'g'),
+          String.fromCharCode(32)
+        );
       });
       js2ftl(unflatten(data), cb);
       return;
@@ -163,22 +191,25 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
         if (err) return cb(err);
 
         const js = flatten(data);
-        const js2TmxData = Object.keys(js).reduce((mem, k) => {
-          const refItem = refNs[k];
-          if (!refItem) return mem;
+        const js2TmxData = Object.keys(js).reduce(
+          (mem, k) => {
+            const refItem = refNs[k];
+            if (!refItem) return mem;
 
-          const value = js[k] || '';
-          mem.resources[namespace][k] = {};
-          mem.resources[namespace][k][opt.referenceLanguage] = refItem;
-          mem.resources[namespace][k][lng] = value;
+            const value = js[k] || '';
+            mem.resources[namespace][k] = {};
+            mem.resources[namespace][k][opt.referenceLanguage] = refItem;
+            mem.resources[namespace][k][lng] = value;
 
-          return mem;
-        }, {
-          resources: {
-            [namespace]: {}
+            return mem;
           },
-          sourceLanguage: opt.referenceLanguage
-        });
+          {
+            resources: {
+              [namespace]: {}
+            },
+            sourceLanguage: opt.referenceLanguage
+          }
+        );
         js2tmx(js2TmxData, cb);
       });
       return;
@@ -192,7 +223,9 @@ const convertToDesiredFormat = (opt, namespace, lng, data, lastModified, cb) => 
       return;
     }
     cb(new Error(`${opt.format} is not a valid format!`));
-  } catch (err) { cb(err); }
+  } catch (err) {
+    cb(err);
+  }
 };
 
 module.exports = convertToDesiredFormat;

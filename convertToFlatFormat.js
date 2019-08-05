@@ -23,13 +23,32 @@ const convertToFlatFormat = (opt, data, cb) => {
     }
     if (opt.format === 'po' || opt.format === 'gettext') {
       try {
-        gettextToI18next(opt.referenceLanguage, data.toString())
-          .then((ret) => {
-            try {
-              cb(null, flatten(JSON.parse(ret.toString())));
-            } catch (err) { cb(err); }
-          }, cb);
-      } catch (err) { cb(err); }
+        gettextToI18next(opt.referenceLanguage, data.toString(), {
+          persistMsgIdPlural: true
+        }).then((ret) => {
+          try {
+            cb(null, flatten(JSON.parse(ret.toString())));
+          } catch (err) {
+            cb(err);
+          }
+        }, cb);
+      } catch (err) {
+        cb(err);
+      }
+      return;
+    }
+    if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
+      try {
+        gettextToI18next(opt.referenceLanguage, data.toString()).then((ret) => {
+          try {
+            cb(null, flatten(JSON.parse(ret.toString())));
+          } catch (err) {
+            cb(err);
+          }
+        }, cb);
+      } catch (err) {
+        cb(err);
+      }
       return;
     }
     if (opt.format === 'csv') {
@@ -68,7 +87,11 @@ const convertToFlatFormat = (opt, data, cb) => {
       const jsonData = csvjson.toObject(text.replace(/""/g, '\\_\\"'), options);
       data = jsonData.reduce((mem, entry) => {
         if (entry.key && typeof entry[opt.referenceLanguage] === 'string') {
-          mem[entry.key.replace(/\\_\\"/g, '"').replace(/\\NeWlInE\\/g, '\n')] = entry[opt.referenceLanguage].replace(/\\_\\"/g, '"').replace(/\\NeWlInE\\/g, '\n');
+          mem[
+            entry.key.replace(/\\_\\"/g, '"').replace(/\\NeWlInE\\/g, '\n')
+          ] = entry[opt.referenceLanguage]
+            .replace(/\\_\\"/g, '"')
+            .replace(/\\NeWlInE\\/g, '\n');
         }
         return mem;
       }, {});
@@ -93,7 +116,14 @@ const convertToFlatFormat = (opt, data, cb) => {
     }
     if (opt.format === 'yaml-rails') {
       const jsObj = jsyaml.safeLoad(data);
-      cb(null, flatten(jsObj[Object.keys(jsObj)[0]][Object.keys(jsObj[Object.keys(jsObj)[0]])[0]]));
+      cb(
+        null,
+        flatten(
+          jsObj[Object.keys(jsObj)[0]][
+            Object.keys(jsObj[Object.keys(jsObj)[0]])[0]
+          ]
+        )
+      );
       return;
     }
     if (opt.format === 'android') {
@@ -106,8 +136,16 @@ const convertToFlatFormat = (opt, data, cb) => {
       cb(null, data);
       return;
     }
-    if (opt.format === 'xliff2' || opt.format === 'xliff12' || opt.format === 'xlf2' || opt.format === 'xlf12') {
-      const fn = (opt.format === 'xliff12' || opt.format === 'xlf12') ? xliff12ToJs : xliff2js;
+    if (
+      opt.format === 'xliff2' ||
+      opt.format === 'xliff12' ||
+      opt.format === 'xlf2' ||
+      opt.format === 'xlf12'
+    ) {
+      const fn =
+        opt.format === 'xliff12' || opt.format === 'xlf12'
+          ? xliff12ToJs
+          : xliff2js;
       fn(data.toString(), (err, res) => {
         if (err) return cb(err);
         if (!res.targetLanguage) {
@@ -123,9 +161,17 @@ const convertToFlatFormat = (opt, data, cb) => {
       return;
     }
     if (opt.format === 'fluent') {
-      const fluentJS = ftl2js(data.toString().replace(new RegExp(String.fromCharCode(160), 'g'), String.fromCharCode(32)));
+      const fluentJS = ftl2js(
+        data
+          .toString()
+          .replace(
+            new RegExp(String.fromCharCode(160), 'g'),
+            String.fromCharCode(32)
+          )
+      );
       Object.keys(fluentJS).forEach((prop) => {
-        if (fluentJS[prop] && fluentJS[prop].comment) delete fluentJS[prop].comment;
+        if (fluentJS[prop] && fluentJS[prop].comment)
+          delete fluentJS[prop].comment;
       });
       cb(null, flatten(fluentJS));
       return;
@@ -153,7 +199,9 @@ const convertToFlatFormat = (opt, data, cb) => {
       return;
     }
     cb(new Error(`${opt.format} is not a valid format!`));
-  } catch (err) { cb(err); }
+  } catch (err) {
+    cb(err);
+  }
 };
 
 module.exports = convertToFlatFormat;
