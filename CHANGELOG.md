@@ -1,3 +1,7 @@
+## 5.1.0
+
+- locize rm: omitting the language argument will remove the key from all languages
+
 ## 5.0.0
 
 - [BREAKING] gettext format: handle it closer to basic gettext format keeping msgid, msgid_plural when converting po -> json (locize UI) -> po

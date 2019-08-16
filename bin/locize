@@ -164,7 +164,7 @@ program
   .description('remove a key')
   .option('-k, --api-key <apiKey>', `The api-key that should be used`)
   .option('-i, --project-id <projectId>', `The project-id that should be used`)
-  .option('-l, --language <lng>', `The language that should be targeted`)
+  .option('-l, --language <lng>', `The language that should be targeted (omitting this attribute will result in removing the key from all languages)`)
   .option('-v, --ver <version>', `The version that should be targeted (default: latest)`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((namespace, key, cmd) => {
@@ -191,11 +191,11 @@ program
     }
 
     const language = cmd.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
-    if (!language) {
-      console.error('  error: missing required argument `language`');
-      process.exit(1);
-      return;
-    }
+    // if (!language) {
+    //   console.error('  error: missing required argument `language`');
+    //   process.exit(1);
+    //   return;
+    // }
 
     const version = cmd.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
 

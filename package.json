@@ -28,7 +28,7 @@
     "strings-file": "0.0.5",
     "tmexchange": "1.2.0",
     "xliff": "4.3.1",
-    "xlsx": "0.14.3"
+    "xlsx": "0.15.1"
   },
   "devDependencies": {
     "eslint": "5.16.0"
