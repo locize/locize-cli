@@ -55,19 +55,24 @@ function handleDownload(opt, url, err, res, downloads, cb) {
           err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
           return clb(err);
         }
-
+        var filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format];
+        var mkdirPath;
+        if (filledMask.lastIndexOf(path.sep) > 0) {
+          mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep));
+        }
         if (!opt.version) {
-          mkdirp.sync(path.join(opt.path, version, lng));
-          fs.writeFile(path.join(opt.path, version, lng, namespace + reversedFileExtensionsMap[opt.format]), converted, clb);
+          if (mkdirPath) mkdirp.sync(path.join(opt.path, version, mkdirPath));
+          fs.writeFile(path.join(opt.path, version, filledMask), converted, clb);
           return;
         }
         if (!opt.language) {
-          mkdirp.sync(path.join(opt.path, lng));
-          fs.writeFile(path.join(opt.path, lng, namespace + reversedFileExtensionsMap[opt.format]), converted, clb);
+          if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath));
+          fs.writeFile(path.join(opt.path, filledMask), converted, clb);
           return;
         }
 
-        fs.writeFile(path.join(opt.path, namespace + reversedFileExtensionsMap[opt.format]), converted, clb);
+        if (filledMask.indexOf('/') > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + lng, '');
+        fs.writeFile(path.join(opt.path, filledMask), converted, clb);
       });
     });
   }, (err) => {
@@ -103,6 +108,10 @@ const download = (opt, cb) => {
   opt.apiPath = opt.apiPath || 'https://api.locize.io/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
   opt.languageFolderPrefix = opt.languageFolderPrefix || '';
   opt.path = opt.path || opt.target;
+  opt.pathMaskInterpolationPrefix = opt.pathMaskInterpolationPrefix || '{{';
+  opt.pathMaskInterpolationSuffix = opt.pathMaskInterpolationSuffix || '}}';
+  opt.pathMask = opt.pathMask || `${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}${path.sep}${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`;
+  opt.pathMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, `${opt.languageFolderPrefix}${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`);
 
   var url = opt.apiPath + '/download/' + opt.projectId;
 

@@ -1,3 +1,7 @@
+## 6.0.0
+
+- locize sync/download: introduced --path-mask={{language}}{{namespace}}
+
 ## 5.1.0
 
 - locize rm: omitting the language argument will remove the key from all languages
