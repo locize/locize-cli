@@ -1,6 +1,6 @@
 ## 6.0.0
 
-- locize sync/download: introduced --path-mask={{language}}{{namespace}}
+- locize sync/download: introduced --path-mask={{language}}/{{namespace}}
 
 ## 5.1.0
 
