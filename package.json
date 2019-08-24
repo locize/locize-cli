@@ -31,11 +31,16 @@
     "xlsx": "0.15.1"
   },
   "devDependencies": {
-    "eslint": "6.2.1"
+    "eslint": "6.2.1",
+    "pkg": "4.4.0"
   },
   "scripts": {
     "lint": "eslint .",
-    "test": "npm run lint"
+    "test": "npm run lint",
+    "pkg": "mkdir -p ./bins && pkg ./index.js --out-path ./bins",
+    "release": "gh-release --assets ./bins/locize-linux,./bins/locize-macos,./bins/locize-win.exe",
+    "version": "npm run pkg",
+    "postversion": "git push && npm run release"
   },
   "keywords": [
     "cli",

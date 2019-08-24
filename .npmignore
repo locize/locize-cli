@@ -1,0 +1,11 @@
+.DS_Store
+test
+bins
+.eslintrc
+.gitignore
+.npmignore
+.editorconfig
+.vscode
+.eslintignore
+install.sh
+install.ps1

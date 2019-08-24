@@ -2,10 +2,24 @@
 
 # Getting started with the locize-cli
 
-## Step 0: Install the cli (preferred globally)
+## Step 0: Install the cli
+
+### with npm (preferred globally)
 
 ```sh
 npm install -g locize-cli
+```
+
+### with Shell: (downloads [released](https://github.com/locize/locize-cli/releases) (linux or macos) binaries)
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/locize/locize-cli/master/install.sh | sh
+```
+
+### with PowerShell: (downloads [released](https://github.com/locize/locize-cli/releases) (windows) binaries)
+
+```sh
+iwr https://raw.githubusercontent.com/locize/locize-cli/master/install.ps1 -useb | iex
 ```
 
 

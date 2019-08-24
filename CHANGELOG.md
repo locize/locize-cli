@@ -1,14 +1,30 @@
-## 6.0.1
+# locize-cli change log
+
+All notable changes to this project will be documented in this file.
+
+Project versioning adheres to [Semantic Versioning](http://semver.org/).
+Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
+
+
+## [6.0.2](https://github.com/locize/locize-cli/compare/v6.0.1...v6.0.2) - 2019-08-24
+
+- offer binaries for linux, macos and windows
+
+
+## [6.0.1](https://github.com/locize/locize-cli/compare/v6.0.0...v6.0.1) - 2019-08-24
 
 - locize sync/download: use path.sep instead of / (for windows users)
+
 
 ## 6.0.0
 
 - locize sync/download: introduced --path-mask={{language}}/{{namespace}}
 
+
 ## 5.1.0
 
 - locize rm: omitting the language argument will remove the key from all languages
+
 
 ## 5.0.0
 
