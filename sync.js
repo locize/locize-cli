@@ -32,23 +32,23 @@ const getDirectories = (srcpath) => {
 const parseLocalLanguage = (opt, lng, cb) => {
   const filledLngMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng);
   var firstPartLngMask, lastPartLngMask;
-  if (opt.pathMask.indexOf('{{language}}') > opt.pathMask.indexOf('{{namespace}}')) {
+  if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`)) {
     const secondPartMask = opt.pathMask.substring(opt.pathMask.indexOf(path.sep) + 1);
-    firstPartLngMask = secondPartMask.substring(0, secondPartMask.indexOf('{{language}}'));
-    lastPartLngMask = secondPartMask.substring(secondPartMask.indexOf('{{language}}') + '{{language}}'.length);
+    firstPartLngMask = secondPartMask.substring(0, secondPartMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`));
+    lastPartLngMask = secondPartMask.substring(secondPartMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) + `${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`.length);
   }
 
   var lngPath;
   if (filledLngMask.lastIndexOf(path.sep) > 0) {
     lngPath = filledLngMask.substring(0, filledLngMask.lastIndexOf(path.sep));
   }
-  if (!opt.dry && lngPath && lngPath.indexOf('{{namespace}}') < 0) mkdirp.sync(path.join(opt.path, lngPath));
+  if (!opt.dry && lngPath && lngPath.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) < 0) mkdirp.sync(path.join(opt.path, lngPath));
   var files = [];
   try {
     if (lngPath) {
-      if (lngPath.indexOf('{{namespace}}') > -1) {
-        const firstPart = lngPath.substring(0, lngPath.indexOf('{{namespace}}'));
-        const lastPart = lngPath.substring(lngPath.indexOf('{{namespace}}') + '{{namespace}}'.length);
+      if (lngPath.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) > -1) {
+        const firstPart = lngPath.substring(0, lngPath.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`));
+        const lastPart = lngPath.substring(lngPath.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) + `${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`.length);
         const dirs = getDirectories(opt.path).filter((d) => d.startsWith(firstPart) && d.endsWith(lastPart));
         dirs.forEach((d) => {
           const fls = getFiles(path.join(opt.path, d)).filter((f) => path.basename(f, path.extname(f)) === `${firstPartLngMask}${lng}${lastPartLngMask}`);
@@ -63,7 +63,7 @@ const parseLocalLanguage = (opt, lng, cb) => {
       const lngIndex = filledLngMask.indexOf(lng);
       const lngLeftLength = filledLngMask.length - lngIndex;
       files = files.filter((f) => { // {{language}} can be left or right of {{namespace}}
-        if (opt.pathMask.indexOf('{{language}}') < opt.pathMask.indexOf('{{namespace}}')) {
+        if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) < opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`)) {
           return f.indexOf(lng) === lngIndex;
         }
         return (path.basename(f, path.extname(f)).length - f.indexOf(lng)) === lngLeftLength;
@@ -307,7 +307,7 @@ const downloadAll = (opt, remoteLanguages, omitRef, cb) => {
 
           const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format];
           if (opt.dry) return clb(null);
-          if (opt.pathMask.indexOf('{{language}}') > opt.pathMask.indexOf('{{namespace}}') && filledMask.lastIndexOf(path.sep) > 0) {
+          if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) && filledMask.lastIndexOf(path.sep) > 0) {
             mkdirp.sync(path.join(opt.path, filledMask.substring(0, filledMask.lastIndexOf(path.sep))));
           }
           fs.writeFile(path.join(opt.path, filledMask), converted, clb);
@@ -412,7 +412,7 @@ const cleanupLanguages = (opt, remoteLanguages) => {
     if (filledLngMask.lastIndexOf(path.sep) > 0) {
       lngPath = filledLngMask.substring(0, filledLngMask.lastIndexOf(path.sep));
     }
-    if (lngPath && lngPath.indexOf('{{namespace}}') < 0) mkdirp.sync(path.join(opt.path, lngPath));
+    if (lngPath && lngPath.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) < 0) mkdirp.sync(path.join(opt.path, lngPath));
   });
 };
 

@@ -71,7 +71,7 @@ function handleDownload(opt, url, err, res, downloads, cb) {
           return;
         }
 
-        if (filledMask.indexOf('/') > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + lng, '');
+        if (filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + lng, '');
         fs.writeFile(path.join(opt.path, filledMask), converted, clb);
       });
     });

@@ -1,3 +1,7 @@
+## 6.0.1
+
+- locize sync/download: use path.sep instead of / (for windows users)
+
 ## 6.0.0
 
 - locize sync/download: introduced --path-mask={{language}}/{{namespace}}
