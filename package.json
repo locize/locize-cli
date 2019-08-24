@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "eslint": "6.2.1",
+    "gh-release": "3.5.0",
     "pkg": "4.4.0"
   },
   "scripts": {
