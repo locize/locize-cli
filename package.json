@@ -38,7 +38,7 @@
   "scripts": {
     "lint": "eslint .",
     "test": "npm run lint",
-    "pkg": "mkdir -p ./bins && pkg ./index.js --out-path ./bins",
+    "pkg": "mkdir -p ./bins && pkg ./bin/locize --out-path ./bins",
     "release": "gh-release --assets ./bins/locize-linux,./bins/locize-macos,./bins/locize-win.exe",
     "version": "npm run pkg",
     "postversion": "git push && npm run release"
