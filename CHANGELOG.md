@@ -6,6 +6,11 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## [6.0.4](https://github.com/locize/locize-cli/compare/v6.0.3...v6.0.4) - 2019-09-09
+
+- fix file ending for strings resources
+
+
 ## [6.0.3](https://github.com/locize/locize-cli/compare/v6.0.2...v6.0.3) - 2019-08-26
 
 - locize sync: ability to handle multiple subfolders in path-mask

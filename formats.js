@@ -1,7 +1,8 @@
 const fileExtensionsMap = {
   '.json': ['json', 'flat'],
   '.po': ['po', 'gettext', 'po_i18next', 'gettext_i18next'],
-  '.xml': ['strings', 'android'],
+  '.xml': ['android'],
+  '.strings': ['strings'],
   '.csv': ['csv'],
   '.resx': ['resx'],
   '.yaml': ['yaml', 'yaml-rails'],
