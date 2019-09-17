@@ -128,7 +128,7 @@ locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-pro
 - if you have new namespaces in your local language directory it will add the missing one to locize
 - if you have less keys (you have deleted some keys) in your local namespace it will remove them in locize too
 - all non reference languages will always be just locally replaced by what is published on locize
-- if you change the values of existing keys in the reference language, it will not change them in locize (to change the existing values you have to change it directly in locize)
+- if you change the values of existing keys in the reference language, it will not change them in locize (to change the existing values you have to change it directly in locize or use the *--update-values true* argument)
 - **if you want to take into account all languages instead of the reference language only while comparing the namespace content between local and remote, you can use the command argument *--reference-language-only false***
 - **if you want to take into account the modification time while comparing the namespace content between local and remote, you can use the command argument *--compare-modification-time true***
 
