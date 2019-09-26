@@ -6,6 +6,11 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## [6.0.6](https://github.com/locize/locize-cli/compare/v6.0.5...v6.0.6) - 2019-09-26
+
+- fallback for xliff files
+
+
 ## [6.0.5](https://github.com/locize/locize-cli/compare/v6.0.4...v6.0.5) - 2019-09-09
 
 - fix file ending for strings resources

@@ -119,7 +119,7 @@ const parseLocalLanguage = (opt, lng, cb) => {
         return clb(new Error(`Format mismatch! Found ${fileExtensionsMap[fExt][0]} but requested ${opt.format}!`));
       }
 
-      convertToFlatFormat(opt, data, (err, content) => {
+      convertToFlatFormat(opt, data, lng, (err, content) => {
         if (err) {
           err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
           err.message += '\n' + fPath;

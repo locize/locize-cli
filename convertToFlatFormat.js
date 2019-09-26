@@ -15,7 +15,11 @@ const laravel2js = require('laravelphp/laravel2js');
 const javaProperties = require('@js.properties/properties');
 const flatten = require('flat');
 
-const convertToFlatFormat = (opt, data, cb) => {
+const convertToFlatFormat = (opt, data, lng, cb) => {
+  if (!cb) {
+    cb = lng;
+    lng = undefined;
+  }
   try {
     if (opt.format === 'json' || opt.format === 'flat') {
       cb(null, flatten(JSON.parse(data.toString())));
@@ -151,7 +155,16 @@ const convertToFlatFormat = (opt, data, cb) => {
         if (!res.targetLanguage) {
           sourceOfjs(res, cb);
         } else {
-          targetOfjs(res, cb);
+          targetOfjs(res, (err, ret) => {
+            if (err) return cb(err);
+            if (lng !== opt.referenceLanguage) return cb(null, ret);
+            ret = ret || {};
+            const keys = Object.keys(ret);
+            if (keys.length === 0) return cb(null, ret);
+            const allEmpty = keys.filter((k) => ret[k] !== '').length === 0;
+            if (!allEmpty) return cb(null, ret);
+            sourceOfjs(res, cb);
+          });
         }
       });
       return;
