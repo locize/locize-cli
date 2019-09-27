@@ -131,7 +131,22 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
       return;
     }
     if (opt.format === 'android') {
-      asr2js(data.toString(), cb);
+      asr2js(data.toString(), { comment: 'right' }, (err, res) => {
+        if (err) return cb(err);
+        Object.keys(res).forEach((k) => {
+          if (res[k] !== 'string' && typeof res[k].comment === 'string') {
+            res[k] = {
+              value: res[k].value,
+              context: {
+                text: res[k].comment,
+              },
+            };
+          } else {
+            res[k] = { value: res[k].value || res[k] };
+          }
+        });
+        cb(null, res);
+      });
       return;
     }
     if (opt.format === 'strings') {
@@ -152,25 +167,62 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
           : xliff2js;
       fn(data.toString(), (err, res) => {
         if (err) return cb(err);
+        res.resources = res.resources || {};
+        const ns = Object.keys(res.resources)[0];
+        const orgRes = res.resources[ns] || res.resources;
+        function checkForContext(nsRes) {
+          Object.keys(nsRes).forEach((k) => {
+            if (orgRes[k].note && (typeof nsRes[k] === 'string' || !nsRes[k])) {
+              nsRes[k] = {
+                value: nsRes[k],
+                context: {
+                  text: orgRes[k].note,
+                },
+              };
+            }
+          });
+          return nsRes;
+        }
         if (!res.targetLanguage) {
-          sourceOfjs(res, cb);
+          sourceOfjs(res, (err, ret) => {
+            if (err) return cb(err);
+            cb(null, checkForContext(ret));
+          });
         } else {
           targetOfjs(res, (err, ret) => {
             if (err) return cb(err);
-            if (lng !== opt.referenceLanguage) return cb(null, ret);
+            if (lng !== opt.referenceLanguage) return cb(null, checkForContext(ret));
             ret = ret || {};
             const keys = Object.keys(ret);
-            if (keys.length === 0) return cb(null, ret);
+            if (keys.length === 0) return cb(null, checkForContext(ret));
             const allEmpty = keys.filter((k) => ret[k] !== '').length === 0;
-            if (!allEmpty) return cb(null, ret);
-            sourceOfjs(res, cb);
+            if (!allEmpty) return cb(null, checkForContext(ret));
+            sourceOfjs(res, (err, ret) => {
+              if (err) return cb(err);
+              cb(null, checkForContext(ret));
+            });
           });
         }
       });
       return;
     }
     if (opt.format === 'resx') {
-      resx2js(data.toString(), cb);
+      resx2js(data.toString(), (err, res) => {
+        if (err) return cb(err);
+        res = Object.keys(res).reduce((mem, k) => {
+          const value = res[k];
+          if (typeof value === 'string') {
+            mem[k] = value;
+          } else if (value.value) {
+            mem[k] = {
+              value: value.value,
+              context: value.comment ? { text: value.comment } : null,
+            };
+          }
+          return mem;
+        }, {});
+        cb(null, res);
+      });
       return;
     }
     if (opt.format === 'fluent') {
@@ -182,11 +234,23 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
             String.fromCharCode(32)
           )
       );
+      const comments = {};
       Object.keys(fluentJS).forEach((prop) => {
-        if (fluentJS[prop] && fluentJS[prop].comment)
+        if (fluentJS[prop] && fluentJS[prop].comment) {
+          comments[prop] = fluentJS[prop].comment;
           delete fluentJS[prop].comment;
+        }
       });
-      cb(null, flatten(fluentJS));
+      const res = flatten(fluentJS);
+      if (res && comments) {
+        Object.keys(comments).forEach((prop) => {
+          res[`${prop}.val`] = {
+            value: res[`${prop}.val`],
+            context: comments[prop] ? { text: comments[prop] } : null,
+          };
+        });
+      }
+      cb(null, res);
       return;
     }
     if (opt.format === 'tmx') {
