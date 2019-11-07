@@ -28,7 +28,8 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
     if (opt.format === 'po' || opt.format === 'gettext') {
       try {
         gettextToI18next(opt.referenceLanguage, data.toString(), {
-          persistMsgIdPlural: true
+          persistMsgIdPlural: true,
+          ignoreCtx: true
         }).then((ret) => {
           try {
             cb(null, flatten(JSON.parse(ret.toString())));

@@ -6,6 +6,11 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## [6.0.8](https://github.com/locize/locize-cli/compare/v6.0.7...v6.0.8) - 2019-11-07
+
+- fix for edge case for msgctxt used with non i18next
+
+
 ## [6.0.7](https://github.com/locize/locize-cli/compare/v6.0.6...v6.0.7) - 2019-09-27
 
 - try to also "import" context information

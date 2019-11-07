@@ -46,8 +46,7 @@ const convertToDesiredFormat = (
         language: lng,
         potCreationDate: lastModified,
         poRevisionDate: lastModified,
-        ctxSeparator:
-          '_ is default but we set it to something that is never found!!!',
+        ctxSeparator: '_ is default but we set it to something that is never found!!!',
         persistMsgIdPlural: true
       };
       i18nextToPo(lng, JSON.stringify(flatData), gettextOpt).then((ret) => {
