@@ -10,8 +10,8 @@ const ini = require('ini');
 
 const home = path.join(os.homedir(), '.locize');
 const workingDirectory = path.join(process.cwd(), '.locize');
-const addPathUrl = 'https://api.locize.io/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
-const getPathUrl = 'https://api.locize.io/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
+const addPathUrl = 'https://api.locize.app/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
+const getPathUrl = 'https://api.locize.app/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
 
 const migrate = require('../migrate');
 const add = require('../add');

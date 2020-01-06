@@ -135,7 +135,7 @@ locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-pro
 
 ### Step 4: verify
 
-Navigate to your locize project and check the results => [www.locize.io](https://www.locize.io)
+Navigate to your locize project and check the results => [www.locize.app](https://www.locize.app)
 
 
 ## Copy version
@@ -218,7 +218,7 @@ _Passing the argument --replace will empty the optionally existing namespace bef
 
 ### Step 4: verify
 
-Navigate to your locize project and check the results => [www.locize.io](https://www.locize.io)
+Navigate to your locize project and check the results => [www.locize.app](https://www.locize.app)
 
 
 

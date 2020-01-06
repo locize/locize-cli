@@ -105,7 +105,7 @@ const download = (opt, cb) => {
 
   if (opt.skipEmpty === undefined) opt.skipEmpty = true;
   opt.format = opt.format || 'json';
-  opt.apiPath = opt.apiPath || 'https://api.locize.io/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
+  opt.apiPath = opt.apiPath || 'https://api.locize.app/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
   opt.languageFolderPrefix = opt.languageFolderPrefix || '';
   opt.path = opt.path || opt.target;
   opt.pathMaskInterpolationPrefix = opt.pathMaskInterpolationPrefix || '{{';
