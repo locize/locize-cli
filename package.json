@@ -13,7 +13,7 @@
     "colors": "1.4.0",
     "commander": "4.1.0",
     "csvjson": "5.1.0",
-    "diff": "4.0.1",
+    "diff": "4.0.2",
     "flat": "5.0.0",
     "fluent_conv": "1.1.1",
     "i18next-conv": "9.2.0",
@@ -27,7 +27,7 @@
     "rimraf": "3.0.0",
     "strings-file": "0.0.5",
     "tmexchange": "1.2.0",
-    "xliff": "4.3.2",
+    "xliff": "4.4.0",
     "xlsx": "0.15.4"
   },
   "devDependencies": {

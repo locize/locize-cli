@@ -12,6 +12,10 @@ const getRemoteLanguages = (opt, cb) => {
     }
     if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
 
+    if (Object.keys(obj).length === 0) {
+      return cb(new Error('Project not found!'));
+    }
+
     const lngs = Object.keys(obj);
     var foundRefLng = null;
     lngs.forEach((l) => {

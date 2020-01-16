@@ -6,6 +6,11 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## [7.0.1](https://github.com/locize/locize-cli/compare/v7.0.0...v7.0.1) - 2020-01-16
+
+- alert if project not found
+
+
 ## [7.0.0](https://github.com/locize/locize-cli/compare/v6.0.8...v7.0.0) - 2020-01-06
 
 - change default api endpoint to new api.locize.app domain
