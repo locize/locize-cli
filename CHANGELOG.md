@@ -6,6 +6,11 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## [7.0.4](https://github.com/locize/locize-cli/compare/v7.0.3...v7.0.4) - 2020-04-10
+
+- update dependencies
+
+
 ## [7.0.3](https://github.com/locize/locize-cli/compare/v7.0.2...v7.0.3) - 2020-02-05
 
 - update android-string-resource dependency
