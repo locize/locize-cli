@@ -2,16 +2,16 @@ const gettextToI18next = require('i18next-conv').gettextToI18next;
 const csvjson = require('csvjson');
 const xlsx = require('xlsx');
 const jsyaml = require('js-yaml');
-const asr2js = require('android-string-resource/asr2js');
+const asr2js = require('android-string-resource/cjs/asr2js');
 const stringsFile = require('strings-file');
-const xliff2js = require('xliff/xliff2js');
-const xliff12ToJs = require('xliff/xliff12ToJs');
-const targetOfjs = require('xliff/targetOfjs');
-const sourceOfjs = require('xliff/sourceOfjs');
-const resx2js = require('resx/resx2js');
-const ftl2js = require('fluent_conv/ftl2js');
-const tmx2js = require('tmexchange/tmx2js');
-const laravel2js = require('laravelphp/laravel2js');
+const xliff2js = require('xliff/cjs/xliff2js');
+const xliff12ToJs = require('xliff/cjs/xliff12ToJs');
+const targetOfjs = require('xliff/cjs/targetOfjs');
+const sourceOfjs = require('xliff/cjs/sourceOfjs');
+const resx2js = require('resx/cjs/resx2js');
+const ftl2js = require('fluent_conv/cjs/ftl2js');
+const tmx2js = require('tmexchange/cjs/tmx2js');
+const laravel2js = require('laravelphp/cjs/laravel2js');
 const javaProperties = require('@js.properties/properties');
 const flatten = require('flat');
 
@@ -190,19 +190,15 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
             cb(null, checkForContext(ret));
           });
         } else {
-          targetOfjs(res, (err, ret) => {
-            if (err) return cb(err);
-            if (lng !== opt.referenceLanguage) return cb(null, checkForContext(ret));
-            ret = ret || {};
-            const keys = Object.keys(ret);
-            if (keys.length === 0) return cb(null, checkForContext(ret));
-            const allEmpty = keys.filter((k) => ret[k] !== '').length === 0;
-            if (!allEmpty) return cb(null, checkForContext(ret));
-            sourceOfjs(res, (err, ret) => {
-              if (err) return cb(err);
-              cb(null, checkForContext(ret));
-            });
-          });
+          let ret = targetOfjs(res);
+          if (lng !== opt.referenceLanguage) return cb(null, checkForContext(ret));
+          ret = ret || {};
+          const keys = Object.keys(ret);
+          if (keys.length === 0) return cb(null, checkForContext(ret));
+          const allEmpty = keys.filter((k) => ret[k] !== '').length === 0;
+          if (!allEmpty) return cb(null, checkForContext(ret));
+          ret = sourceOfjs(res);
+          cb(null, checkForContext(ret));
         }
       });
       return;
