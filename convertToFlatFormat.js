@@ -1,4 +1,4 @@
-const gettextToI18next = require('i18next-conv').gettextToI18next;
+const po2i18next = require('gettext-converter/cjs/po2i18next');
 const csvjson = require('csvjson');
 const xlsx = require('xlsx');
 const jsyaml = require('js-yaml');
@@ -27,16 +27,11 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
     }
     if (opt.format === 'po' || opt.format === 'gettext') {
       try {
-        gettextToI18next(opt.referenceLanguage, data.toString(), {
+        const ret = po2i18next(data.toString(), {
           persistMsgIdPlural: true,
           ignoreCtx: true
-        }).then((ret) => {
-          try {
-            cb(null, flatten(JSON.parse(ret.toString())));
-          } catch (err) {
-            cb(err);
-          }
-        }, cb);
+        });
+        cb(null, flatten(ret));
       } catch (err) {
         cb(err);
       }
@@ -44,13 +39,8 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
     }
     if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
       try {
-        gettextToI18next(opt.referenceLanguage, data.toString()).then((ret) => {
-          try {
-            cb(null, flatten(JSON.parse(ret.toString())));
-          } catch (err) {
-            cb(err);
-          }
-        }, cb);
+        const ret = po2i18next(data.toString());
+        cb(null, flatten(ret));
       } catch (err) {
         cb(err);
       }

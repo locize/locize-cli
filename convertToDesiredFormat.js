@@ -1,5 +1,5 @@
 const flatten = require('flat');
-const i18nextToPo = require('i18next-conv').i18nextToPo;
+const i18next2po = require('gettext-converter/cjs/i18next2po');
 const csvjson = require('csvjson');
 const xlsx = require('xlsx');
 const jsyaml = require('js-yaml');
@@ -49,20 +49,18 @@ const convertToDesiredFormat = (
         ctxSeparator: '_ is default but we set it to something that is never found!!!',
         persistMsgIdPlural: true
       };
-      i18nextToPo(lng, JSON.stringify(flatData), gettextOpt).then((ret) => {
-        cb(null, ret.toString());
-      }, cb);
+      cb(null, i18next2po(lng, flatData, gettextOpt));
       return;
     }
     if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
-      i18nextToPo(lng, JSON.stringify(flatten(data)), {
+      const flatData = flatten(data);
+      const gettextOpt = {
         project: 'locize',
         language: lng,
         potCreationDate: lastModified,
         poRevisionDate: lastModified
-      }).then((ret) => {
-        cb(null, ret.toString());
-      }, cb);
+      };
+      cb(null, i18next2po(lng, flatData, gettextOpt));
       return;
     }
     if (opt.format === 'csv') {
