@@ -1,9 +1,9 @@
 const colors = require('colors');
-const request = require('request');
 const flatten = require('flat');
 const url = require('url');
 const async = require('async');
 const getRemoteLanguages = require('./getRemoteLanguages');
+const request = require('./request');
 
 const _add = (opt, cb) => {
   const url = opt.addPath
@@ -28,14 +28,12 @@ const _add = (opt, cb) => {
     data[opt.key] = opt.value || null; // null will remove the key
   }
 
-  request({
-    method: 'POST',
-    json: true,
-    url: url,
-    body: data,
+  request(url, {
+    method: 'post',
     headers: {
       'Authorization': opt.apiKey
-    }
+    },
+    body: data
   }, (err, res, obj) => {
     if (err) {
       if (!opt.data && (opt.value === undefined || opt.value === null)) {
@@ -47,7 +45,7 @@ const _add = (opt, cb) => {
       if (cb) cb(err);
       return;
     }
-    if (res.statusCode >= 300 && res.statusCode !== 412) {
+    if (res.status >= 300 && res.status !== 412) {
       if (!opt.data && (opt.value === undefined || opt.value === null)) {
         console.log(colors.red(`remove failed for ${opt.key} from ${opt.version}/${opt.language}/${opt.namespace}...`));
       } else {
@@ -58,8 +56,8 @@ const _add = (opt, cb) => {
         if (cb) cb(new Error((obj.errorMessage || obj.message)));
         return;
       } else {
-        if (!cb) { console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')')); process.exit(1); }
-        if (cb) cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+        if (!cb) { console.error(colors.red(res.statusText + ' (' + res.status + ')')); process.exit(1); }
+        if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'));
         return;
       }
     }

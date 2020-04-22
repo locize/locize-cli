@@ -1,7 +1,7 @@
 const colors = require('colors');
 const mkdirp = require('mkdirp');
 const rimraf = require('rimraf');
-const request = require('request');
+const request = require('./request');
 const fs = require('fs');
 const path = require('path');
 const async = require('async');
@@ -27,9 +27,9 @@ function handleDownload(opt, url, err, res, downloads, cb) {
       return;
     }
   }
-  if (res.statusCode >= 300) {
-    if (!cb) { console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')')); process.exit(1); }
-    if (cb) cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+  if (res.status >= 300) {
+    if (!cb) { console.error(colors.red(res.statusText + ' (' + res.status + ')')); process.exit(1); }
+    if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'));
     return;
   }
 
@@ -139,20 +139,16 @@ const download = (opt, cb) => {
   getRemoteLanguages(opt, (err) => {
     if (err) return handleError(err);
 
-    request({
-      method: 'GET',
-      json: true,
-      url: url,
+    request(url, {
+      method: 'get',
       headers: opt.apiKey ? {
         'Authorization': opt.apiKey
       } : undefined
     }, (err, res, obj) => {
-      if (res && res.statusCode === 401) {
+      if (res && res.status === 401) {
         opt.apiKey = null;
-        request({
-          method: 'GET',
-          json: true,
-          url: url
+        request(url, {
+          method: 'get',
         }, (err, res, obj) => handleDownload(opt, url, err, res, obj, cb));
         return;
       }

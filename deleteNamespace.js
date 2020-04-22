@@ -1,15 +1,13 @@
 const colors = require('colors');
-const request = require('request');
+const request = require('./request');
 
 const deleteNamespace = (opt, cb) => {
   const url = opt.apiPath + '/delete/' + opt.projectId + '/' + opt.version + '/' + opt.namespace;
 
   if (!cb) console.log(colors.yellow(`deleting ${opt.namespace} from ${opt.version}...`));
 
-  request({
-    method: 'DELETE',
-    json: true,
-    url: url,
+  request(url, {
+    method: 'delete',
     headers: {
       'Authorization': opt.apiKey
     }
@@ -28,9 +26,9 @@ const deleteNamespace = (opt, cb) => {
         return;
       }
     }
-    if (res.statusCode >= 300) {
-      if (!cb) { console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')')); process.exit(1); }
-      if (cb) cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+    if (res.status >= 300) {
+      if (!cb) { console.error(colors.red(res.statusText + ' (' + res.status + ')')); process.exit(1); }
+      if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'));
       return;
     }
     if (!cb) console.log(colors.green(`deleted ${opt.namespace} from ${opt.version}...`));

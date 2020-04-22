@@ -1,12 +1,10 @@
 const colors = require('colors');
-const request = require('request');
+const request = require('./request');
 const getJob = require('./getJob');
 
 const publishVersion = (opt, cb) => {
-  request({
-    method: 'POST',
-    json: true,
-    url: opt.apiPath + '/publish/' + opt.projectId + '/' + opt.version,
+  request(opt.apiPath + '/publish/' + opt.projectId + '/' + opt.version, {
+    method: 'post',
     headers: {
       'Authorization': opt.apiKey
     }
@@ -25,9 +23,9 @@ const publishVersion = (opt, cb) => {
         return;
       }
     }
-    if (res.statusCode >= 300) {
-      if (!cb) { console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')')); process.exit(1); }
-      if (cb) cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+    if (res.status >= 300) {
+      if (!cb) { console.error(colors.red(res.statusText + ' (' + res.status + ')')); process.exit(1); }
+      if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'));
       return;
     }
 

@@ -1,5 +1,5 @@
 const colors = require('colors');
-const request = require('request');
+const request = require('./request');
 const flatten = require('flat');
 
 const get = (opt, cb) => {
@@ -19,10 +19,8 @@ const get = (opt, cb) => {
     delete opt.key;
   }
 
-  request({
-    method: 'GET',
-    json: true,
-    url: url
+  request(url, {
+    method: 'get'
   }, (err, res, obj) => {
     if (err) {
       if (!cb) console.log(colors.red(`get failed for ${opt.key || opt.keys.join(', ')} from ${opt.version}/${opt.language}/${opt.namespace}...`));
@@ -32,9 +30,9 @@ const get = (opt, cb) => {
         return;
       }
     }
-    if (res.statusCode >= 300) {
-      if (!cb) { console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')')); process.exit(1); }
-      if (cb) cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+    if (res.status >= 300) {
+      if (!cb) { console.error(colors.red(res.statusText + ' (' + res.status + ')')); process.exit(1); }
+      if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'));
       return;
     }
     // if (!cb) console.log(colors.green(`got ${opt.opt.key || opt.keys.join(', ')} from ${opt.version}/${opt.language}/${opt.namespace}...`));

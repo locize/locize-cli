@@ -1,11 +1,9 @@
 const colors = require('colors');
-const request = require('request');
+const request = require('./request');
 
 const getJob = (opt, jobId, cb) => {
-  request({
-    method: 'GET',
-    json: true,
-    url: opt.apiPath + '/jobs/' + opt.projectId + '/' + jobId,
+  request(opt.apiPath + '/jobs/' + opt.projectId + '/' + jobId, {
+    method: 'get',
     headers: {
       'Authorization': opt.apiKey
     }
@@ -24,14 +22,14 @@ const getJob = (opt, jobId, cb) => {
         return;
       }
     }
-    if (res.statusCode === 404) {
-      if (!cb) { console.error(colors.yellow(res.statusMessage + ' (' + res.statusCode + ')')); process.exit(1); }
+    if (res.status === 404) {
+      if (!cb) { console.error(colors.yellow(res.statusText + ' (' + res.status + ')')); process.exit(1); }
       if (cb) cb(null, null);
       return;
     }
-    if (res.statusCode >= 300) {
-      if (!cb) { console.error(colors.red(res.statusMessage + ' (' + res.statusCode + ')')); process.exit(1); }
-      if (cb) cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+    if (res.status >= 300) {
+      if (!cb) { console.error(colors.red(res.statusText + ' (' + res.status + ')')); process.exit(1); }
+      if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'));
       return;
     }
     if (!cb) console.log(colors.green('getting job succesfull'));

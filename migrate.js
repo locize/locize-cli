@@ -3,7 +3,7 @@ const path = require('path');
 const flatten = require('flat');
 const async = require('async');
 const colors = require('colors');
-const request = require('request');
+const request = require('./request');
 
 const getDirectories = (srcpath) => {
   return fs.readdirSync(srcpath).filter(function(file) {
@@ -66,13 +66,8 @@ const transfer = (opt, ns, cb) => {
 
   console.log(colors.yellow(`transfering ${opt.version}/${ns.language}/${ns.namespace}...`));
 
-  request({
-    method: 'POST',
-    json: true,
-    url: url,
-    qs: {
-      replace: opt.replace
-    },
+  request(url + `?replace=${!!opt.replace}`, {
+    method: 'post',
     body: ns.value,
     headers: {
       'Authorization': opt.apiKey
@@ -84,7 +79,7 @@ const transfer = (opt, ns, cb) => {
       if (err) return cb(err);
       if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
     }
-    if (res.statusCode >= 300 && res.statusCode !== 412) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+    if (res.status >= 300 && res.status !== 412) return cb(new Error(res.statusText + ' (' + res.status + ')'));
     console.log(colors.green(`transfered ${opt.version}/${ns.language}/${ns.namespace}...`));
     cb(null);
   });

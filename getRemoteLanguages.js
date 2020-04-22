@@ -1,16 +1,14 @@
-const request = require('request');
+const request = require('./request');
 
 const getRemoteLanguages = (opt, cb) => {
-  request({
-    method: 'GET',
-    json: true,
-    url: opt.apiPath + '/languages/' + opt.projectId + '?ts=' + Date.now()
+  request(opt.apiPath + '/languages/' + opt.projectId + '?ts=' + Date.now(), {
+    method: 'get'
   }, (err, res, obj) => {
     if (err || (obj && (obj.errorMessage || obj.message))) {
       if (err) return cb(err);
       if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
     }
-    if (res.statusCode >= 300) return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+    if (res.status >= 300) return cb(new Error(res.statusText + ' (' + res.status + ')'));
 
     if (Object.keys(obj).length === 0) {
       return cb(new Error('Project not found!'));

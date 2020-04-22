@@ -4,7 +4,7 @@ const mkdirp = require('mkdirp');
 const rimraf = require('rimraf');
 const async = require('async');
 const colors = require('colors');
-const request = require('request');
+const request = require('./request');
 const flatten = require('flat');
 const cloneDeep = require('lodash.clonedeep');
 const getRemoteNamespace = require('./getRemoteNamespace');
@@ -178,20 +178,18 @@ const parseLocalLanguages = (opt, lngs, cb) => {
 };
 
 const getDownloads = (opt, cb) => {
-  request({
-    method: 'GET',
-    json: true,
-    url: opt.apiPath + '/download/' + opt.projectId + '/' + opt.version,
+  request(opt.apiPath + '/download/' + opt.projectId + '/' + opt.version, {
+    method: 'get',
     headers: opt.apiKey ? {
       'Authorization': opt.apiKey
     } : undefined
   }, (err, res, obj) => {
     if (err) return cb(err);
-    if (res.statusCode >= 300) {
+    if (res.status >= 300) {
       if (obj && (obj.errorMessage || obj.message)) {
         return cb(new Error((obj.errorMessage || obj.message)));
       }
-      return cb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+      return cb(new Error(res.statusText + ' (' + res.status + ')'));
     }
     cb(null, obj);
   });
@@ -355,24 +353,22 @@ const update = (opt, lng, ns, cb) => {
   var payloadKeysLimit = 1000;
 
   function send(d, clb, isRetrying) {
-    request({
-      method: 'POST',
-      json: true,
-      url: opt.apiPath + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace,
+    request(opt.apiPath + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace, {
+      method: 'post',
       body: d,
       headers: {
         'Authorization': opt.apiKey
       }
     }, (err, res, obj) => {
       if (err) return clb(err);
-      if (res.statusCode === 504 && !isRetrying) {
+      if (res.status === 504 && !isRetrying) {
         return setTimeout(() => send(d, clb, true), 3000);
       }
-      if (res.statusCode >= 300 && res.statusCode !== 412) {
+      if (res.status >= 300 && res.status !== 412) {
         if (obj && (obj.errorMessage || obj.message)) {
           return clb(new Error((obj.errorMessage || obj.message)));
         }
-        return clb(new Error(res.statusMessage + ' (' + res.statusCode + ')'));
+        return clb(new Error(res.statusText + ' (' + res.status + ')'));
       }
       setTimeout(() => clb(null), 1000);
     });
