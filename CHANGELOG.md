@@ -6,6 +6,11 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## [7.1.1](https://github.com/locize/locize-cli/compare/v7.1.0...v7.1.1) - 2020-04-10
+
+- add X-User-Agent header
+
+
 ## [7.1.0](https://github.com/locize/locize-cli/compare/v7.0.4...v7.1.0) - 2020-04-10
 
 - update dependencies

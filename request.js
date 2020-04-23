@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 
 module.exports = (url, options, callback) => {
   options.headers = options.headers || {};
-  options.headers['User-Agent'] = `${package.name}/${package.version} (node/${process.version}; ${process.platform} ${process.arch})`;
+  options.headers['X-User-Agent'] = `${package.name}/v${package.version} (node/${process.version}; ${process.platform} ${process.arch})`;
   if (options.body || options.method !== 'get') options.headers['Content-Type'] = 'application/json';
   if (options.body) {
     if (typeof options.body !== 'string') {
