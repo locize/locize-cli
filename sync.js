@@ -329,6 +329,8 @@ const downloadAll = (opt, remoteLanguages, omitRef, cb) => {
           if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) && filledMask.lastIndexOf(path.sep) > 0) {
             mkdirp.sync(path.join(opt.path, filledMask.substring(0, filledMask.lastIndexOf(path.sep))));
           }
+          const parentDir = path.dirname(path.join(opt.path, filledMask));
+          mkdirp.sync(parentDir);
           fs.writeFile(path.join(opt.path, filledMask), converted, clb);
         });
       });

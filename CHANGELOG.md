@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.1.6](https://github.com/locize/locize-cli/compare/v7.1.5...v7.1.6) - 2020-05-06
+
+- ensure folder structure is always created
+
+
 ## [7.1.5](https://github.com/locize/locize-cli/compare/v7.1.4...v7.1.5) - 2020-04-30
 
 - update dependencies
