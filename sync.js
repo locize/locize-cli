@@ -63,7 +63,8 @@ const parseLocalLanguage = (opt, lng, cb) => {
         }
         dirs.forEach((d) => {
           if (additionalSubDirs && fs.statSync(path.join(opt.path, additionalSubDirsLeft, d)).isDirectory()) {
-            const subFls = getFiles(path.join(opt.path, additionalSubDirsLeft, d, additionalSubDirs)).filter((f) => path.basename(f, path.extname(f)) === `${firstPartLngMask}${lng}${lastPartLngMask}`);
+            var subFls = getFiles(path.join(opt.path, additionalSubDirsLeft, d, additionalSubDirs));
+            if (firstPartLngMask || lastPartLngMask) subFls = subFls.filter((f) => path.basename(f, path.extname(f)) === `${firstPartLngMask}${lng}${lastPartLngMask}`);
             files = files.concat(subFls.map((f) => `${additionalSubDirsLeft ? additionalSubDirsLeft + path.sep : ''}${d}${path.sep}${additionalSubDirs}${path.sep}${f}`));
           } else {
             const fls = getFiles(path.join(opt.path, additionalSubDirsLeft, d)).filter((f) => path.basename(f, path.extname(f)) === `${firstPartLngMask}${lng}${lastPartLngMask}`);
@@ -216,7 +217,12 @@ const compareNamespace = (local, remote, lastModifiedLocal, lastModifiedRemote) 
         diff.toAdd.push(k);
       }
     }
-    if (remote[k] && remote[k] !== local[k]) {
+    if (
+      remote[k] && (
+        (typeof local[k] === 'object' && local[k].value && remote[k] !== local[k].value) ||
+        (typeof local[k] !== 'object' && remote[k] !== local[k])
+      )
+    ) {
       if (wasLastChangedRemote) {
         diff.toUpdateLocally.push(k); // will download later
       } else {
