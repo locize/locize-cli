@@ -550,6 +550,10 @@ const sync = (opt, cb) => {
   getRemoteLanguages(opt, (err, remoteLanguages) => {
     if (err) return handleError(err);
 
+    if (opt.referenceLanguageOnly && opt.language && opt.referenceLanguage !== opt.language) {
+      opt.referenceLanguage = opt.language;
+    }
+
     if (opt.referenceLanguageOnly) {
       parseLocalReference(opt, (err, localNamespaces) => {
         if (err) return handleError(err);

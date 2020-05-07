@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.2.0](https://github.com/locize/locize-cli/compare/v7.1.8...v7.2.0) - 2020-05-07
+
+- using locize sync with language argument, should handle it as refLng
+
+
 ## [7.1.8](https://github.com/locize/locize-cli/compare/v7.1.7...v7.1.8) - 2020-05-06
 
 - fix sync for special path-masks
