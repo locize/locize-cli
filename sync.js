@@ -63,9 +63,15 @@ const parseLocalLanguage = (opt, lng, cb) => {
         }
         dirs.forEach((d) => {
           if (additionalSubDirs && fs.statSync(path.join(opt.path, additionalSubDirsLeft, d)).isDirectory()) {
-            var subFls = getFiles(path.join(opt.path, additionalSubDirsLeft, d, additionalSubDirs));
-            if (firstPartLngMask || lastPartLngMask) subFls = subFls.filter((f) => path.basename(f, path.extname(f)) === `${firstPartLngMask}${lng}${lastPartLngMask}`);
-            files = files.concat(subFls.map((f) => `${additionalSubDirsLeft ? additionalSubDirsLeft + path.sep : ''}${d}${path.sep}${additionalSubDirs}${path.sep}${f}`));
+            var directoryExists = false;
+            try {
+              directoryExists = fs.statSync(path.join(opt.path, additionalSubDirsLeft, d, additionalSubDirs)).isDirectory();
+            } catch (e) {}
+            if (directoryExists) {
+              var subFls = getFiles(path.join(opt.path, additionalSubDirsLeft, d, additionalSubDirs));
+              if (firstPartLngMask || lastPartLngMask) subFls = subFls.filter((f) => path.basename(f, path.extname(f)) === `${firstPartLngMask}${lng}${lastPartLngMask}`);
+              files = files.concat(subFls.map((f) => `${additionalSubDirsLeft ? additionalSubDirsLeft + path.sep : ''}${d}${path.sep}${additionalSubDirs}${path.sep}${f}`));
+            }
           } else {
             const fls = getFiles(path.join(opt.path, additionalSubDirsLeft, d)).filter((f) => path.basename(f, path.extname(f)) === `${firstPartLngMask}${lng}${lastPartLngMask}`);
             files = files.concat(fls.map((f) => `${additionalSubDirsLeft ? additionalSubDirsLeft + path.sep : ''}${d}${path.sep}${f}`));
