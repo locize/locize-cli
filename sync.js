@@ -70,6 +70,17 @@ const parseLocalLanguage = (opt, lng, cb) => {
             if (directoryExists) {
               var subFls = getFiles(path.join(opt.path, additionalSubDirsLeft, d, additionalSubDirs));
               if (firstPartLngMask || lastPartLngMask) subFls = subFls.filter((f) => path.basename(f, path.extname(f)) === `${firstPartLngMask}${lng}${lastPartLngMask}`);
+
+              subFls = subFls.filter((f) => {
+                const a = path.join(additionalSubDirsLeft, d, additionalSubDirs, path.basename(f, path.extname(f)));
+                const startIndexOfNs = filledLngMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`);
+                if (startIndexOfNs === -1) return true;
+                const afterNs = filledLngMask.substring(startIndexOfNs + `${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`.length);
+                const nsName = a.substring(startIndexOfNs, a.indexOf(afterNs));
+                const b = filledLngMask.replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, nsName);
+                return a === b;
+              });
+
               files = files.concat(subFls.map((f) => `${additionalSubDirsLeft ? additionalSubDirsLeft + path.sep : ''}${d}${path.sep}${additionalSubDirs}${path.sep}${f}`));
             }
           } else {

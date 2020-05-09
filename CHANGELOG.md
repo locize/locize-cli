@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.2.2](https://github.com/locize/locize-cli/compare/v7.2.1...v7.2.2) - 2020-05-09
+
+- fix sync for special path-masks, when having parallel files
+
+
 ## [7.2.1](https://github.com/locize/locize-cli/compare/v7.2.0...v7.2.1) - 2020-05-08
 
 - fix sync for special path-masks, when having parallel empty folders
