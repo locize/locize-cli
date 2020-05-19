@@ -235,7 +235,7 @@ program
   .option('-f, --format <json>', 'File format of namespaces (default: json; [flat, xliff2, xliff12, xlf2, xlf12, android, yaml, yaml-rails, csv, xlsx, po, strings, resx, fluent, tmx, laravel, properties])', 'json')
   .option('-s, --skip-empty <true|false>', 'Skips to download empty files (default: true)', 'true')
   .option('-P, --language-folder-prefix <prefix>', 'This will be added as a local folder name prefix in front of the language.', '')
-  .option('-m, --path-mask <mask>', 'This will define the folder and file structure (default: {{language}}/{{namespace}})', `{{language}}${path.sep}{{namespace}}`)
+  .option('-m, --path-mask <mask>', 'This will define the folder and file structure; do not add a file extension (default: {{language}}/{{namespace}})', `{{language}}${path.sep}{{namespace}}`)
   .option('-c, --clean <true|false>', 'Removes all local files (default: false)', 'false')
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((cmd) => {
@@ -366,7 +366,7 @@ program
   .option('-c, --clean <true|false>', 'Removes all local files (default: false)', 'false')
   .option('-u, --update-values <true|false>', 'This will update values of existing translations. (default: false)', 'false')
   .option('-S, --skip-delete <true|false>', 'This will skip the removal of keys on locize. (default: false)', 'false')
-  .option('-m, --path-mask <mask>', 'This will define the folder and file structure (default: {{language}}/{{namespace}})', `{{language}}${path.sep}{{namespace}}`)
+  .option('-m, --path-mask <mask>', 'This will define the folder and file structure; do not add a file extension (default: {{language}}/{{namespace}})', `{{language}}${path.sep}{{namespace}}`)
   .option('-P, --language-folder-prefix <prefix>', 'This will be added as a local folder name prefix in front of the language.', '')
   .option('-d, --dry <true|false>', 'Dry run (default: false)', 'false')
   .option('-R, --reference-language-only <true|false>', 'Check for changes in reference language only. (default: true)', 'true')
