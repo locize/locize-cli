@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.3.0](https://github.com/locize/locize-cli/compare/v7.2.2...v7.3.0) - 2020-05-25
+
+- new format: yaml-nested
+
+
 ## [7.2.2](https://github.com/locize/locize-cli/compare/v7.2.1...v7.2.2) - 2020-05-09
 
 - fix sync for special path-masks, when having parallel files

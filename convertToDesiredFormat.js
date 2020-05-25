@@ -132,6 +132,10 @@ const convertToDesiredFormat = (
       cb(null, jsyaml.safeDump(flatten(data)));
       return;
     }
+    if (opt.format === 'yaml-nested') {
+      cb(null, jsyaml.safeDump(shouldUnflatten(data) ? unflatten(data) : data));
+      return;
+    }
     if (opt.format === 'yaml-rails') {
       var newData = {};
       newData[lng] = {};

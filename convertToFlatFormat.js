@@ -109,6 +109,10 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
       cb(null, flatten(jsyaml.safeLoad(data)));
       return;
     }
+    if (opt.format === 'yaml-nested') {
+      cb(null, flatten(jsyaml.safeLoad(data)));
+      return;
+    }
     if (opt.format === 'yaml-rails') {
       const jsObj = jsyaml.safeLoad(data);
       cb(
