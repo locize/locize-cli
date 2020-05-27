@@ -574,6 +574,12 @@ const sync = (opt, cb) => {
     if (opt.referenceLanguageOnly) {
       parseLocalReference(opt, (err, localNamespaces) => {
         if (err) return handleError(err);
+
+        if (!opt.dry && opt.cleanLocalFiles) {
+          localNamespaces.forEach((ln) => fs.unlinkSync(ln.path));
+          localNamespaces = [];
+        }
+
         handleSync(opt, remoteLanguages, localNamespaces, cb);
       });
       return;
@@ -581,6 +587,12 @@ const sync = (opt, cb) => {
 
     parseLocalLanguages(opt, remoteLanguages, (err, localNamespaces) => {
       if (err) return handleError(err);
+
+      if (!opt.dry && opt.cleanLocalFiles) {
+        localNamespaces.forEach((ln) => fs.unlinkSync(ln.path));
+        localNamespaces = [];
+      }
+
       handleSync(opt, remoteLanguages, localNamespaces, cb);
     });
   });
