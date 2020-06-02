@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.4.1](https://github.com/locize/locize-cli/compare/v7.4.0...v7.4.1) - 2020-06-03
+
+- update android-string-resource dependency
+
+
 ## [7.4.0](https://github.com/locize/locize-cli/compare/v7.3.0...v7.4.0) - 2020-05-27
 
 - sync: add --clean-local-files option
