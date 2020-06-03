@@ -138,6 +138,46 @@ locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-pro
 Navigate to your locize project and check the results => [www.locize.app](https://www.locize.app)
 
 
+## Push missing keys to locize from your repository (or any other local directory)
+### Step 1: Go near to your translation files
+
+```sh
+cd my-awesome-project/locales
+```
+
+Make sure you have this type of tree structure:
+Each language should be a directory and each namespace should be a file
+
+    locales
+    ├── en
+    │   ├── namespace1.extension
+    │   ├── namespace2.extension
+    │   ├── ...
+    ├── de
+    │   ├── ...
+
+the cli by will use the directory name as language and the filename (without extension as namespace name).
+
+
+### Step 3: execute
+
+Add your api-key and your project-id and let's go...
+
+```sh
+locize save-missing --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba
+```
+
+or add a format like (json, flat, xliff2, xliff12, xlf2, xlf12, android, yaml, yaml-rails, yaml-nested, csv, xlsx, po, strings, resx, fluent, tmx, laravel, properties)
+
+```sh
+locize save-missing --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --format android
+```
+
+### Step 4: verify
+
+Navigate to your locize project and check the results => [www.locize.app](https://www.locize.app)
+
+
 ## Copy version
 ### Step 1: execute
 
