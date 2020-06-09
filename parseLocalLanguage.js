@@ -127,6 +127,14 @@ const parseLocalLanguage = (opt, lng, cb) => {
         return clb(new Error(`Format mismatch! Found ${fileExtensionsMap[fExt][0]} but requested ${opt.format}!`));
       }
 
+      if (opt.namespace) {
+        let hasNamespaceInPathPask = !opt.pathMask || !opt.pathMaskInterpolationPrefix || !opt.pathMaskInterpolationSuffix;
+        hasNamespaceInPathPask = !hasNamespaceInPathPask && opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) > -1;
+        if (!hasNamespaceInPathPask && namespace === lng) {
+          namespace = opt.namespace;
+        }
+      }
+
       convertToFlatFormat(opt, data, lng, (err, content) => {
         if (err) {
           err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
