@@ -16,7 +16,7 @@ const getRemoteNamespace = (opt, lng, ns, cb) => {
       }
       return cb(new Error(res.statusText + ' (' + res.status + ')'));
     }
-    cb(null, sortFlatResources(flatten(obj)), res.headers['last-modified'] ? new Date(res.headers['last-modified']) : undefined);
+    cb(null, sortFlatResources(flatten(obj)), res.headers.get('last-modified') ? new Date(res.headers.get('last-modified')) : undefined);
   });
 };
 

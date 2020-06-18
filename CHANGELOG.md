@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.6.1](https://github.com/locize/locize-cli/compare/v7.6.0...v7.6.1) - 2020-06-18
+
+- streamline --skip-delete behaviour
+- fix getting header value for last-modified
+
+
 ## [7.6.0](https://github.com/locize/locize-cli/compare/v7.5.2...v7.6.0) - 2020-06-09
 
 - handle edge case for no namespace in path-mask

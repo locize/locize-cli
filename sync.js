@@ -131,10 +131,17 @@ const ensureAllNamespacesInLanguages = (opt, remoteLanguages, downloads) => {
   });
 };
 
-const downloadAll = (opt, remoteLanguages, omitRef, cb) => {
-  if (!cb) {
-    cb = omitRef;
-    omitRef = false;
+const downloadAll = (opt, remoteLanguages, omitRef, manipulate, cb) => {
+  if (typeof cb !== 'function') {
+    if (typeof manipulate === 'function') {
+      cb = manipulate;
+      manipulate = undefined;
+    }
+    if (typeof omitRef === 'function') {
+      cb = omitRef;
+      manipulate = undefined;
+      omitRef = false;
+    }
   }
 
   if (!opt.dry) cleanupLanguages(opt, remoteLanguages);
@@ -167,6 +174,8 @@ const downloadAll = (opt, remoteLanguages, omitRef, cb) => {
         if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
           return clb(null);
         }
+
+        if (manipulate && typeof manipulate == 'function') manipulate(lng, namespace, ns);
 
         convertToDesiredFormat(opt, namespace, lng, ns, lastModified, (err, converted) => {
           if (err) {
@@ -332,8 +341,13 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
             if (opt.dry) console.log(colors.green(`would add ${ns.diff.toAdd.join(', ')} in ${ns.language}/${ns.namespace}...`));
           }
           if (ns.diff.toAddLocally.length > 0) {
-            console.log(colors.green(`adding ${ns.diff.toAddLocally.length} keys in ${ns.language}/${ns.namespace} locally...`));
-            if (opt.dry) console.log(colors.green(`would add ${ns.diff.toAddLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`));
+            if (opt.skipDelete) {
+              console.log(colors.bgGreen(`skipping the addition of ${ns.diff.toAddLocally.length} keys in ${ns.language}/${ns.namespace} locally...`));
+              if (opt.dry) console.log(colors.bgGreen(`skipped the addition of ${ns.diff.toAddLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`));
+            } else {
+              console.log(colors.green(`adding ${ns.diff.toAddLocally.length} keys in ${ns.language}/${ns.namespace} locally...`));
+              if (opt.dry) console.log(colors.green(`would add ${ns.diff.toAddLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`));
+            }
           }
           if (opt.updateValues) {
             if (ns.diff.toUpdate.length > 0) {
@@ -345,7 +359,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
               if (opt.dry) console.log(colors.yellow(`would update ${ns.diff.toUpdateLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`));
             }
           }
-          const somethingToUpdate = ns.diff.toAdd.concat(ns.diff.toRemove)/*.concat(ns.diff.toUpdate)*/.length > 0;
+          const somethingToUpdate = ns.diff.toAdd.concat(opt.skipDelete ? [] : ns.diff.toRemove)/*.concat(ns.diff.toUpdate)*/.length > 0;
           if (!somethingToUpdate) console.log(colors.grey(`nothing to update for ${ns.language}/${ns.namespace}`));
           if (!wasThereSomethingToUpdate && somethingToUpdate) wasThereSomethingToUpdate = true;
         }
@@ -362,7 +376,23 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
 
         if (!cb) console.log(colors.grey('syncing...'));
         setTimeout(() => {
-          downloadAll(opt, remoteLanguages, wasThereSomethingToUpdate, (err) => {
+          downloadAll(opt, remoteLanguages, wasThereSomethingToUpdate, opt.skipDelete ? (lng, namespace, ns) => {
+            if (lng === opt.referenceLanguage) {
+              const found = compared.find((n) => n.namespace === namespace && n.language === lng);
+              if (found && found.diff) {
+                if (found.diff.toAddLocally && found.diff.toAddLocally.length > 0) {
+                  found.diff.toAddLocally.forEach((k) => {
+                    delete ns[k];
+                  });
+                }
+                if (found.diff.toRemove && found.diff.toRemove.length > 0) {
+                  found.diff.toRemove.forEach((k) => {
+                    delete ns[k];
+                  });
+                }
+              }
+            }
+          } : undefined, (err) => {
             if (err) return handleError(err);
             if (!cb) console.log(colors.green('FINISHED'));
             if (cb) cb(null);
