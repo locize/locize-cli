@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.6.2](https://github.com/locize/locize-cli/compare/v7.6.1...v7.6.2) - 2020-06-18
+
+- streamline --skip-delete behaviour (optimization)
+
+
 ## [7.6.1](https://github.com/locize/locize-cli/compare/v7.6.0...v7.6.1) - 2020-06-18
 
 - streamline --skip-delete behaviour

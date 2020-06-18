@@ -377,19 +377,17 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
         if (!cb) console.log(colors.grey('syncing...'));
         setTimeout(() => {
           downloadAll(opt, remoteLanguages, wasThereSomethingToUpdate, opt.skipDelete ? (lng, namespace, ns) => {
-            if (lng === opt.referenceLanguage) {
-              const found = compared.find((n) => n.namespace === namespace && n.language === lng);
-              if (found && found.diff) {
-                if (found.diff.toAddLocally && found.diff.toAddLocally.length > 0) {
-                  found.diff.toAddLocally.forEach((k) => {
-                    delete ns[k];
-                  });
-                }
-                if (found.diff.toRemove && found.diff.toRemove.length > 0) {
-                  found.diff.toRemove.forEach((k) => {
-                    delete ns[k];
-                  });
-                }
+            const found = compared.find((n) => n.namespace === namespace && n.language === lng);
+            if (found && found.diff) {
+              if (found.diff.toAddLocally && found.diff.toAddLocally.length > 0) {
+                found.diff.toAddLocally.forEach((k) => {
+                  delete ns[k];
+                });
+              }
+              if (found.diff.toRemove && found.diff.toRemove.length > 0) {
+                found.diff.toRemove.forEach((k) => {
+                  delete ns[k];
+                });
               }
             }
           } : undefined, (err) => {
