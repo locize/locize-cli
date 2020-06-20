@@ -31,7 +31,7 @@
     "xlsx": "0.16.2"
   },
   "devDependencies": {
-    "eslint": "7.2.0",
+    "eslint": "7.3.0",
     "gh-release": "3.5.0",
     "pkg": "4.4.8"
   },

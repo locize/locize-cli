@@ -11,7 +11,7 @@ const getRemoteLanguages = (opt, cb) => {
     if (res.status >= 300) return cb(new Error(res.statusText + ' (' + res.status + ')'));
 
     if (Object.keys(obj).length === 0) {
-      return cb(new Error('Project not found!'));
+      return cb(new Error('Project with id "' + opt.projectId + '" not found!'));
     }
 
     const lngs = Object.keys(obj);
@@ -20,7 +20,7 @@ const getRemoteLanguages = (opt, cb) => {
       if (obj[l].isReferenceLanguage) foundRefLng = l;
     });
     if (!foundRefLng) {
-      return cb(new Error('Reference language not found!'));
+      return cb(new Error('Reference language for project with id "' + opt.projectId + '" not found!'));
     }
     opt.referenceLanguage = foundRefLng;
 
