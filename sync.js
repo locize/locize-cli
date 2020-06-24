@@ -376,7 +376,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
 
         if (!cb) console.log(colors.grey('syncing...'));
         setTimeout(() => {
-          downloadAll(opt, remoteLanguages, wasThereSomethingToUpdate, opt.skipDelete ? (lng, namespace, ns) => {
+          downloadAll(opt, remoteLanguages, false, opt.skipDelete ? (lng, namespace, ns) => {
             const found = compared.find((n) => n.namespace === namespace && n.language === lng);
             if (found && found.diff) {
               if (found.diff.toAddLocally && found.diff.toAddLocally.length > 0) {
