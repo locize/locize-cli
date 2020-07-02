@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.6.5](https://github.com/locize/locize-cli/compare/v7.6.4...v7.6.5) - 2020-07-02
+
+- update dependencies
+
+
 ## [7.6.4](https://github.com/locize/locize-cli/compare/v7.6.3...v7.6.4) - 2020-06-24
 
 - download also the referene language at the end
