@@ -7,16 +7,16 @@
     "locize": "./bin/locize"
   },
   "dependencies": {
-    "@js.properties/properties": "0.5.1",
-    "android-string-resource": "2.3.3",
+    "@js.properties/properties": "0.5.3",
+    "android-string-resource": "2.3.4",
     "async": "3.2.0",
     "colors": "1.4.0",
     "commander": "5.1.0",
     "csvjson": "5.1.0",
     "diff": "4.0.2",
-    "flat": "5.0.0",
+    "flat": "5.0.2",
     "fluent_conv": "3.0.1",
-    "gettext-converter": "1.0.5",
+    "gettext-converter": "1.0.6",
     "ini": "1.3.5",
     "js-yaml": "3.14.0",
     "laravelphp": "2.0.3",
@@ -27,11 +27,11 @@
     "rimraf": "3.0.2",
     "strings-file": "0.0.5",
     "tmexchange": "2.0.4",
-    "xliff": "5.0.6",
-    "xlsx": "0.16.3"
+    "xliff": "5.2.0",
+    "xlsx": "0.16.6"
   },
   "devDependencies": {
-    "eslint": "7.3.1",
+    "eslint": "7.7.0",
     "gh-release": "3.5.0",
     "pkg": "4.4.9"
   },
