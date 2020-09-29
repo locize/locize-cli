@@ -7,11 +7,11 @@
     "locize": "./bin/locize"
   },
   "dependencies": {
-    "@js.properties/properties": "0.5.3",
+    "@js.properties/properties": "0.5.4",
     "android-string-resource": "2.3.4",
     "async": "3.2.0",
     "colors": "1.4.0",
-    "commander": "5.1.0",
+    "commander": "6.1.0",
     "csvjson": "5.1.0",
     "diff": "4.0.2",
     "flat": "5.0.2",
@@ -27,12 +27,12 @@
     "rimraf": "3.0.2",
     "strings-file": "0.0.5",
     "tmexchange": "2.0.4",
-    "xliff": "5.2.0",
-    "xlsx": "0.16.6"
+    "xliff": "5.3.0",
+    "xlsx": "0.16.7"
   },
   "devDependencies": {
-    "eslint": "7.7.0",
-    "gh-release": "3.5.0",
+    "eslint": "7.10.0",
+    "gh-release": "4.0.2",
     "pkg": "4.4.9"
   },
   "scripts": {
