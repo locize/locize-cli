@@ -101,13 +101,14 @@ const handleError = (err, cb) => {
 };
 
 const download = (opt, cb) => {
+  opt.format = opt.format || 'json';
   if (!reversedFileExtensionsMap[opt.format]) {
     return handleError(new Error(`${opt.format} is not a valid format!`));
   }
 
   if (opt.skipEmpty === undefined) opt.skipEmpty = true;
-  opt.format = opt.format || 'json';
-  opt.apiPath = opt.apiPath || 'https://api.locize.app/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
+  opt.apiPath = opt.apiPath || 'https://api.locize.app';
+  opt.version = opt.version || 'latest';
   opt.languageFolderPrefix = opt.languageFolderPrefix || '';
   opt.path = opt.path || opt.target;
   opt.pathMaskInterpolationPrefix = opt.pathMaskInterpolationPrefix || '{{';

@@ -402,9 +402,13 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
 };
 
 const sync = (opt, cb) => {
+  opt.format = opt.format || 'json';
   if (!reversedFileExtensionsMap[opt.format]) {
     return handleError(new Error(`${opt.format} is not a valid format!`));
   }
+
+  opt.version = opt.version || 'latest';
+  opt.apiPath = opt.apiPath || 'https://api.locize.app';
 
   if (!opt.dry && opt.clean) rimraf.sync(path.join(opt.path, '*'));
   if (!opt.dry) mkdirp.sync(opt.path);
