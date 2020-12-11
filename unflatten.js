@@ -13,7 +13,7 @@ module.exports = (data) => {
           return mem;
         }, {});
       }
-      return r[e] || (r[e] = (!isNumber || hasLeadingZero) ? (keys.length - 1 === j ? data[i] : {}) : []);
+      return r[e] || (r[e] = (!isNumber || hasLeadingZero || tooHighNumberToBeAnArrayIndex) ? (keys.length - 1 === j ? data[i] : {}) : []);
     }, result);
   }
   return result;
