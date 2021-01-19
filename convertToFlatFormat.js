@@ -106,15 +106,21 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
       return;
     }
     if (opt.format === 'yaml') {
-      cb(null, flatten(jsyaml.safeLoad(data)));
+      const d = data.toString();
+      if (!d || d === '') return cb(null, {});
+      cb(null, flatten(jsyaml.load(d)));
       return;
     }
     if (opt.format === 'yaml-nested') {
-      cb(null, flatten(jsyaml.safeLoad(data)));
+      const d = data.toString();
+      if (!d || d === '') return cb(null, {});
+      cb(null, flatten(jsyaml.load(d)));
       return;
     }
     if (opt.format === 'yaml-rails') {
-      const jsObj = jsyaml.safeLoad(data);
+      const d = data.toString();
+      if (!d || d === '') return cb(null, {});
+      const jsObj = jsyaml.load(d);
       cb(
         null,
         flatten(

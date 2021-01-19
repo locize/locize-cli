@@ -26,6 +26,7 @@ const convertToDesiredFormat = (
   cb
 ) => {
   opt.getNamespace = opt.getNamespace || getRemoteNamespace;
+  const isEmpty = !data || Object.keys(data).length === 0;
   try {
     if (opt.format === 'json') {
       try {
@@ -129,18 +130,21 @@ const convertToDesiredFormat = (
       return;
     }
     if (opt.format === 'yaml') {
-      cb(null, jsyaml.safeDump(flatten(data)));
+      if (isEmpty) return cb(null, '');
+      cb(null, jsyaml.dump(flatten(data)));
       return;
     }
     if (opt.format === 'yaml-nested') {
-      cb(null, jsyaml.safeDump(shouldUnflatten(data) ? unflatten(data) : data));
+      if (isEmpty) return cb(null, '');
+      cb(null, jsyaml.dump(shouldUnflatten(data) ? unflatten(data) : data));
       return;
     }
     if (opt.format === 'yaml-rails') {
+      if (isEmpty) return cb(null, '');
       var newData = {};
       newData[lng] = {};
       newData[lng][namespace] = shouldUnflatten(data) ? unflatten(data) : data;
-      cb(null, jsyaml.safeDump(removeUndefinedFromArrays(newData)));
+      cb(null, jsyaml.dump(removeUndefinedFromArrays(newData)));
       return;
     }
     if (opt.format === 'android') {
