@@ -15,7 +15,7 @@
     "csvjson": "5.1.0",
     "diff": "5.0.0",
     "flat": "5.0.2",
-    "fluent_conv": "3.0.1",
+    "fluent_conv": "3.1.0",
     "gettext-converter": "1.0.6",
     "ini": "2.0.0",
     "js-yaml": "4.0.0",
@@ -31,7 +31,7 @@
     "xlsx": "0.16.9"
   },
   "devDependencies": {
-    "eslint": "7.18.0",
+    "eslint": "7.19.0",
     "gh-release": "4.0.4",
     "pkg": "4.4.9"
   },

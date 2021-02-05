@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.6.10](https://github.com/locize/locize-cli/compare/v7.6.9...v7.6.10) - 2021-02-05
+
+- update fluent dependency
+
+
 ## [7.6.9](https://github.com/locize/locize-cli/compare/v7.6.8...v7.6.9) - 2021-01-19
 
 - update yaml dependency and fix the handling of empty ns
