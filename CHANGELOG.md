@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.6.11](https://github.com/locize/locize-cli/compare/v7.6.10...v7.6.11) - 2021-02-08
+
+- --get-path param for sync command
+
+
 ## [7.6.10](https://github.com/locize/locize-cli/compare/v7.6.9...v7.6.10) - 2021-02-05
 
 - update fluent dependency
