@@ -17,6 +17,7 @@
     "flat": "5.0.2",
     "fluent_conv": "3.1.0",
     "gettext-converter": "1.0.6",
+    "https-proxy-agent": "5.0.0",
     "ini": "2.0.0",
     "js-yaml": "4.0.0",
     "laravelphp": "2.0.3",

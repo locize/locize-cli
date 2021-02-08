@@ -1,7 +1,11 @@
 const package = require('./package.json');
 const fetch = require('node-fetch');
+const HttpsProxyAgent = require('https-proxy-agent');
+const httpProxy = process.env.http_proxy || process.env.HTTP_PROXY || process.env.https_proxy || process.env.HTTPS_PROXY;
 
 module.exports = (url, options, callback) => {
+  if (httpProxy) options.agent = new HttpsProxyAgent(httpProxy);
+
   options.headers = options.headers || {};
   options.headers['User-Agent'] = `${package.name}/v${package.version} (node/${process.version}; ${process.platform} ${process.arch})`;
   options.headers['X-User-Agent'] = options.headers['User-Agent'];
