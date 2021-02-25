@@ -3,7 +3,7 @@ const flatten = require('flat');
 const sortFlatResources = require('./sortFlatResources');
 
 const getRemoteNamespace = (opt, lng, ns, cb) => {
-  request(opt.apiPath + (opt.isPrivate ? '/private' : '') + '/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns, {
+  request(opt.apiPath + (opt.isPrivate ? '/private' : '') + '/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns + '?ts=' + Date.now(), {
     method: 'get',
     headers: opt.isPrivate ? {
       'Authorization': opt.apiKey

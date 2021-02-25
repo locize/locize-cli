@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.6.13](https://github.com/locize/locize-cli/compare/v7.6.12...v7.6.13) - 2021-02-08
+
+- try to download non-cached version of namespaces
+
+
 ## [7.6.12](https://github.com/locize/locize-cli/compare/v7.6.11...v7.6.12) - 2021-02-08
 
 - introduce optional HTTPS_PROXY environment variable
