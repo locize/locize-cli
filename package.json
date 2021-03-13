@@ -11,12 +11,12 @@
     "android-string-resource": "2.3.4",
     "async": "3.2.0",
     "colors": "1.4.0",
-    "commander": "6.2.0",
+    "commander": "7.1.0",
     "csvjson": "5.1.0",
     "diff": "5.0.0",
     "flat": "5.0.2",
     "fluent_conv": "3.1.0",
-    "gettext-converter": "1.0.6",
+    "gettext-converter": "1.0.7",
     "https-proxy-agent": "5.0.0",
     "ini": "2.0.0",
     "js-yaml": "4.0.0",
@@ -28,12 +28,12 @@
     "rimraf": "3.0.2",
     "strings-file": "0.0.5",
     "tmexchange": "2.0.4",
-    "xliff": "5.3.1",
+    "xliff": "5.5.1",
     "xlsx": "0.16.9"
   },
   "devDependencies": {
-    "eslint": "7.19.0",
-    "gh-release": "4.0.4",
+    "eslint": "7.22.0",
+    "gh-release": "5.0.0",
     "pkg": "4.4.9"
   },
   "scripts": {
