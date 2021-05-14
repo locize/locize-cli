@@ -88,6 +88,9 @@ locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver lat
 
 
 ## Synchronize locize with your repository (or any other local directory)
+By using the sync command, you can keep your existing code setup and synchronize the translations with locize.
+An example on how this could look like can be seen in [this tutorial](https://github.com/locize/react-tutorial#step-1---keep-existing-code-setup-but-synchronize-with-locize).
+
 ### Step 1: Go near to your translation files
 
 ```sh
