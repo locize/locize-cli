@@ -23,7 +23,7 @@
     "laravelphp": "2.0.3",
     "lodash.clonedeep": "4.5.0",
     "mkdirp": "1.0.4",
-    "node-fetch": "2.6.1",
+    "node-fetch": "2.6.2",
     "resx": "2.0.3",
     "rimraf": "3.0.2",
     "strings-file": "0.0.5",
