@@ -409,6 +409,7 @@ const sync = (opt, cb) => {
 
   opt.version = opt.version || 'latest';
   opt.apiPath = opt.apiPath || 'https://api.locize.app';
+  opt.languageFolderPrefix = opt.languageFolderPrefix ?? '';
 
   if (!opt.dry && opt.clean) rimraf.sync(path.join(opt.path, '*'));
   if (!opt.dry) mkdirp.sync(opt.path);
