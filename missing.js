@@ -139,6 +139,7 @@ const missing = (opt, cb) => {
   opt.pathMaskInterpolationPrefix = opt.pathMaskInterpolationPrefix || '{{';
   opt.pathMaskInterpolationSuffix = opt.pathMaskInterpolationSuffix || '}}';
   opt.pathMask = opt.pathMask || `${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}${path.sep}${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`;
+  opt.languageFolderPrefix = opt.languageFolderPrefix || '';
   opt.pathMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, `${opt.languageFolderPrefix}${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`);
 
   getRemoteLanguages(opt, (err, remoteLanguages) => {
