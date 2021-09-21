@@ -152,10 +152,14 @@ const download = (opt, cb) => {
         opt.apiKey = null;
         request(url, {
           method: 'get',
-        }, (err, res, obj) => handleDownload(opt, url, err, res, obj, cb));
+        }, (err, res, obj) => {
+          if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
+          handleDownload(opt, url, err, res, obj, cb);
+        });
         return;
       }
 
+      if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
       handleDownload(opt, url, err, res, obj, cb);
     });
   });

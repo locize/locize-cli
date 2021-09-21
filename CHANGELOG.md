@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.6.17](https://github.com/locize/locize-cli/compare/v7.6.16...v7.6.17) - 2021-09-21
+
+- check skipEmpty flag when downloading translations
+
+
 ## [7.6.16](https://github.com/locize/locize-cli/compare/v7.6.15...v7.6.16) - 2021-09-20
 
 - by default set also languageFolderPrefix to empty string when using programmatically

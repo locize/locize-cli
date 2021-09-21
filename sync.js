@@ -36,6 +36,7 @@ const getDownloads = (opt, cb) => {
       }
       return cb(new Error(res.statusText + ' (' + res.status + ')'));
     }
+    if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
     cb(null, obj);
   });
 };
