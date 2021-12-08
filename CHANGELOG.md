@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.7.0](https://github.com/locize/locize-cli/compare/v7.6.17...v7.7.0) - 2021-12-08
+
+- sync: optimize api requests on bigger projects
+- retry on very short dns resolution errors
+
+
 ## [7.6.17](https://github.com/locize/locize-cli/compare/v7.6.16...v7.6.17) - 2021-09-21
 
 - check skipEmpty flag when downloading translations

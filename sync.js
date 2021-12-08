@@ -198,7 +198,7 @@ const downloadAll = (opt, remoteLanguages, omitRef, manipulate, cb) => {
   });
 };
 
-const update = (opt, lng, ns, cb) => {
+const update = (opt, lng, ns, shouldOmit, cb) => {
   var data = {};
   if (!opt.skipDelete) {
     ns.diff.toRemove.forEach((k) => data[k] = null);
@@ -215,7 +215,7 @@ const update = (opt, lng, ns, cb) => {
   var payloadKeysLimit = 1000;
 
   function send(d, clb, isRetrying) {
-    request(opt.apiPath + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace, {
+    request(opt.apiPath + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace + (shouldOmit ? '?omitstatsgeneration=true' : ''), {
       method: 'post',
       body: d,
       headers: {
@@ -321,6 +321,20 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
     compareNamespaces(opt, localNamespaces, (err, compared) => {
       if (err) return handleError(err);
 
+      const onlyToUpdate = compared.filter((ns) => ns.diff.toAdd.concat(opt.skipDelete ? [] : ns.diff.toRemove).concat(ns.diff.toUpdate).length > 0);
+
+      const lngsInReqs = [];
+      const nsInReqs = [];
+      onlyToUpdate.forEach((n) => {
+        if (lngsInReqs.indexOf(n.language) < 0) {
+          lngsInReqs.push(n.language);
+        }
+        if (nsInReqs.indexOf(n.namespace) < 0) {
+          nsInReqs.push(n.namespace);
+        }
+      });
+      const shouldOmit = lngsInReqs.length > 5 || nsInReqs.length > 5;
+
       var wasThereSomethingToUpdate = false;
       async.eachLimit(compared, Math.round(require('os').cpus().length / 2), (ns, clb) => {
         if (!cb) {
@@ -364,40 +378,63 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
           if (!somethingToUpdate) console.log(colors.grey(`nothing to update for ${ns.language}/${ns.namespace}`));
           if (!wasThereSomethingToUpdate && somethingToUpdate) wasThereSomethingToUpdate = true;
         }
-        update(opt, ns.language, ns, (err) => {
+        update(opt, ns.language, ns, shouldOmit, (err) => {
           if (err) return clb(err);
           if (ns.diff.toRemove.length === 0 || ns.language !== opt.referenceLanguage) return clb();
           const nsOnlyRemove = cloneDeep(ns);
           nsOnlyRemove.diff.toAdd = [];
           nsOnlyRemove.diff.toUpdate = [];
-          async.eachLimit(remoteLanguages, Math.round(require('os').cpus().length / 2), (lng, clb) => update(opt, lng, nsOnlyRemove, clb), clb);
+          async.eachLimit(remoteLanguages, Math.round(require('os').cpus().length / 2), (lng, clb) => update(opt, lng, nsOnlyRemove, shouldOmit, clb), clb);
         });
       }, (err) => {
         if (err) return handleError(err);
-
         if (!cb) console.log(colors.grey('syncing...'));
-        setTimeout(() => {
-          downloadAll(opt, remoteLanguages, false, opt.skipDelete ? (lng, namespace, ns) => {
-            const found = compared.find((n) => n.namespace === namespace && n.language === lng);
-            if (found && found.diff) {
-              if (found.diff.toAddLocally && found.diff.toAddLocally.length > 0) {
-                found.diff.toAddLocally.forEach((k) => {
-                  delete ns[k];
-                });
+
+        function down() {
+          setTimeout(() => { // wait a bit before downloading... just to have a chance to get the newly published files
+            downloadAll(opt, remoteLanguages, false, opt.skipDelete ? (lng, namespace, ns) => {
+              const found = compared.find((n) => n.namespace === namespace && n.language === lng);
+              if (found && found.diff) {
+                if (found.diff.toAddLocally && found.diff.toAddLocally.length > 0) {
+                  found.diff.toAddLocally.forEach((k) => {
+                    delete ns[k];
+                  });
+                }
+                if (found.diff.toRemove && found.diff.toRemove.length > 0) {
+                  found.diff.toRemove.forEach((k) => {
+                    delete ns[k];
+                  });
+                }
               }
-              if (found.diff.toRemove && found.diff.toRemove.length > 0) {
-                found.diff.toRemove.forEach((k) => {
-                  delete ns[k];
-                });
-              }
+            } : undefined, (err) => {
+              if (err) return handleError(err);
+              if (!cb) console.log(colors.green('FINISHED'));
+              if (cb) cb(null);
+            });
+          }, wasThereSomethingToUpdate && !opt.dry ? 5000 : 0);
+        }
+
+        if (!shouldOmit) return down();
+        if (opt.dry) return down();
+
+        // optimize stats generation...
+        request(opt.apiPath + '/stats/project/regenerate/' + opt.projectId + '/' + opt.version + (lngsInReqs.length === 1 ? `/${lngsInReqs[0]}` : '') + (nsInReqs.length === 1 ? `?namespace=${nsInReqs[0]}` : ''), {
+          method: 'post',
+          body: {},
+          headers: {
+            'Authorization': opt.apiKey
+          }
+        }, (err, res, obj) => {
+          if (err) return handleError(err);
+          if (res.status >= 300 && res.status !== 412) {
+            if (obj && (obj.errorMessage || obj.message)) {
+              return handleError(new Error((obj.errorMessage || obj.message)));
             }
-          } : undefined, (err) => {
-            if (err) return handleError(err);
-            if (!cb) console.log(colors.green('FINISHED'));
-            if (cb) cb(null);
-          });
-        }, wasThereSomethingToUpdate && !opt.dry ? 5000 : 0);
-      }); // wait a bit before downloading... just to have a chance to get the newly published files
+            return handleError(new Error(res.statusText + ' (' + res.status + ')'));
+          }
+          down();
+        });
+      });
     });
   });
 };

@@ -22,5 +22,19 @@ module.exports = (url, options, callback) => {
     } else {
       return { res };
     }
-  }).then((ret) => callback(null, ret.res, ret.obj)).catch(callback);
+  }).then((ret) => callback(null, ret.res, ret.obj)).catch((err) => {
+    if (err && err.message && err.message.indexOf('ENOTFOUND') > -1) {
+      setTimeout(() => {
+        fetch(url, options).then((res) => {
+          if (res.headers.get('content-type') && res.headers.get('content-type').indexOf('json') > 0) {
+            return new Promise((resolve, reject) => res.json().then((obj) => resolve({ res, obj })).catch(reject));
+          } else {
+            return { res };
+          }
+        }).then((ret) => callback(null, ret.res, ret.obj)).catch(callback);
+      }, 3000);
+      return;
+    }
+    callback(err);
+  });
 };
