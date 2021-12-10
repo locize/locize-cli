@@ -39,7 +39,7 @@
   "scripts": {
     "lint": "eslint .",
     "test": "npm run lint",
-    "pkg": "mkdir -p ./bins && pkg ./bin/locize --out-path ./bins",
+    "pkg": "mkdir -p ./bins && pkg ./bin/locize --out-path ./bins --targets node16-linux-x64,node16-macos-x64,node16-win-x64",
     "release": "gh-release --assets ./bins/locize-linux,./bins/locize-macos,./bins/locize-win.exe",
     "version": "npm run pkg",
     "postversion": "git push && npm run release"
