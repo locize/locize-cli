@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.7.2](https://github.com/locize/locize-cli/compare/v7.7.1...v7.7.2) - 2021-12-10
+
+- update dependencies
+
+
 ## [7.7.1](https://github.com/locize/locize-cli/compare/v7.7.0...v7.7.1) - 2021-12-10
 
 - new binary build (x64)
