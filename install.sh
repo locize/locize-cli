@@ -9,6 +9,7 @@ esac
 
 case $(uname -m) in
 x86_64) arch="x86_64" ;;
+arm64) arch="arm64" ;;
 *) arch="other" ;;
 esac
 
