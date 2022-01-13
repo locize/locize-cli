@@ -14,6 +14,7 @@ const parseLocalLanguages = require('./parseLocalLanguages');
 const parseLocalReference = require('./parseLocalReference');
 const formats = require('./formats');
 const lngCodes = require('./lngs.json');
+const deleteNamespace = require('./deleteNamespace');
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap;
 
 const getDirectories = (srcpath) => {
@@ -303,6 +304,26 @@ const handleError = (err, cb) => {
   if (cb) cb(err);
 };
 
+const checkForMissingLocalNamespaces = (downloads, localNamespaces, opt) => {
+  const localMissingNamespaces = [];
+  downloads.forEach((d) => {
+    const splitted = d.url.split('/');
+    const namespace = splitted.pop();
+    const language = splitted.pop();
+    // if (!opt.referenceLanguageOnly || (opt.referenceLanguageOnly && language === opt.referenceLanguage)) {
+    if (language === opt.referenceLanguage) {
+      const foundLocalNamespace = localNamespaces.find((n) => n.namespace === namespace && n.language === language);
+      if (!foundLocalNamespace) {
+        localMissingNamespaces.push({
+          language,
+          namespace
+        });
+      }
+    }
+  });
+  return localMissingNamespaces;
+};
+
 const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
   if (!localNamespaces || localNamespaces.length === 0) {
     downloadAll(opt, remoteLanguages, (err) => {
@@ -317,6 +338,8 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
     if (err) return handleError(err);
 
     opt.isPrivate = downloads.length > 0 && downloads[0].isPrivate;
+
+    const localMissingNamespaces = checkForMissingLocalNamespaces(downloads, localNamespaces, opt);
 
     compareNamespaces(opt, localNamespaces, (err, compared) => {
       if (err) return handleError(err);
@@ -336,105 +359,131 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
       const shouldOmit = lngsInReqs.length > 5 || nsInReqs.length > 5;
 
       var wasThereSomethingToUpdate = false;
-      async.eachLimit(compared, Math.round(require('os').cpus().length / 2), (ns, clb) => {
-        if (!cb) {
-          if (ns.diff.toRemove.length > 0) {
-            if (opt.skipDelete) {
-              console.log(colors.bgRed(`skipping the removal of ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`));
-              if (opt.dry) console.log(colors.bgRed(`skipped to remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`));
-            } else {
-              console.log(colors.red(`removing ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`));
-              if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`));
-            }
-          }
-          if (ns.diff.toRemoveLocally.length > 0) {
-            console.log(colors.red(`removing ${ns.diff.toRemoveLocally.length} keys in ${ns.language}/${ns.namespace} locally...`));
-            if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemoveLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`));
-          }
-          if (ns.diff.toAdd.length > 0) {
-            console.log(colors.green(`adding ${ns.diff.toAdd.length} keys in ${ns.language}/${ns.namespace}...`));
-            if (opt.dry) console.log(colors.green(`would add ${ns.diff.toAdd.join(', ')} in ${ns.language}/${ns.namespace}...`));
-          }
-          if (ns.diff.toAddLocally.length > 0) {
-            if (opt.skipDelete) {
-              console.log(colors.bgGreen(`skipping the addition of ${ns.diff.toAddLocally.length} keys in ${ns.language}/${ns.namespace} locally...`));
-              if (opt.dry) console.log(colors.bgGreen(`skipped the addition of ${ns.diff.toAddLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`));
-            } else {
-              console.log(colors.green(`adding ${ns.diff.toAddLocally.length} keys in ${ns.language}/${ns.namespace} locally...`));
-              if (opt.dry) console.log(colors.green(`would add ${ns.diff.toAddLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`));
-            }
-          }
-          if (opt.updateValues) {
-            if (ns.diff.toUpdate.length > 0) {
-              console.log(colors.yellow(`updating ${ns.diff.toUpdate.length} keys in ${ns.language}/${ns.namespace}...`));
-              if (opt.dry) console.log(colors.yellow(`would update ${ns.diff.toUpdate.join(', ')} in ${ns.language}/${ns.namespace}...`));
-            }
-            if (ns.diff.toUpdateLocally.length > 0) {
-              console.log(colors.yellow(`updating ${ns.diff.toUpdateLocally.length} keys in ${ns.language}/${ns.namespace} locally...`));
-              if (opt.dry) console.log(colors.yellow(`would update ${ns.diff.toUpdateLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`));
-            }
-          }
-          const somethingToUpdate = ns.diff.toAdd.concat(opt.skipDelete ? [] : ns.diff.toRemove)/*.concat(ns.diff.toUpdate)*/.length > 0;
-          if (!somethingToUpdate) console.log(colors.grey(`nothing to update for ${ns.language}/${ns.namespace}`));
-          if (!wasThereSomethingToUpdate && somethingToUpdate) wasThereSomethingToUpdate = true;
-        }
-        update(opt, ns.language, ns, shouldOmit, (err) => {
-          if (err) return clb(err);
-          if (ns.diff.toRemove.length === 0 || ns.language !== opt.referenceLanguage) return clb();
-          const nsOnlyRemove = cloneDeep(ns);
-          nsOnlyRemove.diff.toAdd = [];
-          nsOnlyRemove.diff.toUpdate = [];
-          async.eachLimit(remoteLanguages, Math.round(require('os').cpus().length / 2), (lng, clb) => update(opt, lng, nsOnlyRemove, shouldOmit, clb), clb);
-        });
-      }, (err) => {
-        if (err) return handleError(err);
-        if (!cb) console.log(colors.grey('syncing...'));
 
-        function down() {
-          setTimeout(() => { // wait a bit before downloading... just to have a chance to get the newly published files
-            downloadAll(opt, remoteLanguages, false, opt.skipDelete ? (lng, namespace, ns) => {
-              const found = compared.find((n) => n.namespace === namespace && n.language === lng);
-              if (found && found.diff) {
-                if (found.diff.toAddLocally && found.diff.toAddLocally.length > 0) {
-                  found.diff.toAddLocally.forEach((k) => {
-                    delete ns[k];
-                  });
-                }
-                if (found.diff.toRemove && found.diff.toRemove.length > 0) {
-                  found.diff.toRemove.forEach((k) => {
-                    delete ns[k];
-                  });
-                }
+      function updateComparedNamespaces() {
+        async.eachLimit(compared, Math.round(require('os').cpus().length / 2), (ns, clb) => {
+          if (!cb) {
+            if (ns.diff.toRemove.length > 0) {
+              if (opt.skipDelete) {
+                console.log(colors.bgRed(`skipping the removal of ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`));
+                if (opt.dry) console.log(colors.bgRed(`skipped to remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`));
+              } else {
+                console.log(colors.red(`removing ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`));
+                if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`));
               }
-            } : undefined, (err) => {
-              if (err) return handleError(err);
-              if (!cb) console.log(colors.green('FINISHED'));
-              if (cb) cb(null);
-            });
-          }, wasThereSomethingToUpdate && !opt.dry ? 5000 : 0);
-        }
-
-        if (!shouldOmit) return down();
-        if (opt.dry) return down();
-
-        // optimize stats generation...
-        request(opt.apiPath + '/stats/project/regenerate/' + opt.projectId + '/' + opt.version + (lngsInReqs.length === 1 ? `/${lngsInReqs[0]}` : '') + (nsInReqs.length === 1 ? `?namespace=${nsInReqs[0]}` : ''), {
-          method: 'post',
-          body: {},
-          headers: {
-            'Authorization': opt.apiKey
-          }
-        }, (err, res, obj) => {
-          if (err) return handleError(err);
-          if (res.status >= 300 && res.status !== 412) {
-            if (obj && (obj.errorMessage || obj.message)) {
-              return handleError(new Error((obj.errorMessage || obj.message)));
             }
-            return handleError(new Error(res.statusText + ' (' + res.status + ')'));
+            if (ns.diff.toRemoveLocally.length > 0) {
+              console.log(colors.red(`removing ${ns.diff.toRemoveLocally.length} keys in ${ns.language}/${ns.namespace} locally...`));
+              if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemoveLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`));
+            }
+            if (ns.diff.toAdd.length > 0) {
+              console.log(colors.green(`adding ${ns.diff.toAdd.length} keys in ${ns.language}/${ns.namespace}...`));
+              if (opt.dry) console.log(colors.green(`would add ${ns.diff.toAdd.join(', ')} in ${ns.language}/${ns.namespace}...`));
+            }
+            if (ns.diff.toAddLocally.length > 0) {
+              if (opt.skipDelete) {
+                console.log(colors.bgGreen(`skipping the addition of ${ns.diff.toAddLocally.length} keys in ${ns.language}/${ns.namespace} locally...`));
+                if (opt.dry) console.log(colors.bgGreen(`skipped the addition of ${ns.diff.toAddLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`));
+              } else {
+                console.log(colors.green(`adding ${ns.diff.toAddLocally.length} keys in ${ns.language}/${ns.namespace} locally...`));
+                if (opt.dry) console.log(colors.green(`would add ${ns.diff.toAddLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`));
+              }
+            }
+            if (opt.updateValues) {
+              if (ns.diff.toUpdate.length > 0) {
+                console.log(colors.yellow(`updating ${ns.diff.toUpdate.length} keys in ${ns.language}/${ns.namespace}...`));
+                if (opt.dry) console.log(colors.yellow(`would update ${ns.diff.toUpdate.join(', ')} in ${ns.language}/${ns.namespace}...`));
+              }
+              if (ns.diff.toUpdateLocally.length > 0) {
+                console.log(colors.yellow(`updating ${ns.diff.toUpdateLocally.length} keys in ${ns.language}/${ns.namespace} locally...`));
+                if (opt.dry) console.log(colors.yellow(`would update ${ns.diff.toUpdateLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`));
+              }
+            }
+            const somethingToUpdate = ns.diff.toAdd.concat(opt.skipDelete ? [] : ns.diff.toRemove)/*.concat(ns.diff.toUpdate)*/.length > 0;
+            if (!somethingToUpdate) console.log(colors.grey(`nothing to update for ${ns.language}/${ns.namespace}`));
+            if (!wasThereSomethingToUpdate && somethingToUpdate) wasThereSomethingToUpdate = true;
           }
-          down();
+          update(opt, ns.language, ns, shouldOmit, (err) => {
+            if (err) return clb(err);
+            if (ns.diff.toRemove.length === 0 || ns.language !== opt.referenceLanguage) return clb();
+            const nsOnlyRemove = cloneDeep(ns);
+            nsOnlyRemove.diff.toAdd = [];
+            nsOnlyRemove.diff.toUpdate = [];
+            async.eachLimit(remoteLanguages, Math.round(require('os').cpus().length / 2), (lng, clb) => update(opt, lng, nsOnlyRemove, shouldOmit, clb), clb);
+          });
+        }, (err) => {
+          if (err) return handleError(err);
+          if (!cb) console.log(colors.grey('syncing...'));
+
+          function down() {
+            setTimeout(() => { // wait a bit before downloading... just to have a chance to get the newly published files
+              downloadAll(opt, remoteLanguages, false, opt.skipDelete ? (lng, namespace, ns) => {
+                const found = compared.find((n) => n.namespace === namespace && n.language === lng);
+                if (found && found.diff) {
+                  if (found.diff.toAddLocally && found.diff.toAddLocally.length > 0) {
+                    found.diff.toAddLocally.forEach((k) => {
+                      delete ns[k];
+                    });
+                  }
+                  if (found.diff.toRemove && found.diff.toRemove.length > 0) {
+                    found.diff.toRemove.forEach((k) => {
+                      delete ns[k];
+                    });
+                  }
+                }
+              } : undefined, (err) => {
+                if (err) return handleError(err);
+                if (!cb) console.log(colors.green('FINISHED'));
+                if (cb) cb(null);
+              });
+            }, wasThereSomethingToUpdate && !opt.dry ? 5000 : 0);
+          }
+
+          if (!shouldOmit) return down();
+          if (opt.dry) return down();
+
+          // optimize stats generation...
+          request(opt.apiPath + '/stats/project/regenerate/' + opt.projectId + '/' + opt.version + (lngsInReqs.length === 1 ? `/${lngsInReqs[0]}` : '') + (nsInReqs.length === 1 ? `?namespace=${nsInReqs[0]}` : ''), {
+            method: 'post',
+            body: {},
+            headers: {
+              'Authorization': opt.apiKey
+            }
+          }, (err, res, obj) => {
+            if (err) return handleError(err);
+            if (res.status >= 300 && res.status !== 412) {
+              if (obj && (obj.errorMessage || obj.message)) {
+                return handleError(new Error((obj.errorMessage || obj.message)));
+              }
+              return handleError(new Error(res.statusText + ' (' + res.status + ')'));
+            }
+            down();
+          });
         });
-      });
+      }
+
+      if (opt.deleteRemoteNamespace && localMissingNamespaces.length > 0) {
+        wasThereSomethingToUpdate = true;
+        async.each(localMissingNamespaces, (n, clb) => {
+          if (opt.dry) {
+            console.log(colors.red(`would delete complete namespace ${n.namespace}...`));
+            return clb();
+          }
+          console.log(colors.red(`deleting complete namespace ${n.namespace}...`));
+          deleteNamespace({
+            apiPath: opt.apiPath,
+            apiKey: opt.apiKey,
+            projectId: opt.projectId,
+            version: opt.version,
+            namespace: n.namespace
+          }, clb);
+        }, (err) => {
+          if (err) return handleError(err);
+          updateComparedNamespaces();
+        });
+        return;
+      }
+      updateComparedNamespaces();
     });
   });
 };
