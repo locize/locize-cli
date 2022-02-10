@@ -91,7 +91,7 @@ locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver lat
 By using the sync command, you can keep your existing code setup and synchronize the translations with locize.
 An example on how this could look like can be seen in [this tutorial](https://github.com/locize/react-tutorial#step-1---keep-existing-code-setup-but-synchronize-with-locize).
 
-**⚠️ Since the remote source are the published translations, make sure the desired version is set to standard publish mode, or alternatively [publish](#publish-version) that version before you execute the cli command. ⚠️**
+**⚠️ Since the remote source are the published translations, make sure the desired version is set to standard/auto publish mode, or alternatively [publish](#publish-version) that version before you execute the cli command. ⚠️**
 
 ### Step 1: Go near to your translation files
 
