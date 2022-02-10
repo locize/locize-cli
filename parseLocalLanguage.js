@@ -20,6 +20,7 @@ const getDirectories = (srcpath) => {
 };
 
 const parseLocalLanguage = (opt, lng, cb) => {
+  const hasNamespaceInPath = opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) > -1;
   const filledLngMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng);
   var firstPartLngMask, lastPartLngMask;
   if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`)) {
@@ -114,6 +115,8 @@ const parseLocalLanguage = (opt, lng, cb) => {
       } else {
         namespace = dirPath.substring(filledNsMask.indexOf(nsMask));
       }
+    } else if (!hasNamespaceInPath && startNsIndex < 0) {
+      namespace = opt.namespace;
     }
     var fPath = path.join(opt.path, lngPath || '', file);
     if (dirPath && lngPath.indexOf(nsMask) > -1) {
