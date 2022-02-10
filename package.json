@@ -9,7 +9,7 @@
   "dependencies": {
     "@js.properties/properties": "0.5.4",
     "android-string-resource": "2.3.4",
-    "async": "3.2.2",
+    "async": "3.2.3",
     "colors": "1.4.0",
     "commander": "7.2.0",
     "csvjson": "5.1.0",
@@ -23,18 +23,18 @@
     "laravelphp": "2.0.3",
     "lodash.clonedeep": "4.5.0",
     "mkdirp": "1.0.4",
-    "node-fetch": "2.6.6",
+    "node-fetch": "2.6.7",
     "resx": "2.0.3",
     "rimraf": "3.0.2",
     "strings-file": "0.0.5",
     "tmexchange": "2.0.4",
-    "xliff": "5.7.2",
-    "xlsx": "0.17.4"
+    "xliff": "6.0.1",
+    "xlsx": "0.18.0"
   },
   "devDependencies": {
     "eslint": "7.32.0",
     "gh-release": "6.0.1",
-    "pkg": "5.5.1"
+    "pkg": "5.5.2"
   },
   "scripts": {
     "lint": "eslint .",
