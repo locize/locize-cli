@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.8.2](https://github.com/locize/locize-cli/compare/v7.8.1...v7.8.2) - 2022-02-28
+
+- update dependencies
+
+
 ## [7.8.1](https://github.com/locize/locize-cli/compare/v7.8.0...v7.8.1) - 2022-02-10
 
 - sync: optimize handling if pathmask does not include namespace

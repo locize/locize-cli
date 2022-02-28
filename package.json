@@ -11,7 +11,7 @@
     "android-string-resource": "2.3.4",
     "async": "3.2.3",
     "colors": "1.4.0",
-    "commander": "7.2.0",
+    "commander": "9.0.0",
     "csvjson": "5.1.0",
     "diff": "5.0.0",
     "flat": "5.0.2",
@@ -28,8 +28,8 @@
     "rimraf": "3.0.2",
     "strings-file": "0.0.5",
     "tmexchange": "2.0.4",
-    "xliff": "6.0.1",
-    "xlsx": "0.18.0"
+    "xliff": "6.0.3",
+    "xlsx": "0.18.2"
   },
   "devDependencies": {
     "eslint": "7.32.0",
