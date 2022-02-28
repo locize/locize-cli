@@ -14,6 +14,7 @@ const tmx2js = require('tmexchange/cjs/tmx2js');
 const laravel2js = require('laravelphp/cjs/laravel2js');
 const javaProperties = require('@js.properties/properties');
 const flatten = require('flat');
+const prepareCombinedImport = require('./combineSubkeyPreprocessor').prepareImport;
 
 const convertToFlatFormat = (opt, data, lng, cb) => {
   if (!cb) {
@@ -171,34 +172,34 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
         res.resources = res.resources || {};
         const ns = Object.keys(res.resources)[0];
         const orgRes = res.resources[ns] || res.resources;
-        function checkForContext(nsRes) {
+        function checkForPostProcessing(nsRes) {
           Object.keys(nsRes).forEach((k) => {
             if (orgRes[k].note && (typeof nsRes[k] === 'string' || !nsRes[k])) {
               nsRes[k] = {
                 value: nsRes[k],
                 context: {
                   text: orgRes[k].note,
-                },
+                }
               };
             }
           });
-          return nsRes;
+          return prepareCombinedImport(nsRes);
         }
         if (!res.targetLanguage) {
           sourceOfjs(res, (err, ret) => {
             if (err) return cb(err);
-            cb(null, checkForContext(ret));
+            cb(null, checkForPostProcessing(ret));
           });
         } else {
           let ret = targetOfjs(res);
-          if (lng !== opt.referenceLanguage) return cb(null, checkForContext(ret));
+          if (lng !== opt.referenceLanguage) return cb(null, checkForPostProcessing(ret));
           ret = ret || {};
           const keys = Object.keys(ret);
-          if (keys.length === 0) return cb(null, checkForContext(ret));
+          if (keys.length === 0) return cb(null, checkForPostProcessing(ret));
           const allEmpty = keys.filter((k) => ret[k] !== '').length === 0;
-          if (!allEmpty) return cb(null, checkForContext(ret));
+          if (!allEmpty) return cb(null, checkForPostProcessing(ret));
           ret = sourceOfjs(res);
-          cb(null, checkForContext(ret));
+          cb(null, checkForPostProcessing(ret));
         }
       });
       return;

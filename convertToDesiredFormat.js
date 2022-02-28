@@ -16,6 +16,7 @@ const unflatten = require('./unflatten');
 const getRemoteNamespace = require('./getRemoteNamespace');
 const removeUndefinedFromArrays = require('./removeUndefinedFromArrays');
 const shouldUnflatten = require('./shouldUnflatten');
+const prepareCombinedExport = require('./combineSubkeyPreprocessor').prepareExport;
 
 const convertToDesiredFormat = (
   opt,
@@ -172,7 +173,8 @@ const convertToDesiredFormat = (
       opt.getNamespace(opt, opt.referenceLanguage, namespace, (err, refNs) => {
         if (err) return cb(err);
 
-        fn(opt.referenceLanguage, lng, refNs, flatten(data), namespace, cb);
+        const prepared = prepareCombinedExport(refNs, flatten(data));
+        fn(opt.referenceLanguage, lng, prepared.ref, prepared.trg, namespace, cb);
       });
       return;
     }
