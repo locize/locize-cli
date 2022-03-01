@@ -25,6 +25,15 @@ const getBaseKey = (delimiter) => (k) => {
 
 const uniq = (value, index, self) => self.indexOf(value) === index;
 
+const stringify = (o) => {
+  let str = jsyaml.dump(o);
+  const subKeys = Object.keys(o);
+  subKeys.forEach((sk, i) => {
+    str = str.replace(new RegExp(`^(?:${sk}: )+`, 'm'), `{${sk}}: `);
+  });
+  return str;
+};
+
 const transformKeys = (segments, baseKeys, toMerge, deli) => {
   baseKeys.forEach((bk) => {
     const asObj = toMerge[bk].reduce((mem, k) => {
@@ -33,7 +42,7 @@ const transformKeys = (segments, baseKeys, toMerge, deli) => {
       return mem;
     }, {});
     if (Object.keys(asObj).length > 0) {
-      const value = jsyaml.dump(asObj);
+      const value = stringify(asObj);
       segments[`${bk}__#locize.com/combinedSubkey`] = value;
       toMerge[bk].forEach((k) => {
         delete segments[k];
@@ -93,13 +102,23 @@ const prepareExport = (refRes, trgRes) => {
   return { ref: transformedRef, trg: transformedTrg };
 };
 
+const skRegex = new RegExp('^(?:{(.+)})+', 'gm');
+const parse = (s) => {
+  let matchArray;
+  while ((matchArray = skRegex.exec(s)) !== null) {
+    const [match, sk] = matchArray;
+    s = s.replace(new RegExp(`^(?:${match}: )+`, 'm'), `${sk}: `);
+  }
+  return jsyaml.load(s);
+};
+
 const prepareImport = (resources) => {
   const keys = Object.keys(resources);
   keys.forEach((k) => {
     if (k.indexOf('__#locize.com/combinedSubkey') > -1) {
       const baseKey = k.substring(0, k.indexOf('__#locize.com/combinedSubkey'));
       if (resources[k]) {
-        const parsed = jsyaml.load(resources[k]);
+        const parsed = parse(resources[k]);
         Object.keys(parsed).map((sk) => {
           const skVal = parsed[sk];
           resources[`${baseKey}_${sk}`] = skVal;
