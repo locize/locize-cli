@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.9.1](https://github.com/locize/locize-cli/compare/v7.9.0...v7.9.1) - 2022-03-02
+
+- xliff: fix combined plural keys
+
+
 ## [7.9.0](https://github.com/locize/locize-cli/compare/v7.8.2...v7.9.0) - 2022-03-01
 
 - xliff: detect i18n format and merge pluralforms if necessary

@@ -28,8 +28,12 @@ const uniq = (value, index, self) => self.indexOf(value) === index;
 const stringify = (o) => {
   let str = jsyaml.dump(o);
   const subKeys = Object.keys(o);
-  subKeys.forEach((sk, i) => {
-    str = str.replace(new RegExp(`^(?:${sk}: )+`, 'm'), `{${sk}}: `);
+  subKeys.forEach((sk) => {
+    if (isNaN(sk)) {
+      str = str.replace(new RegExp(`^(?:${sk}: )+`, 'm'), `{${sk}}: `);
+    } else {
+      str = str.replace(new RegExp(`^(?:'${sk}': )+`, 'm'), `{${sk}}: `);
+    }
   });
   return str;
 };
@@ -38,6 +42,11 @@ const transformKeys = (segments, baseKeys, toMerge, deli) => {
   baseKeys.forEach((bk) => {
     const asObj = toMerge[bk].reduce((mem, k) => {
       const subKey = k.substring((bk + deli).length);
+      // special handling for i18next v3
+      if (deli === delimiter.i18next && subKey === 'plural' && segments[bk]) {
+        mem['__'] = segments[bk];
+        delete segments[bk];
+      }
       mem[subKey] = segments[k];
       return mem;
     }, {});
@@ -107,7 +116,12 @@ const parse = (s) => {
   let matchArray;
   while ((matchArray = skRegex.exec(s)) !== null) {
     const [match, sk] = matchArray;
-    s = s.replace(new RegExp(`^(?:${match}: )+`, 'm'), `${sk}: `);
+    if (isNaN(sk)) {
+      s = s.replace(new RegExp(`^(?:${match}: )+`, 'm'), `${sk}: `);
+    } else {
+      const escapedMatch = match.replace('{', '\\{').replace('}', '\\}');
+      s = s.replace(new RegExp(`^(?:${escapedMatch}: )+`, 'm'), `${sk}: `);
+    }
   }
   return jsyaml.load(s);
 };
@@ -122,6 +136,10 @@ const prepareImport = (resources) => {
         Object.keys(parsed).map((sk) => {
           const skVal = parsed[sk];
           resources[`${baseKey}_${sk}`] = skVal;
+          if (sk === '__') {
+            resources[baseKey] = resources[`${baseKey}_${sk}`];
+            delete resources[`${baseKey}_${sk}`];
+          }
         });
         delete resources[k];
       }
