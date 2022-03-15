@@ -16,7 +16,7 @@
     "diff": "5.0.0",
     "flat": "5.0.2",
     "fluent_conv": "3.1.0",
-    "gettext-converter": "1.2.0",
+    "gettext-converter": "1.2.2",
     "https-proxy-agent": "5.0.0",
     "ini": "2.0.0",
     "js-yaml": "4.1.0",
@@ -29,11 +29,11 @@
     "strings-file": "0.0.5",
     "tmexchange": "2.0.4",
     "xliff": "6.0.3",
-    "xlsx": "0.18.2"
+    "xlsx": "0.18.3"
   },
   "devDependencies": {
     "eslint": "7.32.0",
-    "gh-release": "6.0.1",
+    "gh-release": "6.0.2",
     "pkg": "5.5.2"
   },
   "scripts": {

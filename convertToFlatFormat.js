@@ -40,7 +40,9 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
     }
     if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
       try {
-        const ret = po2i18next(data.toString());
+        const potxt = data.toString();
+        const compatibilityJSON = /msgctxt "(zero|one|two|few|many|other)"/.test(potxt) && 'v4';
+        const ret = po2i18next(potxt, { compatibilityJSON });
         cb(null, flatten(ret));
       } catch (err) {
         cb(err);

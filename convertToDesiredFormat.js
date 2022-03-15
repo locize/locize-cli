@@ -56,11 +56,13 @@ const convertToDesiredFormat = (
     }
     if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
       const flatData = flatten(data);
+      const compatibilityJSON = !!Object.keys(flatData).find((k) => /_(zero|one|two|few|many|other)/.test(k)) && 'v4';
       const gettextOpt = {
         project: 'locize',
         language: lng,
         potCreationDate: lastModified,
-        poRevisionDate: lastModified
+        poRevisionDate: lastModified,
+        compatibilityJSON
       };
       cb(null, i18next2po(lng, flatData, gettextOpt));
       return;
