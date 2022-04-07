@@ -10,6 +10,7 @@
     "@js.properties/properties": "0.5.4",
     "android-string-resource": "2.3.4",
     "async": "3.2.3",
+    "cacheable-lookup": "6.0.4",
     "colors": "1.4.0",
     "commander": "9.0.0",
     "csvjson": "5.1.0",
