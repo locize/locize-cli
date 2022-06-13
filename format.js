@@ -150,7 +150,7 @@ function processFiles(opt, filePaths, clb) {
       files.forEach((f) => {
         if (f.content) {
           Object.keys(f.content).forEach((k) => {
-            if (f.content[k] && typeof f.content[k] === 'object' && typeof f.content[k].value !== undefined) {
+            if (f.content[k] && typeof f.content[k] === 'object' && f.content[k].value !== undefined) {
               f.content[k] = f.content[k].value;
             }
           });
