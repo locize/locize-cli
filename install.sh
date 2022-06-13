@@ -7,6 +7,15 @@ Darwin) os="macos" ;;
 *) os="linux" ;;
 esac
 
+if [ "$os" = "linux" ]; then
+	if [ $(cat /etc/os-release | grep "NAME=" | grep -ic "Alpine") = "0" ]; then
+		# normal variant, i.e. ubuntu
+	else
+		# alpine variant
+		os="alpine"
+	fi
+fi
+
 case $(uname -m) in
 x86_64) arch="x86_64" ;;
 arm64) arch="arm64" ;;
