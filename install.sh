@@ -8,9 +8,7 @@ Darwin) os="macos" ;;
 esac
 
 if [ "$os" = "linux" ]; then
-	if [ $(cat /etc/os-release | grep "NAME=" | grep -ic "Alpine") = "0" ]; then
-		# normal variant, i.e. ubuntu
-	else
+	if [ $(cat /etc/os-release | grep "NAME=" | grep -ic "Alpine") != "0" ]; then
 		# alpine variant
 		os="alpine"
 	fi
