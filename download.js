@@ -10,6 +10,7 @@ const getRemoteNamespace = require('./getRemoteNamespace');
 const getRemoteLanguages = require('./getRemoteLanguages');
 const convertToDesiredFormat = require('./convertToDesiredFormat');
 const formats = require('./formats');
+const getProjectStats = require('./getProjectStats');
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap;
 
 function handleDownload(opt, url, err, res, downloads, cb) {
@@ -92,6 +93,56 @@ function handleDownload(opt, url, err, res, downloads, cb) {
   });
 }
 
+function handlePull(opt, toDownload, cb) {
+  const url = opt.apiPath + '/pull/' + opt.projectId + '/' + opt.version;
+  async.each(toDownload, (download, clb) => {
+    const lng = download.language;
+    const namespace = download.namespace;
+
+    getRemoteNamespace(opt, lng, namespace, (err, ns, lastModified) => {
+      if (err) return clb(err);
+
+      if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
+        return clb(null);
+      }
+
+      convertToDesiredFormat(opt, namespace, lng, ns, lastModified, (err, converted) => {
+        if (err) {
+          err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
+          return clb(err);
+        }
+        var filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format];
+        var mkdirPath;
+        if (filledMask.lastIndexOf(path.sep) > 0) {
+          mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep));
+        }
+        if (!opt.language) {
+          if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath));
+          fs.writeFile(path.join(opt.path, filledMask), converted, clb);
+          return;
+        }
+
+        if (filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + lng, '');
+        const parentDir = path.dirname(path.join(opt.path, filledMask));
+        mkdirp.sync(parentDir);
+        fs.writeFile(path.join(opt.path, filledMask), converted, clb);
+      });
+    });
+  }, (err) => {
+    if (err) {
+      if (!cb) {
+        console.error(colors.red(err.message));
+        process.exit(1);
+      }
+      if (cb) cb(err);
+      return;
+    }
+
+    if (!cb) console.log(colors.green(`downloaded ${url} to ${opt.path}...`));
+    if (cb) cb(null);
+  });
+}
+
 const handleError = (err, cb) => {
   if (!cb && err) {
     console.error(colors.red(err.message));
@@ -103,7 +154,7 @@ const handleError = (err, cb) => {
 const download = (opt, cb) => {
   opt.format = opt.format || 'json';
   if (!reversedFileExtensionsMap[opt.format]) {
-    return handleError(new Error(`${opt.format} is not a valid format!`));
+    return handleError(new Error(`${opt.format} is not a valid format!`), cb);
   }
 
   if (opt.skipEmpty === undefined) opt.skipEmpty = true;
@@ -115,6 +166,9 @@ const download = (opt, cb) => {
   opt.pathMaskInterpolationSuffix = opt.pathMaskInterpolationSuffix || '}}';
   opt.pathMask = opt.pathMask || `${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}${path.sep}${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`;
   opt.pathMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, `${opt.languageFolderPrefix}${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`);
+  if (opt.unpublished && !opt.apiKey) {
+    return handleError(new Error('Please provide also an api-key!'), cb);
+  }
 
   var url = opt.apiPath + '/download/' + opt.projectId;
 
@@ -140,27 +194,57 @@ const download = (opt, cb) => {
   if (!cb) console.log(colors.yellow(`downloading ${url} to ${opt.path}...`));
 
   getRemoteLanguages(opt, (err) => {
-    if (err) return handleError(err);
+    if (err) return handleError(err, cb);
 
-    request(url, {
-      method: 'get',
-      headers: opt.apiKey ? {
-        'Authorization': opt.apiKey
-      } : undefined
-    }, (err, res, obj) => {
-      if (res && res.status === 401) {
-        opt.apiKey = null;
-        request(url, {
-          method: 'get',
-        }, (err, res, obj) => {
-          if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
-          handleDownload(opt, url, err, res, obj, cb);
-        });
-        return;
-      }
+    if (!opt.unpublished) {
+      request(url, {
+        method: 'get',
+        headers: opt.apiKey ? {
+          'Authorization': opt.apiKey
+        } : undefined
+      }, (err, res, obj) => {
+        if (res && res.status === 401) {
+          opt.apiKey = null;
+          request(url, {
+            method: 'get',
+          }, (err, res, obj) => {
+            if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
+            handleDownload(opt, url, err, res, obj, cb);
+          });
+          return;
+        }
 
-      if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
-      handleDownload(opt, url, err, res, obj, cb);
+        if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
+        handleDownload(opt, url, err, res, obj, cb);
+      });
+      return;
+    }
+
+    getProjectStats(opt, (err, res) => {
+      if (err) return handleError(err, cb);
+      if (!res || !res[opt.version]) return handleError(new Error('Nothing found!'), cb);
+
+      const toDownload = [];
+      const lngsToCheck = opt.language ? [opt.language] : Object.keys(res[opt.version]);
+      lngsToCheck.forEach((l) => {
+        if (opt.namespaces) {
+          opt.namespaces.forEach((n) => {
+            if (!res[opt.version][l][n]) return;
+            if (opt.skipEmpty && res[opt.version][l][n].segmentsTranslated === 0) return;
+            toDownload.push({ language: l, namespace: n });
+          });
+        } else if (opt.namespace) {
+          if (!res[opt.version][l][opt.namespace]) return;
+          if (opt.skipEmpty && res[opt.version][l][opt.namespace].segmentsTranslated === 0) return;
+          toDownload.push({ language: l, namespace: opt.namespace });
+        } else {
+          Object.keys(res[opt.version][l]).forEach((n) => {
+            if (opt.skipEmpty && res[opt.version][l][n].segmentsTranslated === 0) return;
+            toDownload.push({ language: l, namespace: n });
+          });
+        }
+      });
+      handlePull(opt, toDownload, cb);
     });
   });
 };

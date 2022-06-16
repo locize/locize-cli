@@ -15,6 +15,7 @@ const parseLocalReference = require('./parseLocalReference');
 const formats = require('./formats');
 const lngCodes = require('./lngs.json');
 const deleteNamespace = require('./deleteNamespace');
+const getProjectStats = require('./getProjectStats');
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap;
 
 const getDirectories = (srcpath) => {
@@ -24,22 +25,66 @@ const getDirectories = (srcpath) => {
 };
 
 const getDownloads = (opt, cb) => {
-  request(opt.apiPath + '/download/' + opt.projectId + '/' + opt.version, {
-    method: 'get',
-    headers: opt.apiKey ? {
-      'Authorization': opt.apiKey
-    } : undefined
-  }, (err, res, obj) => {
-    if (err) return cb(err);
-    if (res.status >= 300) {
-      if (obj && (obj.errorMessage || obj.message)) {
-        return cb(new Error((obj.errorMessage || obj.message)));
+  if (!opt.unpublished) {
+    request(opt.apiPath + '/download/' + opt.projectId + '/' + opt.version, {
+      method: 'get',
+      headers: opt.apiKey ? {
+        'Authorization': opt.apiKey
+      } : undefined
+    }, (err, res, obj) => {
+      if (err) return cb(err);
+      if (res.status >= 300) {
+        if (obj && (obj.errorMessage || obj.message)) {
+          return cb(new Error((obj.errorMessage || obj.message)));
+        }
+        return cb(new Error(res.statusText + ' (' + res.status + ')'));
       }
-      return cb(new Error(res.statusText + ' (' + res.status + ')'));
-    }
-    if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
-    cb(null, obj);
-  });
+      if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
+      cb(null, obj);
+    });
+  } else {
+    getProjectStats(opt, (err, res) => {
+      if (err) return handleError(err, cb);
+      if (!res || !res[opt.version]) return handleError(new Error('Nothing found!'), cb);
+
+      const toDownload = [];
+      const lngsToCheck = opt.language ? [opt.language] : Object.keys(res[opt.version]);
+      lngsToCheck.forEach((l) => {
+        if (opt.namespaces) {
+          opt.namespaces.forEach((n) => {
+            if (!res[opt.version][l][n]) return;
+            if (opt.skipEmpty && res[opt.version][l][n].segmentsTranslated === 0) return;
+            toDownload.push({
+              url: `${opt.apiPath}/${opt.projectId}/${opt.version}/${l}/${n}`,
+              key: `${opt.projectId}/${opt.version}/${l}/${n}`,
+              lastModified: '1960-01-01T00:00:00.000Z',
+              size: 0
+            });
+          });
+        } else if (opt.namespace) {
+          if (!res[opt.version][l][opt.namespace]) return;
+          if (opt.skipEmpty && res[opt.version][l][opt.namespace].segmentsTranslated === 0) return;
+          toDownload.push({
+            url: `${opt.apiPath}/${opt.projectId}/${opt.version}/${l}/${opt.namespace}`,
+            key: `${opt.projectId}/${opt.version}/${l}/${opt.namespace}`,
+            lastModified: '1960-01-01T00:00:00.000Z',
+            size: 0
+          });
+        } else {
+          Object.keys(res[opt.version][l]).forEach((n) => {
+            if (opt.skipEmpty && res[opt.version][l][n].segmentsTranslated === 0) return;
+            toDownload.push({
+              url: `${opt.apiPath}/${opt.projectId}/${opt.version}/${l}/${n}`,
+              key: `${opt.projectId}/${opt.version}/${l}/${n}`,
+              lastModified: '1960-01-01T00:00:00.000Z',
+              size: 0
+            });
+          });
+        }
+      });
+      cb(null, toDownload);
+    });
+  }
 };
 
 const compareNamespace = (local, remote, lastModifiedLocal, lastModifiedRemote) => {
@@ -327,7 +372,7 @@ const checkForMissingLocalNamespaces = (downloads, localNamespaces, opt) => {
 const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
   if (!localNamespaces || localNamespaces.length === 0) {
     downloadAll(opt, remoteLanguages, (err) => {
-      if (err) return handleError(err);
+      if (err) return handleError(err, cb);
       if (!cb) console.log(colors.green('FINISHED'));
       if (cb) cb(null);
     });
@@ -335,14 +380,14 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
   }
 
   getDownloads(opt, (err, downloads) => {
-    if (err) return handleError(err);
+    if (err) return handleError(err, cb);
 
     opt.isPrivate = downloads.length > 0 && downloads[0].isPrivate;
 
     const localMissingNamespaces = checkForMissingLocalNamespaces(downloads, localNamespaces, opt);
 
     compareNamespaces(opt, localNamespaces, (err, compared) => {
-      if (err) return handleError(err);
+      if (err) return handleError(err, cb);
 
       const onlyToUpdate = compared.filter((ns) => ns.diff.toAdd.concat(opt.skipDelete ? [] : ns.diff.toRemove).concat(ns.diff.toUpdate).length > 0);
 
@@ -412,7 +457,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
             async.eachLimit(remoteLanguages, Math.round(require('os').cpus().length / 2), (lng, clb) => update(opt, lng, nsOnlyRemove, shouldOmit, clb), clb);
           });
         }, (err) => {
-          if (err) return handleError(err);
+          if (err) return handleError(err, cb);
           if (!cb) console.log(colors.grey('syncing...'));
 
           function down() {
@@ -432,7 +477,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
                   }
                 }
               } : undefined, (err) => {
-                if (err) return handleError(err);
+                if (err) return handleError(err, cb);
                 if (!cb) console.log(colors.green('FINISHED'));
                 if (cb) cb(null);
               });
@@ -450,12 +495,12 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
               'Authorization': opt.apiKey
             }
           }, (err, res, obj) => {
-            if (err) return handleError(err);
+            if (err) return handleError(err, cb);
             if (res.status >= 300 && res.status !== 412) {
               if (obj && (obj.errorMessage || obj.message)) {
-                return handleError(new Error((obj.errorMessage || obj.message)));
+                return handleError(new Error((obj.errorMessage || obj.message)), cb);
               }
-              return handleError(new Error(res.statusText + ' (' + res.status + ')'));
+              return handleError(new Error(res.statusText + ' (' + res.status + ')'), cb);
             }
             down();
           });
@@ -478,7 +523,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
             namespace: n.namespace
           }, clb);
         }, (err) => {
-          if (err) return handleError(err);
+          if (err) return handleError(err, cb);
           updateComparedNamespaces();
         });
         return;
@@ -491,7 +536,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
 const sync = (opt, cb) => {
   opt.format = opt.format || 'json';
   if (!reversedFileExtensionsMap[opt.format]) {
-    return handleError(new Error(`${opt.format} is not a valid format!`));
+    return handleError(new Error(`${opt.format} is not a valid format!`), cb);
   }
 
   opt.version = opt.version || 'latest';
@@ -510,9 +555,12 @@ const sync = (opt, cb) => {
   opt.pathMask = opt.pathMask || `${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}${path.sep}${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`;
   opt.languageFolderPrefix = opt.languageFolderPrefix || '';
   opt.pathMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, `${opt.languageFolderPrefix}${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`);
+  if (opt.unpublished && !opt.apiKey) {
+    return handleError(new Error('Please provide also an api-key!'), cb);
+  }
 
   getRemoteLanguages(opt, (err, remoteLanguages) => {
-    if (err) return handleError(err);
+    if (err) return handleError(err, cb);
 
     if (opt.referenceLanguageOnly && opt.language && opt.referenceLanguage !== opt.language) {
       opt.referenceLanguage = opt.language;
@@ -520,7 +568,7 @@ const sync = (opt, cb) => {
 
     if (opt.referenceLanguageOnly) {
       parseLocalReference(opt, (err, localNamespaces) => {
-        if (err) return handleError(err);
+        if (err) return handleError(err, cb);
 
         if (!opt.dry && opt.cleanLocalFiles) {
           localNamespaces.forEach((ln) => fs.unlinkSync(ln.path));
@@ -533,7 +581,7 @@ const sync = (opt, cb) => {
     }
 
     parseLocalLanguages(opt, remoteLanguages, (err, localNamespaces) => {
-      if (err) return handleError(err);
+      if (err) return handleError(err, cb);
 
       if (!opt.dry && opt.cleanLocalFiles) {
         localNamespaces.forEach((ln) => fs.unlinkSync(ln.path));

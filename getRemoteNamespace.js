@@ -3,9 +3,9 @@ const flatten = require('flat');
 const sortFlatResources = require('./sortFlatResources');
 
 const getRemoteNamespace = (opt, lng, ns, cb) => {
-  request(opt.apiPath + (opt.isPrivate ? '/private' : '') + '/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns + '?ts=' + Date.now(), {
+  request(opt.apiPath + (opt.isPrivate ? '/private' : opt.unpublished ? '/pull' : '') + '/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns + '?ts=' + Date.now(), {
     method: 'get',
-    headers: opt.isPrivate ? {
+    headers: (opt.isPrivate || opt.unpublished) ? {
       'Authorization': opt.apiKey
     } : undefined
   }, (err, res, obj) => {

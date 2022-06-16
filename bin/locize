@@ -238,6 +238,7 @@ program
   .option('-P, --language-folder-prefix <prefix>', 'This will be added as a local folder name prefix in front of the language.', '')
   .option('-m, --path-mask <mask>', 'This will define the folder and file structure; do not add a file extension (default: {{language}}/{{namespace}})', `{{language}}${path.sep}{{namespace}}`)
   .option('-c, --clean <true|false>', 'Removes all local files by removing the whole folder (default: false)', 'false')
+  .option('-up, --unpublished <true|false>', 'Downloads the current (unpublished) translations. This will generate private download costs (default: false)', 'false')
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((options) => {
     try {
@@ -271,6 +272,8 @@ program
 
     const clean = options.clean === 'true';
 
+    const unpublished = options.unpublished === 'true';
+
     const languageFolderPrefix = options.languageFolderPrefix || '';
 
     const pathMask = options.pathMask;
@@ -287,7 +290,8 @@ program
       skipEmpty: skipEmpty,
       clean: clean,
       languageFolderPrefix: languageFolderPrefix,
-      pathMask: pathMask
+      pathMask: pathMask,
+      unpublished: unpublished
     });
   })
   .on('--help', () => {
@@ -377,6 +381,7 @@ program
   .option('-l, --language <lng>', 'The language that should be targeted')
   .option('-n, --namespace <ns>', 'The namespace that should be targeted')
   .option('-g, --get-path <url>', `Specify the get-path url that should be used (default: ${getPathUrl})`)
+  .option('-up, --unpublished <true|false>', 'Downloads the current (unpublished) translations. This will generate private download costs (default: false)', 'false')
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${workingDirectory} or ${home})`)
   .action((options) => {
     try {
@@ -424,6 +429,7 @@ program
     const referenceLanguageOnly = options.referenceLanguageOnly === 'false' ? false : true;
     const compareModificationTime = options.compareModificationTime === 'true';
     const pathMask = options.pathMask;
+    const unpublished = options.unpublished === 'true';
 
     sync({
       apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
@@ -444,7 +450,8 @@ program
       language: language,
       namespace: namespace,
       dry: dry,
-      pathMask: pathMask
+      pathMask: pathMask,
+      unpublished: unpublished
     });
   })
   .on('--help', () => {
