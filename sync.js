@@ -205,7 +205,7 @@ const downloadAll = (opt, remoteLanguages, omitRef, manipulate, cb) => {
         return lng !== opt.referenceLanguage;
       });
     }
-    async.eachLimit(downloads, 30, (download, clb) => {
+    async.eachLimit(downloads, 20, (download, clb) => {
       const splitted = download.key.split('/');
       const lng = splitted[download.isPrivate ? 3 : 2];
       const namespace = splitted[download.isPrivate ? 4 : 3];
@@ -509,7 +509,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
 
       if (opt.deleteRemoteNamespace && localMissingNamespaces.length > 0) {
         wasThereSomethingToUpdate = true;
-        async.eachLimit(localMissingNamespaces, 30, (n, clb) => {
+        async.eachLimit(localMissingNamespaces, 20, (n, clb) => {
           if (opt.dry) {
             console.log(colors.red(`would delete complete namespace ${n.namespace}...`));
             return clb();

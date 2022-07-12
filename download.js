@@ -34,7 +34,7 @@ function handleDownload(opt, url, err, res, downloads, cb) {
     return;
   }
 
-  async.eachLimit(downloads, 30, (download, clb) => {
+  async.eachLimit(downloads, 20, (download, clb) => {
     const splitted = download.key.split('/');
     const version = splitted[download.isPrivate ? 2 : 1];
     const lng = splitted[download.isPrivate ? 3 : 2];
@@ -95,7 +95,7 @@ function handleDownload(opt, url, err, res, downloads, cb) {
 
 function handlePull(opt, toDownload, cb) {
   const url = opt.apiPath + '/pull/' + opt.projectId + '/' + opt.version;
-  async.eachLimit(toDownload, 30, (download, clb) => {
+  async.eachLimit(toDownload, 20, (download, clb) => {
     const lng = download.language;
     const namespace = download.namespace;
 
@@ -203,11 +203,13 @@ const download = (opt, cb) => {
           'Authorization': opt.apiKey
         } : undefined
       }, (err, res, obj) => {
+        obj = obj || [];
         if (res && res.status === 401) {
           opt.apiKey = null;
           request(url, {
             method: 'get',
           }, (err, res, obj) => {
+            obj = obj || [];
             if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
             handleDownload(opt, url, err, res, obj, cb);
           });
