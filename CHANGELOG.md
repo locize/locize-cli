@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.12.1](https://github.com/locize/locize-cli/compare/v7.12.0...v7.12.1) - 2022-07-12
+
+- limit parallel downloads
+
 ## [7.12.0](https://github.com/locize/locize-cli/compare/v7.11.0...v7.12.0) - 2022-06-16
 
 - sync and download: introduce --unpublished flag
