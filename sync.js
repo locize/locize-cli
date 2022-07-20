@@ -205,7 +205,7 @@ const downloadAll = (opt, remoteLanguages, omitRef, manipulate, cb) => {
         return lng !== opt.referenceLanguage;
       });
     }
-    async.eachLimit(downloads, 20, (download, clb) => {
+    async.eachLimit(downloads, opt.unpublished ? 5 : 20, (download, clb) => {
       const splitted = download.key.split('/');
       const lng = splitted[download.isPrivate ? 3 : 2];
       const namespace = splitted[download.isPrivate ? 4 : 3];

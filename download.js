@@ -95,7 +95,7 @@ function handleDownload(opt, url, err, res, downloads, cb) {
 
 function handlePull(opt, toDownload, cb) {
   const url = opt.apiPath + '/pull/' + opt.projectId + '/' + opt.version;
-  async.eachLimit(toDownload, 20, (download, clb) => {
+  async.eachLimit(toDownload, 5, (download, clb) => {
     const lng = download.language;
     const namespace = download.namespace;
 

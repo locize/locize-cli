@@ -12,12 +12,12 @@
     "async": "3.2.4",
     "cacheable-lookup": "6.0.4",
     "colors": "1.4.0",
-    "commander": "9.3.0",
+    "commander": "9.4.0",
     "csvjson": "5.1.0",
     "diff": "5.1.0",
     "flat": "5.0.2",
     "fluent_conv": "3.1.0",
-    "gettext-converter": "1.2.2",
+    "gettext-converter": "1.2.3",
     "https-proxy-agent": "5.0.1",
     "ini": "3.0.0",
     "js-yaml": "4.1.0",
@@ -29,13 +29,13 @@
     "rimraf": "3.0.2",
     "strings-file": "0.0.5",
     "tmexchange": "2.0.4",
-    "xliff": "6.0.3",
+    "xliff": "6.1.0",
     "xlsx": "0.18.5"
   },
   "devDependencies": {
-    "eslint": "8.17.0",
+    "eslint": "8.20.0",
     "gh-release": "6.0.4",
-    "pkg": "5.7.0"
+    "pkg": "5.8.0"
   },
   "scripts": {
     "lint": "eslint .",
