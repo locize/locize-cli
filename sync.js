@@ -254,14 +254,15 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
     ns.diff.toUpdate.forEach((k) => data[k] = ns.content[k]);
   }
 
-  if (Object.keys(data).length === 0) return cb(null);
+  var keysToSend = Object.keys(data).length;
+  if (keysToSend === 0) return cb(null);
 
   if (opt.dry) return cb(null);
 
   var payloadKeysLimit = 1000;
 
-  function send(d, clb, isRetrying) {
-    request(opt.apiPath + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace + (shouldOmit ? '?omitstatsgeneration=true' : ''), {
+  function send(d, so, clb, isRetrying) {
+    request(opt.apiPath + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace + (so ? '?omitstatsgeneration=true' : ''), {
       method: 'post',
       body: d,
       headers: {
@@ -270,7 +271,7 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
     }, (err, res, obj) => {
       if (err) return clb(err);
       if (res.status === 504 && !isRetrying) {
-        return setTimeout(() => send(d, clb, true), 3000);
+        return setTimeout(() => send(d, so, clb, true), 3000);
       }
       if (res.status >= 300 && res.status !== 412) {
         if (obj && (obj.errorMessage || obj.message)) {
@@ -282,7 +283,7 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
     });
   }
 
-  if (Object.keys(data).length > payloadKeysLimit) {
+  if (keysToSend > payloadKeysLimit) {
     var tasks = [];
     var keysInObj = Object.keys(data);
 
@@ -290,7 +291,8 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
       (function() {
         var pagedData = {};
         keysInObj.splice(0, payloadKeysLimit).forEach((k) => pagedData[k] = data[k]);
-        tasks.push((c) => send(pagedData, c));
+        var hasMoreKeys = keysInObj.length > 0;
+        tasks.push((c) => send(pagedData, hasMoreKeys ? true : shouldOmit, c));
       })();
     }
 
@@ -298,13 +300,13 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
 
     var finalPagedData = {};
     keysInObj.splice(0, keysInObj.length).forEach((k) => finalPagedData[k] = data[k]);
-    tasks.push((c) => send(finalPagedData, c));
+    tasks.push((c) => send(finalPagedData, shouldOmit, c));
 
     async.series(tasks, cb);
     return;
   }
 
-  send(data, cb);
+  send(data, shouldOmit, cb);
 };
 
 const cleanupLanguages = (opt, remoteLanguages) => {
