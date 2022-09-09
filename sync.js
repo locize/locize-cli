@@ -110,7 +110,7 @@ const compareNamespace = (local, remote, lastModifiedLocal, lastModifiedRemote) 
     }
     if (
       remote[k] && (
-        (typeof local[k] === 'object' && local[k].value && remote[k] !== local[k].value) ||
+        (typeof local[k] === 'object' && local[k] && local[k].value && remote[k] !== local[k].value) ||
         (typeof local[k] !== 'object' && remote[k] !== local[k])
       )
     ) {
