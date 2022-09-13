@@ -49,27 +49,14 @@ $FILENAME = if ($IsWindows) {
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 $DenoUri = if (!$Version) {
-  $Response = Invoke-WebRequest 'https://github.com/locize/locize-cli/releases' -UseBasicParsing
-  if ($PSVersionTable.PSEdition -eq 'Core') {
-    $Response.Links |
-      Where-Object { $_.href -like "/locize/locize-cli/releases/download/*/locize-${OS}" } |
-      ForEach-Object { 'https://github.com' + $_.href } |
-      Select-Object -First 1
-  } else {
-    $HTMLFile = New-Object -Com HTMLFile
-    if ($HTMLFile.IHTMLDocument2_write) {
-      $HTMLFile.IHTMLDocument2_write($Response.Content)
-    } else {
-      $ResponseBytes = [Text.Encoding]::Unicode.GetBytes($Response.Content)
-      $HTMLFile.write($ResponseBytes)
-    }
-    $HTMLFile.getElementsByTagName('a') |
-      Where-Object { $_.href -like "about:/locize/locize-cli/releases/download/*/locize-${OS}" } |
-      ForEach-Object { $_.href -replace 'about:', 'https://github.com' } |
-      Select-Object -First 1
-  }
+  "https://github.com/locize/locize-cli/releases/latest/download/locize-${OS}"
 } else {
-  "https://github.com/locize/locize-cli/releases/download/$Version/locize-${OS}"
+  "https://github.com/locize/locize-cli/releases/download/${Version}/locize-${OS}"
+}
+
+if (!$DenoUri) {
+  Write-Output "failed to find a release on github"
+  Exit 1
 }
 
 if (!(Test-Path $BinDir)) {
