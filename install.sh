@@ -32,19 +32,21 @@ if [ $# -eq 0 ]; then
 	# 		command head -n 1
 	# )
 
-	locize_asset_path_for_lazy=$(
-		command curl -sSf https://github.com/locize/locize-cli/releases |
-			command grep -o "https://github.com/locize/locize-cli/releases/expanded_assets/.*\" " |
-			command head -n 1 |
-			command rev |
-			command cut -c3- |
-			command rev
-	)
-	locize_asset_path=$(
-		command curl -sSf ${locize_asset_path_for_lazy} |
-			command grep -o "/locize/locize-cli/releases/download/.*/locize-${os}" |
-			command head -n 1
-	)
+	# locize_asset_path_for_lazy=$(
+	# 	command curl -sSf https://github.com/locize/locize-cli/releases |
+	# 		command grep -o "https://github.com/locize/locize-cli/releases/expanded_assets/.*\" " |
+	# 		command head -n 1 |
+	# 		command rev |
+	# 		command cut -c3- |
+	# 		command rev
+	# )
+	# locize_asset_path=$(
+	# 	command curl -sSf ${locize_asset_path_for_lazy} |
+	# 		command grep -o "/locize/locize-cli/releases/download/.*/locize-${os}" |
+	# 		command head -n 1
+	# )
+
+	locize_asset_path="/locize/locize-cli/releases/latest/download/locize-${os}"
 
 	if [ ! "$locize_asset_path" ]; then
     echo "failed to find a release on github"
