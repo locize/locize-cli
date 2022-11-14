@@ -46,7 +46,7 @@ const pullNamespace = (opt, lng, ns, cb) => {
         ret[k] = info.result[k];
       });
 
-      if (info.lastModified.getTime() > lastModified.getTime()) {
+      if (info.lastModified && info.lastModified.getTime() > (lastModified ? lastModified.getTime() : 0)) {
         lastModified = info.lastModified;
       }
 
