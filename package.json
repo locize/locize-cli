@@ -8,11 +8,11 @@
   },
   "dependencies": {
     "@js.properties/properties": "0.5.4",
-    "android-string-resource": "2.3.4",
+    "android-string-resource": "2.3.5",
     "async": "3.2.4",
     "cacheable-lookup": "6.1.0",
     "colors": "1.4.0",
-    "commander": "9.4.0",
+    "commander": "9.4.1",
     "csvjson": "5.1.0",
     "diff": "5.1.0",
     "flat": "5.0.2",
@@ -33,7 +33,7 @@
     "xlsx": "0.18.5"
   },
   "devDependencies": {
-    "eslint": "8.22.0",
+    "eslint": "8.28.0",
     "gh-release": "6.0.4",
     "pkg": "5.8.0"
   },
