@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.12.11](https://github.com/locize/locize-cli/compare/v7.12.10...v7.12.11) - 2022-11-24
+
+- update android-string-resource dependency to fix [#80](https://github.com/locize/locize-cli/issues/80)
+
 ## [7.12.10](https://github.com/locize/locize-cli/compare/v7.12.9...v7.12.10) - 2022-11-23
 
 - update android-string-resource dependency to fix [#80](https://github.com/locize/locize-cli/issues/80)
