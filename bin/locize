@@ -79,6 +79,7 @@ program
       apiKey: apiKey,
       projectId: projectId,
       addPath: addPath,
+      apiPath: url.parse(addPath).protocol + '//' + url.parse(addPath).host,
       path: options.path,
       language: options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG,
       version: version,

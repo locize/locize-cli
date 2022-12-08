@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.12.13](https://github.com/locize/locize-cli/compare/v7.12.12...v7.12.13) - 2022-12-08
+
+- migrate command will use missing route if replace param is false or not passed and will also automaticaly create languages (make sure to use an api key with admin permissions)
+
 ## [7.12.12](https://github.com/locize/locize-cli/compare/v7.12.11...v7.12.12) - 2022-11-24
 
 - update android-string-resource dependency to fix wrong plural unescaping

@@ -4,6 +4,7 @@ const flatten = require('flat');
 const async = require('async');
 const colors = require('colors');
 const request = require('./request');
+const getRemoteLanguages = require('./getRemoteLanguages');
 
 const getDirectories = (srcpath) => {
   return fs.readdirSync(srcpath).filter(function(file) {
@@ -66,6 +67,8 @@ const transfer = (opt, ns, cb) => {
 
   console.log(colors.yellow(`transfering ${opt.version}/${ns.language}/${ns.namespace}...`));
 
+  if (!opt.replace) url = url.replace('/update/', '/missing/');
+
   request(url + `?replace=${!!opt.replace}`, {
     method: 'post',
     body: ns.value,
@@ -74,6 +77,11 @@ const transfer = (opt, ns, cb) => {
     }
   }, (err, res, obj) => {
     if (err || (obj && (obj.errorMessage || obj.message))) {
+      if (url.indexOf('/missing/') > -1 && res.status === 412) {
+        console.log(colors.green(`transfered ${opt.version}/${ns.language}/${ns.namespace} (but all keys already existed)...`));
+        cb(null);
+        return;
+      }
       console.log(colors.red(`transfer failed for ${opt.version}/${ns.language}/${ns.namespace}...`));
 
       if (err) return cb(err);
@@ -86,12 +94,54 @@ const transfer = (opt, ns, cb) => {
 };
 
 const upload = (opt, nss, cb) => {
+  if (!opt.referenceLanguage) {
+    async.eachLimit(
+      nss,
+      require('os').cpus().length,
+      (ns, done) => transfer(opt, ns, done),
+      cb
+    );
+    return;
+  }
+
+  const nssRefLng = nss.filter((n) => n.language === opt.referenceLanguage);
+  const nssNonRefLng = nss.filter((n) => n.language !== opt.referenceLanguage);
+
   async.eachLimit(
-    nss,
+    nssRefLng,
     require('os').cpus().length,
     (ns, done) => transfer(opt, ns, done),
-    cb
+    (err) => {
+      if (err) return cb(err);
+      async.eachLimit(
+        nssNonRefLng,
+        require('os').cpus().length,
+        (ns, done) => transfer(opt, ns, done),
+        cb
+      );
+    }
   );
+};
+
+const addLanguage = (opt, l, cb) => {
+  var url = opt.apiPath + '/language/' + opt.projectId + '/' + l;
+
+  request(url, {
+    method: 'post',
+    headers: {
+      'Authorization': opt.apiKey
+    }
+  }, (err, res, obj) => {
+    if (err || (obj && (obj.errorMessage || obj.message))) {
+      console.log(colors.red(`failed to add language ${l}...`));
+
+      if (err) return cb(err);
+      if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
+    }
+    if (res.status >= 300 && res.status !== 412) return cb(new Error(res.statusText + ' (' + res.status + ')'));
+    console.log(colors.green(`added language ${l}...`));
+    cb(null);
+  });
 };
 
 const migrate = (opt, cb) => {
@@ -101,6 +151,8 @@ const migrate = (opt, cb) => {
     if (cb) cb(err);
     return;
   }
+
+  opt.apiPath = opt.apiPath || 'https://api.locize.app';
 
   if (opt.language) {
     const files = getFiles(opt.path);
@@ -142,17 +194,57 @@ const migrate = (opt, cb) => {
         if (cb) cb(err);
         return;
       }
-      upload(opt, nss, (err) => {
+
+      getRemoteLanguages(opt, (err, remoteLanguages) => {
         if (err) {
-          if (!cb) {
-            console.error(colors.red(err.stack));
-            process.exit(1);
-          }
+          if (!cb) { console.error(colors.red(err.stack)); process.exit(1); }
           if (cb) cb(err);
           return;
         }
-        if (!cb) console.log(colors.green('FINISHED'));
-        if (cb) cb(null);
+
+        const localLanguages = [];
+        nss.forEach((n) => {
+          if (localLanguages.indexOf(n.language) < 0) localLanguages.push(n.language);
+        });
+
+        const notExistingLanguages = localLanguages.filter((l) => remoteLanguages.indexOf(l) < 0);
+
+        if (notExistingLanguages.length === 0) {
+          upload(opt, nss, (err) => {
+            if (err) {
+              if (!cb) {
+                console.error(colors.red(err.stack));
+                process.exit(1);
+              }
+              if (cb) cb(err);
+              return;
+            }
+            if (!cb) console.log(colors.green('FINISHED'));
+            if (cb) cb(null);
+          });
+          return;
+        }
+
+        async.eachLimit(
+          notExistingLanguages,
+          require('os').cpus().length,
+          (l, done) => addLanguage(opt, l, done),
+          (err) => {
+            upload(opt, nss, (err) => {
+              if (err) {
+                if (!cb) {
+                  console.error(colors.red(err.stack));
+                  process.exit(1);
+                }
+                if (cb) cb(err);
+                return;
+              }
+              if (!cb) console.log(colors.green('FINISHED'));
+              if (cb) cb(null);
+            });
+          }
+        );
+        return;
       });
     });
     return;
