@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.13.1](https://github.com/locize/locize-cli/compare/v7.13.0...v7.13.1) - 2022-12-08
+
+- optimize migrate command
+
 ## [7.13.0](https://github.com/locize/locize-cli/compare/v7.12.12...v7.13.0) - 2022-12-08
 
 - migrate command will use missing route if replace param is false or not passed and will also automaticaly create languages (make sure to use an api key with admin permissions)

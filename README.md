@@ -223,7 +223,7 @@ locize delete-namespace common --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 
 
 ## Migration of existing i18next files
 We suggest to use the sync command instead of the migrate command.
-The migrate command is older and only works with json files.
+The migrate command should be used only once and only works with json files.
 
 ### Step 1: Go near to your translation files
 

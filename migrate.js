@@ -230,18 +230,29 @@ const migrate = (opt, cb) => {
           require('os').cpus().length,
           (l, done) => addLanguage(opt, l, done),
           (err) => {
-            upload(opt, nss, (err) => {
-              if (err) {
-                if (!cb) {
-                  console.error(colors.red(err.stack));
-                  process.exit(1);
-                }
-                if (cb) cb(err);
-                return;
+            if (err) {
+              if (!cb) {
+                console.error(colors.red(err.stack));
+                process.exit(1);
               }
-              if (!cb) console.log(colors.green('FINISHED'));
-              if (cb) cb(null);
-            });
+              if (cb) cb(err);
+              return;
+            }
+            setTimeout(() => {
+              // wait a bit to make sure project is up-to-date also in cache
+              upload(opt, nss, (err) => {
+                if (err) {
+                  if (!cb) {
+                    console.error(colors.red(err.stack));
+                    process.exit(1);
+                  }
+                  if (cb) cb(err);
+                  return;
+                }
+                if (!cb) console.log(colors.green('FINISHED'));
+                if (cb) cb(null);
+              });
+            }, 5000);
           }
         );
         return;
