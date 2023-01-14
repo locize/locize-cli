@@ -86,6 +86,10 @@ or add a format like (json, flat, xliff2, xliff12, xlf2, xlf12, android, yaml, y
 locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1 --path ./backup --format android
 ```
 
+### GitHub Action
+
+There's also a [GitHub Action](https://github.com/marketplace/actions/locize-download) that handles the download in your CI/CD workflow.
+
 
 ## Synchronize locize with your repository (or any other local directory)
 By using the sync command, you can keep your existing code setup and synchronize the translations with locize.
