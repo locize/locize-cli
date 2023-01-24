@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@js.properties/properties": "0.5.4",
-    "android-string-resource": "2.3.8",
+    "android-string-resource": "2.3.9",
     "async": "3.2.4",
     "cacheable-lookup": "6.1.0",
     "colors": "1.4.0",
