@@ -315,7 +315,7 @@ or
 locize add common title "the title of my cool app"
 ```
 
-### Additionally if these environment variables are set:
+### Additionally if these environment variables can be set:
 
 - LOCIZE_PROJECTID or LOCIZE_PID
 - LOCIZE_API_KEY or LOCIZE_KEY
@@ -326,4 +326,6 @@ they will also be considered with this priority:
 
 1. argument as part of command (i.e. locize sync --project-id ...)
 2. config value in .locize file (i.e. projectId = ...)
-3. env variable (i.e. LOCIZE_PROJECTID)
+3. env variable (i.e. LOCIZE_PROJECTID) / or .env file
+
+In case you have a .env file in the current working directory, it will be used to load environment variables from that .env file into process.env.

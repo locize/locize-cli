@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.14.0](https://github.com/locize/locize-cli/compare/v7.13.2...v7.14.0) - 2023-03-11
+
+- support for .env file [#83](https://github.com/locize/locize-cli/pull/83)
+
 ## [7.13.2](https://github.com/locize/locize-cli/compare/v7.13.1...v7.13.2) - 2023-01-24
 
 - update dependencies to fix reported vulnerabilities [#81](https://github.com/locize/locize-cli/issues/81)
