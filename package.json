@@ -26,7 +26,7 @@
     "lodash.clonedeep": "4.5.0",
     "mkdirp": "2.1.6",
     "node-fetch": "2.6.8",
-    "resx": "2.0.3",
+    "resx": "2.0.4",
     "rimraf": "3.0.2",
     "strings-file": "0.0.5",
     "tmexchange": "2.0.4",
@@ -34,7 +34,7 @@
     "xlsx": "0.18.5"
   },
   "devDependencies": {
-    "eslint": "8.36.0",
+    "eslint": "8.40.0",
     "gh-release": "7.0.2",
     "pkg": "5.8.1"
   },

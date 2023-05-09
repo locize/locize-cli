@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.14.2](https://github.com/locize/locize-cli/compare/v7.14.1...v7.14.2) - 2023-05-09
+
+- optimize unflatten algorithm
+
 ## [7.14.1](https://github.com/locize/locize-cli/compare/v7.14.0...v7.14.1) - 2023-03-28
 
 - update fluent_conv to fix [#84](https://github.com/locize/locize-cli/pull/84)
