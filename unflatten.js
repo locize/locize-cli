@@ -58,7 +58,7 @@ module.exports = (data) => {
     const parts = arrToConvert.split('.');
     let pr = result;
     parts.forEach((part, ind) => {
-      if (ind === parts.length - 1) {
+      if (ind === parts.length - 1 && Array.isArray(pr[part])) {
         pr[part] = pr[part].reduce((mem, item, ind) => {
           mem[ind] = item;
           return mem;
