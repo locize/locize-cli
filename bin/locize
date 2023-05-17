@@ -356,6 +356,7 @@ program
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-v, --ver <version>', 'Found namespaces will be matched to this version (default: latest)')
   .option('-p, --path <path>', `Specify the path that should be used (default: ${process.cwd()})`, process.cwd())
+  .option('-A, --auto-create-path <true|false>', 'This will automatically make sure the --path is created. (default: true)', 'true')
   .option('-f, --format <json>', 'File format of namespaces (default: json; [flat, xliff2, xliff12, xlf2, xlf12, android, yaml, yaml-rails, yaml-nested, csv, xlsx, po, strings, resx, fluent, tmx, laravel, properties])', 'json')
   .option('-s, --skip-empty <true|false>', 'Skips to download empty files (default: false)', 'false')
   .option('-c, --clean <true|false>', 'Removes all local files by removing the whole folder (default: false)', 'false')
@@ -416,6 +417,7 @@ program
     const compareModificationTime = options.compareModificationTime === 'true';
     const pathMask = options.pathMask;
     const unpublished = options.unpublished === 'true';
+    const autoCreatePath = options.autoCreatePath === 'true';
 
     sync({
       apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
@@ -437,7 +439,8 @@ program
       namespace: namespace,
       dry: dry,
       pathMask: pathMask,
-      unpublished: unpublished
+      unpublished: unpublished,
+      autoCreatePath: autoCreatePath
     });
   })
   .on('--help', () => {

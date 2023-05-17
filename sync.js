@@ -545,6 +545,16 @@ const sync = (opt, cb) => {
   opt.apiPath = opt.apiPath || 'https://api.locize.app';
 
   if (!opt.dry && opt.clean) rimraf.sync(path.join(opt.path, '*'));
+
+  if (opt.autoCreatePath === false) {
+    var directoryExists = false;
+    try {
+      directoryExists = fs.statSync(opt.path).isDirectory();
+    } catch (e) {}
+    if (!directoryExists) {
+      return handleError(new Error(`${opt.path} does not exist!`), cb);
+    }
+  }
   if (!opt.dry) mkdirp.sync(opt.path);
 
   if (opt.namespace && opt.namespace.indexOf(',') > 0) {
