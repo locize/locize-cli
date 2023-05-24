@@ -29,12 +29,12 @@
     "resx": "2.0.4",
     "rimraf": "3.0.2",
     "strings-file": "0.0.5",
-    "tmexchange": "2.0.4",
+    "tmexchange": "2.0.5",
     "xliff": "6.1.0",
     "xlsx": "0.18.5"
   },
   "devDependencies": {
-    "eslint": "8.40.0",
+    "eslint": "8.41.0",
     "gh-release": "7.0.2",
     "pkg": "5.8.1"
   },

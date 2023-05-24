@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.14.5](https://github.com/locize/locize-cli/compare/v7.14.4...v7.14.5) - 2023-05-24
+
+- update tmexchange dependency
+
 ## [7.14.4](https://github.com/locize/locize-cli/compare/v7.14.3...v7.14.4) - 2023-05-09
 
 - sync: introduce --auto-create-path option
