@@ -73,6 +73,7 @@ Add your project-id and let's go...
 ```sh
 locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1 --path ./backup
 ```
+*Make sure to use `--ver` and not `--version` (`--version` will print the CLI version).*
 
 or
 
@@ -203,6 +204,7 @@ Add your api-key (of target version) and your project-id and let's go...
 # this will copy version latest to production
 locize copy-version latest --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver production
 ```
+*Make sure to use `--ver` and not `--version` (`--version` will print the CLI version).*
 
 
 ## Publish version
@@ -223,6 +225,7 @@ Add your api-key and your project-id and let's go...
 ```sh
 locize delete-namespace common --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest
 ```
+*Make sure to use `--ver` and not `--version` (`--version` will print the CLI version).*
 
 
 ## Migration of existing i18next files
