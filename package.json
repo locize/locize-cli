@@ -15,7 +15,7 @@
     "commander": "9.5.0",
     "csvjson": "5.1.0",
     "diff": "5.1.0",
-    "dotenv": "16.0.3",
+    "dotenv": "16.3.1",
     "flat": "5.0.2",
     "fluent_conv": "3.2.0",
     "gettext-converter": "1.2.3",
@@ -34,7 +34,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.3/xlsx-0.19.3.tgz"
   },
   "devDependencies": {
-    "eslint": "8.41.0",
+    "eslint": "8.45.0",
     "gh-release": "7.0.2",
     "pkg": "5.8.1"
   },

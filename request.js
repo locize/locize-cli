@@ -33,6 +33,8 @@ module.exports = (url, options, callback) => {
     }
   }).then((ret) => callback(null, ret.res, ret.obj)).catch((err) => {
     if (err && err.message && (
+      err.message.indexOf('ETIMEDOUT') > -1 || // on timeout retry
+      // on dns errors
       err.message.indexOf('ENOTFOUND') > -1 ||
       err.message.indexOf('ENODATA') > -1 ||
       err.message.indexOf('ENOENT') > -1 // Windows: name exists, but not this record type

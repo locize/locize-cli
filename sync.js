@@ -571,6 +571,7 @@ const sync = (opt, cb) => {
     return handleError(new Error('Please provide also an api-key!'), cb);
   }
 
+  console.log(colors.grey('checking remote (locize)...'));
   getRemoteLanguages(opt, (err, remoteLanguages) => {
     if (err) return handleError(err, cb);
 
@@ -579,6 +580,7 @@ const sync = (opt, cb) => {
     }
 
     if (opt.referenceLanguageOnly) {
+      console.log(colors.grey('checking local (reference language)...'));
       parseLocalReference(opt, (err, localNamespaces) => {
         if (err) return handleError(err, cb);
 
@@ -587,11 +589,13 @@ const sync = (opt, cb) => {
           localNamespaces = [];
         }
 
+        console.log(colors.grey('calculate diffs...'));
         handleSync(opt, remoteLanguages, localNamespaces, cb);
       });
       return;
     }
 
+    console.log(colors.grey('checking local...'));
     parseLocalLanguages(opt, remoteLanguages, (err, localNamespaces) => {
       if (err) return handleError(err, cb);
 
@@ -600,6 +604,7 @@ const sync = (opt, cb) => {
         localNamespaces = [];
       }
 
+      console.log(colors.grey('calculate diffs...'));
       handleSync(opt, remoteLanguages, localNamespaces, cb);
     });
   });
