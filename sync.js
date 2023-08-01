@@ -580,7 +580,7 @@ const sync = (opt, cb) => {
     }
 
     if (opt.referenceLanguageOnly) {
-      console.log(colors.grey('checking local (reference language)...'));
+      console.log(colors.grey(`checking local${opt.path !== process.cwd() ? ` (${opt.path})` : ''} only reference language...`));
       parseLocalReference(opt, (err, localNamespaces) => {
         if (err) return handleError(err, cb);
 
@@ -595,7 +595,7 @@ const sync = (opt, cb) => {
       return;
     }
 
-    console.log(colors.grey('checking local...'));
+    console.log(colors.grey(`checking local${opt.path !== process.cwd() ? ` (${opt.path})` : ''}...`));
     parseLocalLanguages(opt, remoteLanguages, (err, localNamespaces) => {
       if (err) return handleError(err, cb);
 
