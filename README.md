@@ -196,6 +196,9 @@ Navigate to your locize project and check the results => [www.locize.app](https:
 
 
 ## Copy version
+
+*It uses this [API endpoint](https://docs.locize.com/integration/api#copy-version) and it's the same behavior like [overwriting](https://github.com/more/versioning#a-overwrite-with-data-from) via the UI.*
+
 ### Step 1: execute
 
 Add your api-key (of target version) and your project-id and let's go...
