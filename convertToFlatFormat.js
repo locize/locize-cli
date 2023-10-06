@@ -23,7 +23,16 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
   }
   try {
     if (opt.format === 'json' || opt.format === 'flat') {
-      cb(null, flatten(JSON.parse(data.toString())));
+      const dataString = data.toString().trim();
+      if (dataString[0] !== '{' && dataString[0] !== '[') {
+        return cb(new Error(`Not a valid json file: Content starts with "${dataString[0]}" but should start with "{"`));
+      }
+      try {
+        const jsonParsed = JSON.parse(dataString);
+        cb(null, flatten(jsonParsed));
+      } catch (err) {
+        return cb(err);
+      }
       return;
     }
     if (opt.format === 'po' || opt.format === 'gettext') {

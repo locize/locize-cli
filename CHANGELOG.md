@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.14.9](https://github.com/locize/locize-cli/compare/v7.14.8...v7.14.9) - 2023-10-06
+
+- update some deps and add additional logs for json parse error
+
 ## [7.14.8](https://github.com/locize/locize-cli/compare/v7.14.7...v7.14.8) - 2023-08-01
 
 - sync: log path if passing custom path argument
