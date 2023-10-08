@@ -55,7 +55,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath)) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
     } catch (e) {}
 
     const addPath = options.addPath || config.addPath || addPathUrl;
@@ -113,7 +113,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((namespace, key, value, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath)) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
     } catch (e) {}
 
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
@@ -172,7 +172,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((namespace, key, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath)) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
     } catch (e) {}
 
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
@@ -240,7 +240,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath)) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
     } catch (e) {}
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
@@ -309,7 +309,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((namespace, key, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath)) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
     } catch (e) {}
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
@@ -376,7 +376,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath)) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
     } catch (e) {}
 
     const getPath = options.getPath || config.getPath || options.addPath || config.addPath || getPathUrl;
@@ -470,7 +470,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath)) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
     } catch (e) {}
 
     const getPath = options.getPath || config.getPath || options.addPath || config.addPath || getPathUrl;
@@ -542,7 +542,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((fromVersion, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath)) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
     } catch (e) {}
 
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
@@ -590,7 +590,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath)) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
     } catch (e) {}
 
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
@@ -637,7 +637,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((namespace, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath)) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
     } catch (e) {}
 
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
@@ -685,7 +685,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((fileOrDirectory, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath)) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
     } catch (e) {}
 
     fileOrDirectory = fileOrDirectory || '.';
