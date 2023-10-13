@@ -277,7 +277,7 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
       return;
     }
     if (opt.format === 'laravel') {
-      cb(null, flatten(laravel2js(data.toString())));
+      laravel2js(data.toString(), (err, res) => cb(err, flatten(res)));
       return;
     }
     if (opt.format === 'properties') {
