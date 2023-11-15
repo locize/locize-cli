@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const async = require('async');
-const mkdirp = require('mkdirp');
+const { mkdirp } = require('mkdirp');
 const convertToFlatFormat = require('./convertToFlatFormat');
 const formats = require('./formats');
 const fileExtensionsMap = formats.fileExtensionsMap;
