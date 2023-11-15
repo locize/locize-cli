@@ -27,7 +27,7 @@
     "mkdirp": "3.0.1",
     "node-fetch": "2.7.0",
     "resx": "2.0.4",
-    "rimraf": "5.0.5",
+    "rimraf": "3.0.2",
     "strings-file": "0.0.5",
     "tmexchange": "2.0.5",
     "xliff": "6.2.0",
@@ -41,7 +41,7 @@
   "scripts": {
     "lint": "eslint .",
     "test": "npm run lint",
-    "pkg": "mkdir -p ./bins && pkg ./bin/locize --out-path ./bins --targets node16-linux-x64,node16-macos-x64,node16-win-x64,node16-alpine-x64",
+    "pkg": "mkdir -p ./bins && pkg ./bin/locize --out-path ./bins --targets node18-linux-x64,node18-macos-x64,node18-win-x64,node18-alpine-x64",
     "release": "gh-release --assets ./bins/locize-linux,./bins/locize-macos,./bins/locize-win.exe,./bins/locize-alpine",
     "version": "npm run pkg",
     "postversion": "git push && npm run release"
