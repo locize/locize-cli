@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { mkdirp } = require('mkdirp');
-const { rimraf } = require('rimraf');
+const rimraf = require('rimraf');
 const async = require('async');
 const colors = require('colors');
 const request = require('./request');

@@ -1,6 +1,6 @@
 const colors = require('colors');
 const { mkdirp } = require('mkdirp');
-const { rimraf } = require('rimraf');
+const rimraf = require('rimraf');
 const request = require('./request');
 const fs = require('fs');
 const path = require('path');
