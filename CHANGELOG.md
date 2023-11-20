@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [7.14.12](https://github.com/locize/locize-cli/compare/v7.14.11...v7.14.12) - 2023-10-13
+## [7.14.13](https://github.com/locize/locize-cli/compare/v7.14.12...v7.14.13) - 2023-11-20
+
+- downgrade https-proxy-agent dependency
+
+## [7.14.12](https://github.com/locize/locize-cli/compare/v7.14.11...v7.14.12) - 2023-11-15
 
 - update some deps and optimize unflatten
 
