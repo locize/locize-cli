@@ -31,7 +31,7 @@
     "strings-file": "0.0.5",
     "tmexchange": "2.0.5",
     "xliff": "6.2.0",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.3/xlsx-0.19.3.tgz"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.0/xlsx-0.20.0.tgz"
   },
   "devDependencies": {
     "eslint": "8.53.0",
