@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.14.14](https://github.com/locize/locize-cli/compare/v7.14.13...v7.14.14) - 2023-11-28
+
+- update gettext and xlsx dependencies
+
 ## [7.14.13](https://github.com/locize/locize-cli/compare/v7.14.12...v7.14.13) - 2023-11-20
 
 - downgrade https-proxy-agent dependency
