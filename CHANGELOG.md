@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [7.15.0](https://github.com/locize/locize-cli/compare/v7.14.15...v7.15.0) - 2023-12-18
+
+- locize sync: show publish mode advice if necessary
+
 ## [7.14.15](https://github.com/locize/locize-cli/compare/v7.14.14...v7.14.15) - 2023-12-18
 
 - fix sync for private published translations

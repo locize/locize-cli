@@ -270,6 +270,11 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
       }
     }, (err, res, obj) => {
       if (err) return clb(err);
+      const cliInfo = res.headers.get('x-cli-info');
+      if (cliInfo && cliInfo !== opt.lastShownCliInfo) {
+        console.log(colors.yellow(cliInfo));
+        opt.lastShownCliInfo = cliInfo;
+      }
       if (res.status === 504 && !isRetrying) {
         return setTimeout(() => send(d, so, clb, true), 3000);
       }
