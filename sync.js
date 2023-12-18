@@ -28,9 +28,9 @@ const getDownloads = (opt, cb) => {
   if (!opt.unpublished) {
     request(opt.apiPath + '/download/' + opt.projectId + '/' + opt.version, {
       method: 'get',
-      // headers: opt.apiKey ? {
-      //   'Authorization': opt.apiKey
-      // } : undefined
+      headers: opt.apiKey ? {
+        'Authorization': opt.apiKey
+      } : undefined
     }, (err, res, obj) => {
       if (err) return cb(err);
       if (res.status >= 300) {
