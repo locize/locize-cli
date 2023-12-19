@@ -8,6 +8,28 @@ cacheable.install(https.globalAgent);
 
 const httpProxy = process.env.http_proxy || process.env.HTTP_PROXY || process.env.https_proxy || process.env.HTTPS_PROXY;
 
+const isRetriableError = (err) => {
+  return err && err.message && (
+    err.message.indexOf('ETIMEDOUT') > -1 || // on timeout retry
+    // on dns errors
+    err.message.indexOf('ENOTFOUND') > -1 ||
+    err.message.indexOf('ENODATA') > -1 ||
+    err.message.indexOf('ENOENT') > -1 // Windows: name exists, but not this record type
+  );
+};
+
+const isJSONResponse = (res) => res.headers.get('content-type') && res.headers.get('content-type').indexOf('json') > 0;
+
+const handleResponse = (res) => {
+  if (isJSONResponse(res)) {
+    return new Promise((resolve, reject) => res.json().then((obj) => resolve({ res, obj })).catch(reject));
+  } else {
+    return { res };
+  }
+};
+
+const handleSuccessful = (callback) => (ret) => callback(null, ret.res, ret.obj);
+
 module.exports = (url, options, callback) => {
   if (httpProxy) {
     const httpsProxyAgent = new HttpsProxyAgent(httpProxy);
@@ -25,31 +47,16 @@ module.exports = (url, options, callback) => {
     }
   }
   if (options.headers['Authorization'] === undefined) delete options.headers['Authorization'];
-  fetch(url, options).then((res) => {
-    if (res.headers.get('content-type') && res.headers.get('content-type').indexOf('json') > 0) {
-      return new Promise((resolve, reject) => res.json().then((obj) => resolve({ res, obj })).catch(reject));
-    } else {
-      return { res };
-    }
-  }).then((ret) => callback(null, ret.res, ret.obj)).catch((err) => {
-    if (err && err.message && (
-      err.message.indexOf('ETIMEDOUT') > -1 || // on timeout retry
-      // on dns errors
-      err.message.indexOf('ENOTFOUND') > -1 ||
-      err.message.indexOf('ENODATA') > -1 ||
-      err.message.indexOf('ENOENT') > -1 // Windows: name exists, but not this record type
-    )) {
+
+  function retriableFetch(maxRetries) {
+    fetch(url, options).then(handleResponse).then(handleSuccessful(callback)).catch((err) => {
+      if (maxRetries < 1) return callback(err);
+      if (!isRetriableError(err)) return callback(err);
       setTimeout(() => {
-        fetch(url, options).then((res) => {
-          if (res.headers.get('content-type') && res.headers.get('content-type').indexOf('json') > 0) {
-            return new Promise((resolve, reject) => res.json().then((obj) => resolve({ res, obj })).catch(reject));
-          } else {
-            return { res };
-          }
-        }).then((ret) => callback(null, ret.res, ret.obj)).catch(callback);
+        retriableFetch(--maxRetries);
       }, 5000);
-      return;
-    }
-    callback(err);
-  });
+    });
+  }
+
+  retriableFetch(3);
 };
