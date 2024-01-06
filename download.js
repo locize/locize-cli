@@ -151,6 +151,43 @@ const handleError = (err, cb) => {
   if (cb) cb(err);
 };
 
+const filterDownloads = (opt, downloads) => {
+  if (opt.skipEmpty) return downloads.filter((d) => d.size > 2);
+  if (downloads.length < 1) return downloads;
+
+  const allNamespaces = [];
+  const downloadMap = {};
+  downloads.forEach((d) => {
+    const splitted = d.key.split('/');
+    const p = splitted[d.isPrivate ? 1 : 0];
+    const v = splitted[d.isPrivate ? 2 : 1];
+    const l = splitted[d.isPrivate ? 3 : 2];
+    const n = splitted[d.isPrivate ? 4 : 3];
+    downloadMap[p] = downloadMap[p] || {};
+    downloadMap[p][v] = downloadMap[p][v] || {};
+    downloadMap[p][v][l] = downloadMap[p][v][l] || {};
+    downloadMap[p][v][l][n] = d;
+    if (allNamespaces.indexOf(n) < 0) allNamespaces.push(n);
+  });
+  Object.keys(downloadMap).forEach((projectId) => {
+    Object.keys(downloadMap[projectId]).forEach((version) => {
+      Object.keys(downloadMap[projectId][version]).forEach((language) => {
+        allNamespaces.forEach((namespace) => {
+          if (!downloadMap[projectId][version][language][namespace]) {
+            downloads.push({
+              url: `${opt.apiPath}/${projectId}/${version}/${language}/${namespace}`,
+              key: `${projectId}/${version}/${language}/${namespace}`,
+              lastModified: '1960-01-01T00:00:00.000Z',
+              size: 0
+            });
+          }
+        });
+      });
+    });
+  });
+  return downloads;
+};
+
 const download = (opt, cb) => {
   opt.format = opt.format || 'json';
   if (!reversedFileExtensionsMap[opt.format]) {
@@ -203,20 +240,18 @@ const download = (opt, cb) => {
           'Authorization': opt.apiKey
         } : undefined
       }, (err, res, obj) => {
-        obj = obj || [];
         if (res && res.status === 401) {
           opt.apiKey = null;
           request(url, {
             method: 'get',
           }, (err, res, obj) => {
-            obj = obj || [];
-            if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
+            obj = filterDownloads(opt, obj || []);
             handleDownload(opt, url, err, res, obj, cb);
           });
           return;
         }
 
-        if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
+        obj = filterDownloads(opt, obj || []);
         handleDownload(opt, url, err, res, obj, cb);
       });
       return;
