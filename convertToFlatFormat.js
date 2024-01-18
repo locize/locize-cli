@@ -22,7 +22,7 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
     lng = undefined;
   }
   try {
-    if (opt.format === 'json' || opt.format === 'flat') {
+    if (opt.format === 'json' || opt.format === 'nested' || opt.format === 'flat') {
       const dataString = data.toString().trim();
       if (dataString[0] !== '{' && dataString[0] !== '[') {
         return cb(new Error(`Not a valid json file: Content starts with "${dataString[0]}" but should start with "{"`));

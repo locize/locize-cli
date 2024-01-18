@@ -1,5 +1,5 @@
 const fileExtensionsMap = {
-  '.json': ['json', 'flat'],
+  '.json': ['json', 'nested', 'flat'],
   '.po': ['po', 'gettext', 'po_i18next', 'gettext_i18next'],
   '.xml': ['android'],
   '.strings': ['strings'],

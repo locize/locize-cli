@@ -1,8 +1,13 @@
-module.exports = (data) => {
+module.exports = (data, testNatural) => {
   const result = {};
   const shouldConvertArray = {};
-  for (var i in data) {
-    const keys = i.split('.');
+  for (const i in data) {
+    let keys = [];
+    if (testNatural && /( |,|\?)/.test(i)) {
+      keys = [i];
+    } else {
+      keys = i.split('.');
+    }
     keys.reduce((r, e, j) => {
       const isNumber = !isNaN(Number(keys[j + 1]));
       const hasLeadingZero = isNumber && keys[j + 1].length > 1 && keys[j + 1][0] === '0';

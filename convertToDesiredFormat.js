@@ -31,6 +31,13 @@ const convertToDesiredFormat = (
   try {
     if (opt.format === 'json') {
       try {
+        data = unflatten(data, true);
+      } catch (err) {}
+      cb(null, JSON.stringify(data, null, 2));
+      return;
+    }
+    if (opt.format === 'nested') {
+      try {
         data = unflatten(data);
       } catch (err) {}
       cb(null, JSON.stringify(data, null, 2));
