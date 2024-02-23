@@ -66,6 +66,9 @@ locize get common title
 
 
 ## Download current published files
+
+*The CLI will use the normal [API](https://docs.locize.com/integration/api) endpoints to download the translations, so normal download charges etc. will occur.*
+
 ### Step 1: execute
 
 Add your project-id and let's go...
@@ -97,6 +100,8 @@ By using the sync command, you can keep your existing code setup and synchronize
 An example on how this could look like can be seen in [this tutorial](https://github.com/locize/react-tutorial#step-1---keep-existing-code-setup-but-synchronize-with-locize).
 
 **⚠️ Since the remote source are the published translations, make sure the desired version is set to auto publish mode. Alternatively use the `--unpublished true` argument (this will generate [private downloads costs](https://docs.locize.com/integration/api#fetch-filter-the-unpublished-namespace-resources)). ⚠️**
+
+*The CLI will use the normal [API](https://docs.locize.com/integration/api) endpoints, so normal modification and download charges etc. will occur.*
 
 ### Step 1: Go near to your translation files
 
