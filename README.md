@@ -103,6 +103,8 @@ An example on how this could look like can be seen in [this tutorial](https://gi
 
 *The CLI will use the normal [API](https://docs.locize.com/integration/api) endpoints, so normal modification and download charges etc. will occur.*
 
+*If you need to change or remove multiple keys, please do NOT execute the sync command after each individual key change, but make the changes all together and then execute the sync command once.*
+
 ### Step 1: Go near to your translation files
 
 ```sh
