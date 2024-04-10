@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.0.1](https://github.com/locize/locize-cli/compare/v8.0.0...v8.0.1) - 2023-04-10
+
+- update some dependencies to address security vulnerabilities in xlsx
+
 ## [8.0.0](https://github.com/locize/locize-cli/compare/v7.15.2...v8.0.0) - 2023-01-18
 
 - align json format with publish format on project: To keep the same behaviour like before with default format or `json` format, now use `--format nested`. The `--format json` (the default) will now try to "guess" if a flat or a nested format should be used.
