@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.0.2](https://github.com/locize/locize-cli/compare/v8.0.1...v8.0.2) - 2024-08-14
+
+- update some dependencies to address #95 and #94
+
 ## [8.0.1](https://github.com/locize/locize-cli/compare/v8.0.0...v8.0.1) - 2023-04-10
 
 - update some dependencies to address security vulnerabilities in xlsx
