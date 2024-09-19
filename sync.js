@@ -48,7 +48,7 @@ const getDownloads = (opt, cb) => {
       if (!res || !res[opt.version]) return handleError(new Error('Nothing found!'), cb);
 
       const toDownload = [];
-      const lngsToCheck = opt.language ? [opt.language] : Object.keys(res[opt.version]);
+      const lngsToCheck = opt.language ? [opt.language] : (opt.languages && opt.languages.length > 0) ? opt.languages : Object.keys(res[opt.version]);
       lngsToCheck.forEach((l) => {
         if (opt.namespaces) {
           opt.namespaces.forEach((n) => {
@@ -212,6 +212,7 @@ const downloadAll = (opt, remoteLanguages, omitRef, manipulate, cb) => {
       opt.isPrivate = download.isPrivate;
 
       if (opt.language && opt.language !== lng && lng !== opt.referenceLanguage) return clb(null);
+      if (opt.languages && opt.languages.length > 0 && opt.languages.indexOf(lng) < 0 && lng !== opt.referenceLanguage) return clb(null);
       if (opt.namespace && opt.namespace !== namespace) return clb(null);
       if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return clb(null);
 
@@ -317,7 +318,7 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
 const cleanupLanguages = (opt, remoteLanguages) => {
   if (opt.pathMask.lastIndexOf(path.sep) < 0) return;
   const dirs = getDirectories(opt.path).filter((dir) => dir.indexOf('.') !== 0);
-  if (!opt.language && !opt.namespace && !opt.namespaces) {
+  if (!opt.language && (!opt.languages || opt.languages.length === 0) && !opt.namespace && !opt.namespaces) {
     dirs
       .filter((lng) => {
         const lMask = `${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`;
@@ -339,6 +340,7 @@ const cleanupLanguages = (opt, remoteLanguages) => {
   }
   remoteLanguages.forEach((lng) => {
     if (opt.language && opt.language !== lng) return;
+    if (opt.languages && opt.languages.length > 0 && opt.languages.indexOf(lng) < 0) return;
     const filledLngMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng);
     var lngPath;
     if (filledLngMask.lastIndexOf(path.sep) > 0) {
@@ -582,6 +584,9 @@ const sync = (opt, cb) => {
 
     if (opt.referenceLanguageOnly && opt.language && opt.referenceLanguage !== opt.language) {
       opt.referenceLanguage = opt.language;
+    }
+    if (opt.referenceLanguageOnly && !opt.language && opt.languages && opt.languages.length > 0 && opt.languages.indexOf(opt.referenceLanguage) < 0) {
+      opt.referenceLanguage = opt.languages[0];
     }
 
     if (opt.referenceLanguageOnly) {

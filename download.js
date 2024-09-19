@@ -151,8 +151,22 @@ const handleError = (err, cb) => {
   if (cb) cb(err);
 };
 
+const filterDownloadsLanguages = (opt, downloads) => {
+  if (opt.languages) {
+    downloads = downloads.filter((d) => {
+      const splitted = d.key.split('/');
+      // const p = splitted[d.isPrivate ? 1 : 0];
+      // const v = splitted[d.isPrivate ? 2 : 1];
+      const l = splitted[d.isPrivate ? 3 : 2];
+      const n = splitted[d.isPrivate ? 4 : 3];
+      return opt.languages.indexOf(l) > -1 && (!opt.namespace || opt.namespace === n);
+    });
+  }
+  return downloads;
+};
+
 const filterDownloads = (opt, downloads) => {
-  if (opt.skipEmpty) return downloads.filter((d) => d.size > 2);
+  if (opt.skipEmpty) return filterDownloadsLanguages(opt, downloads.filter((d) => d.size > 2));
   if (downloads.length < 1) return downloads;
 
   const allNamespaces = [];
@@ -185,7 +199,7 @@ const filterDownloads = (opt, downloads) => {
       });
     });
   });
-  return downloads;
+  return filterDownloadsLanguages(opt, downloads);
 };
 
 const download = (opt, cb) => {
@@ -216,7 +230,7 @@ const download = (opt, cb) => {
 
   if (opt.version) {
     url += '/' + opt.version;
-    if (opt.language) {
+    if (!opt.languages && opt.language) {
       url += '/' + opt.language;
       if (opt.namespace) {
         url += '/' + opt.namespace;
