@@ -22,6 +22,9 @@ const pullNamespacePaged = (opt, lng, ns, cb, next, retry) => {
         return;
       }
       if (obj && (obj.errorMessage || obj.message)) {
+        if (res.statusText && res.status) {
+          return cb(new Error(res.statusText + ' (' + res.status + ') | ' + (obj.errorMessage || obj.message)));
+        }
         return cb(new Error((obj.errorMessage || obj.message)));
       }
       return cb(new Error(res.statusText + ' (' + res.status + ')'));
@@ -70,6 +73,9 @@ const getRemoteNamespace = (opt, lng, ns, cb) => {
     if (err) return cb(err);
     if (res.status >= 300) {
       if (obj && (obj.errorMessage || obj.message)) {
+        if (res.statusText && res.status) {
+          return cb(new Error(res.statusText + ' (' + res.status + ') | ' + (obj.errorMessage || obj.message)));
+        }
         return cb(new Error((obj.errorMessage || obj.message)));
       }
       return cb(new Error(res.statusText + ' (' + res.status + ')'));

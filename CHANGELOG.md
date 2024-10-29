@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.1.1](https://github.com/locize/locize-cli/compare/v8.1.0...v8.1.1) - 2024-10-29
+
+- improve some error logs
+
 ## [8.1.0](https://github.com/locize/locize-cli/compare/v8.0.2...v8.1.0) - 2024-09-19
 
 - introduce `--languages lng1,lng2` argument (#96)

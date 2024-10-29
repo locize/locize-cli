@@ -6,7 +6,12 @@ const getRemoteLanguages = (opt, cb) => {
   }, (err, res, obj) => {
     if (err || (obj && (obj.errorMessage || obj.message))) {
       if (err) return cb(err);
-      if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
+      if (obj && (obj.errorMessage || obj.message)) {
+        if (res && res.statusText && res.status) {
+          return cb(new Error(res.statusText + ' (' + res.status + ') | ' + (obj.errorMessage || obj.message)));
+        }
+        return cb(new Error((obj.errorMessage || obj.message)));
+      }
     }
     if (res.status >= 300) return cb(new Error(res.statusText + ' (' + res.status + ')'));
 
