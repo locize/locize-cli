@@ -11,6 +11,8 @@ const httpProxy = process.env.http_proxy || process.env.HTTP_PROXY || process.en
 const isRetriableError = (err) => {
   return err && err.message && (
     err.message.indexOf('ETIMEDOUT') > -1 || // on timeout retry
+    err.message.indexOf('FetchError') > -1 ||
+    err.code === 'ETIMEDOUT' ||
     // on dns errors
     err.message.indexOf('ENOTFOUND') > -1 ||
     err.message.indexOf('ENODATA') > -1 ||

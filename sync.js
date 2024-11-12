@@ -138,7 +138,7 @@ const compareNamespace = (local, remote, lastModifiedLocal, lastModifiedRemote) 
 };
 
 const compareNamespaces = (opt, localNamespaces, cb) => {
-  async.map(localNamespaces, (ns, clb) => {
+  async.mapLimit(localNamespaces, 20, (ns, clb) => {
     getRemoteNamespace(opt, ns.language, ns.namespace, (err, remoteNamespace, lastModified) => {
       if (err) return clb(err);
 
@@ -381,6 +381,28 @@ const checkForMissingLocalNamespaces = (downloads, localNamespaces, opt) => {
   return localMissingNamespaces;
 };
 
+const backupDeleted = (opt, ns, now) => {
+  if (opt.dry || ns.diff.toRemove.length === 0) return;
+  var m = now.getMonth() + 1;
+  if (m < 10) m = `0${m}`;
+  var d = now.getDate();
+  if (d < 10) d = `0${d}`;
+  var h = now.getHours();
+  if (h < 10) h = `0${h}`;
+  var mi = now.getMinutes();
+  if (mi < 10) mi = `0${mi}`;
+  var s = now.getSeconds();
+  if (s < 10) s = `0${s}`;
+  const currentBackupPath = path.join(opt.backupDeletedPath, `${now.getFullYear()}${m}${d}-${h}${mi}${s}`);
+  mkdirp.sync(currentBackupPath);
+  const removingRemote = ns.diff.toRemove.reduce((prev, k) => {
+    prev[k] = ns.remoteContent[k];
+    return prev;
+  }, {});
+  mkdirp.sync(path.join(currentBackupPath, ns.language));
+  fs.writeFileSync(path.join(currentBackupPath, ns.language, `${ns.namespace}.json`), JSON.stringify(removingRemote, null, 2));
+};
+
 const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
   if (!localNamespaces || localNamespaces.length === 0) {
     downloadAll(opt, remoteLanguages, (err) => {
@@ -418,6 +440,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
       var wasThereSomethingToUpdate = false;
 
       function updateComparedNamespaces() {
+        const now = new Date();
         async.eachLimit(compared, Math.round(require('os').cpus().length / 2), (ns, clb) => {
           if (!cb) {
             if (ns.diff.toRemove.length > 0) {
@@ -427,6 +450,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
               } else {
                 console.log(colors.red(`removing ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`));
                 if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`));
+                if (!opt.dry && opt.backupDeletedPath) backupDeleted(opt, ns, now);
               }
             }
             if (ns.diff.toRemoveLocally.length > 0) {

@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.2.0](https://github.com/locize/locize-cli/compare/v8.1.1...v8.2.0) - 2024-11-12
+
+- introduce `--backup-deleted-path` argument (#98)
+
 ## [8.1.1](https://github.com/locize/locize-cli/compare/v8.1.0...v8.1.1) - 2024-10-29
 
 - improve some error logs
