@@ -1,6 +1,6 @@
 {
   "name": "locize-cli",
-  "version": "8.2.0",
+  "version": "8.3.0",
   "description": "locize cli to import locales",
   "main": "index.js",
   "bin": {
@@ -36,7 +36,7 @@
   "devDependencies": {
     "eslint": "8.56.0",
     "gh-release": "7.0.2",
-    "pkg": "5.8.1"
+    "@yao-pkg/pkg": "6.1.1"
   },
   "scripts": {
     "lint": "eslint .",
@@ -52,7 +52,7 @@
   ],
   "author": "adrai",
   "license": "MIT",
-  "homepage": "http://locize.com",
+  "homepage": "https://locize.com",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/locize/locize-cli.git"
