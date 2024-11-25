@@ -1,6 +1,6 @@
 const package = require('./package.json');
 const fetch = require('node-fetch');
-const HttpsProxyAgent = require('https-proxy-agent');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 const https = require('https');
 const CacheableLookup = require('cacheable-lookup');
 const cacheable = new CacheableLookup();
