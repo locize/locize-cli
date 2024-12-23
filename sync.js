@@ -318,6 +318,14 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
   send(data, shouldOmit, cb);
 };
 
+const doesDirectoryExist = (p) => {
+  var directoryExists = false;
+  try {
+    directoryExists = fs.statSync(p).isDirectory();
+  } catch (e) {}
+  return directoryExists;
+};
+
 const cleanupLanguages = (opt, remoteLanguages) => {
   if (opt.pathMask.lastIndexOf(path.sep) < 0) return;
   const dirs = getDirectories(opt.path).filter((dir) => dir.indexOf('.') !== 0);
@@ -338,6 +346,7 @@ const cleanupLanguages = (opt, remoteLanguages) => {
         if (filledLngMask.lastIndexOf(path.sep) > 0) {
           lngPath = filledLngMask.substring(0, filledLngMask.lastIndexOf(path.sep));
         }
+        if (doesDirectoryExist(path.join(opt.path, lngPath, 'CVS'))) return; // special hack for CVS
         rimraf.sync(path.join(opt.path, lngPath));
       });
   }
@@ -581,11 +590,7 @@ const sync = (opt, cb) => {
   if (!opt.dry && opt.clean) rimraf.sync(path.join(opt.path, '*'));
 
   if (opt.autoCreatePath === false) {
-    var directoryExists = false;
-    try {
-      directoryExists = fs.statSync(opt.path).isDirectory();
-    } catch (e) {}
-    if (!directoryExists) {
+    if (!doesDirectoryExist(opt.path)) {
       return handleError(new Error(`${opt.path} does not exist!`), cb);
     }
   }
