@@ -266,7 +266,19 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
   var payloadKeysLimit = 1000;
 
   function send(d, so, clb, isRetrying) {
-    request(opt.apiPath + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace + (so ? '?omitstatsgeneration=true' : ''), {
+    const queryParams = new URLSearchParams();
+    if (opt.autoTranslate) {
+      /** @See https://docs.locize.com/integration/api#optional-autotranslate */
+      queryParams.append('autotranslate', 'true');
+    }
+    if (so) {
+      // no API docs for this
+      queryParams.append('omitstatsgeneration', 'true');
+    }
+
+    const queryString = queryParams.size > 0 ? '?' + queryParams.toString() : '';
+
+    request(opt.apiPath + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace + queryString, {
       method: 'post',
       body: d,
       headers: {
@@ -481,7 +493,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
             }
             if (opt.updateValues) {
               if (ns.diff.toUpdate.length > 0) {
-                console.log(colors.yellow(`updating ${ns.diff.toUpdate.length} keys in ${ns.language}/${ns.namespace}...`));
+                console.log(colors.yellow(`updating ${ns.diff.toUpdate.length} keys in ${ns.language}/${ns.namespace}${opt.autoTranslate ? ' with automatic translation' : ''}...`));
                 if (opt.dry) console.log(colors.yellow(`would update ${ns.diff.toUpdate.join(', ')} in ${ns.language}/${ns.namespace}...`));
               }
               if (ns.diff.toUpdateLocally.length > 0) {
