@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.4.0](https://github.com/locize/locize-cli/compare/v8.3.1...v8.4.0) - 2024-12-23
+
+- feat: add --auto-translate option for sync command [101](https://github.com/locize/locize-cli/pull/101)
+
 ## [8.3.1](https://github.com/locize/locize-cli/compare/v8.3.0...v8.3.1) - 2024-12-23
 
 - special check for CVS (does not cleanup local language folders)
