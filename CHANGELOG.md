@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.5.0](https://github.com/locize/locize-cli/compare/v8.4.0...v8.5.0) - 2025-02-18
+
+- feat: add --tenants option for publish version command [102](https://github.com/locize/locize-cli/issues/102)
+
 ## [8.4.0](https://github.com/locize/locize-cli/compare/v8.3.1...v8.4.0) - 2024-12-23
 
 - feat: add --auto-translate option for sync command [101](https://github.com/locize/locize-cli/pull/101)

@@ -599,6 +599,7 @@ program
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-v, --ver <version>', 'The version to be used to publish (default: latest)')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
+  .option('-t, --tenants <true|false>', 'Publish also tenants (if using multi-tenant setup) (default: false)', 'false')
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((options) => {
     try {
@@ -623,11 +624,14 @@ program
 
     const getPath = options.getPath || config.getPath || getPathUrl;
 
+    const tenants = options.tenants === 'true';
+
     publishVersion({
       apiKey: apiKey,
       projectId: projectId,
       apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
-      version: version
+      version: version,
+      tenants: tenants
     });
   })
   .on('--help', () => {

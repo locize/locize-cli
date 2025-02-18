@@ -3,7 +3,7 @@ const request = require('./request');
 const getJob = require('./getJob');
 
 const publishVersion = (opt, cb) => {
-  request(opt.apiPath + '/publish/' + opt.projectId + '/' + opt.version, {
+  request(opt.apiPath + '/publish/' + opt.projectId + '/' + opt.version + (opt.tenants ? '?tenants=true' : ''), {
     method: 'post',
     headers: {
       'Authorization': opt.apiKey
