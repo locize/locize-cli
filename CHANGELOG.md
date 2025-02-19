@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.5.1](https://github.com/locize/locize-cli/compare/v8.5.0...v8.5.1) - 2025-02-19
+
+- downgrade binary generation to node v20 to try to address [103](https://github.com/locize/locize-cli/issues/103)
+
 ## [8.5.0](https://github.com/locize/locize-cli/compare/v8.4.0...v8.5.0) - 2025-02-18
 
 - feat: add --tenants option for publish version command [102](https://github.com/locize/locize-cli/issues/102)
