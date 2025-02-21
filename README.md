@@ -67,7 +67,7 @@ locize get common title
 
 ## Download current published files
 
-*The CLI will use the normal [API](https://docs.locize.com/integration/api) endpoints to download the translations, so normal download charges etc. will occur.*
+*The CLI will use the normal [API](https://www.locize.com/docs/api) endpoints to download the translations, so normal download charges etc. will occur.*
 
 ### Step 1: execute
 
@@ -99,9 +99,9 @@ There's also a [GitHub Action](https://github.com/marketplace/actions/locize-dow
 By using the sync command, you can keep your existing code setup and synchronize the translations with locize.
 An example on how this could look like can be seen in [this tutorial](https://github.com/locize/react-tutorial#step-1---keep-existing-code-setup-but-synchronize-with-locize).
 
-**⚠️ Since the remote source are the published translations, make sure the desired version is set to auto publish mode. Alternatively use the `--unpublished true` argument (this will generate [private downloads costs](https://docs.locize.com/integration/api#fetch-filter-the-unpublished-namespace-resources)). ⚠️**
+**⚠️ Since the remote source are the published translations, make sure the desired version is set to auto publish mode. Alternatively use the `--unpublished true` argument (this will generate [private downloads costs](https://www.locize.com/docs/api#fetch-filter-the-unpublished-namespace-resources)). ⚠️**
 
-*The CLI will use the normal [API](https://docs.locize.com/integration/api) endpoints, so normal modification and download charges etc. will occur.*
+*The CLI will use the normal [API](https://www.locize.com/docs/api) endpoints, so normal modification and download charges etc. will occur.*
 
 *If you need to change or remove multiple keys, please do NOT execute the sync command after each individual key change, but make the changes all together and then execute the sync command once.*
 
@@ -158,7 +158,7 @@ Navigate to your locize project and check the results => [www.locize.app](https:
 
 ## Push missing keys to locize from your repository (or any other local directory)
 This is useful, when i.e. using [i18next-scanner](https://github.com/i18next/i18next-scanner), like described [here](https://github.com/locize/i18next-locize-backend/issues/315#issuecomment-586967039).
-The save-missing command uses the [missing API](https://docs.locize.com/integration/api#missing-translations) and the sync command uses the [update API](https://docs.locize.com/integration/api#update-remove-translations)
+The save-missing command uses the [missing API](https://www.locize.com/docs/api#missing-translations) and the sync command uses the [update API](https://www.locize.com/docs/api#update-remove-translations)
 So, if you want to save new keys (that does not exist in locize), the save-missing command is the better choice.
 Doing so, you can then for example make use of the “created by missing API" filter in the locize UI.
 
@@ -205,7 +205,7 @@ Navigate to your locize project and check the results => [www.locize.app](https:
 
 ## Copy version
 
-*It uses this [API endpoint](https://docs.locize.com/integration/api#copy-version) and it's the same behavior like [overwriting](https://github.com/more/versioning#a-overwrite-with-data-from) via the UI.*
+*It uses this [API endpoint](https://www.locize.com/docs/api#copy-version) and it's the same behavior like [overwriting](https://github.com/more/versioning#a-overwrite-with-data-from) via the UI.*
 
 ### Step 1: execute
 

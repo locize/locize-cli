@@ -268,7 +268,7 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
   function send(d, so, clb, isRetrying) {
     const queryParams = new URLSearchParams();
     if (opt.autoTranslate) {
-      /** @See https://docs.locize.com/integration/api#optional-autotranslate */
+      /** @See https://www.locize.com/docs/api#optional-autotranslate */
       queryParams.append('autotranslate', 'true');
     }
     if (so) {
