@@ -139,17 +139,26 @@ const convertToDesiredFormat = (
       });
       return;
     }
-    if (opt.format === 'yaml') {
+    if (
+      opt.format === 'yaml' ||
+      opt.format === 'yml'
+    ) {
       if (isEmpty) return cb(null, '');
       cb(null, jsyaml.dump(flatten(data)));
       return;
     }
-    if (opt.format === 'yaml-nested') {
+    if (
+      opt.format === 'yaml-nested' ||
+      opt.format === 'yml-nested'
+    ) {
       if (isEmpty) return cb(null, '');
       cb(null, jsyaml.dump(shouldUnflatten(data) ? unflatten(data) : data));
       return;
     }
-    if (opt.format === 'yaml-rails') {
+    if (
+      opt.format === 'yaml-rails' ||
+      opt.format === 'yml-rails'
+    ) {
       if (isEmpty) return cb(null, '');
       var newData = {};
       newData[lng] = {};
