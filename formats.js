@@ -6,6 +6,7 @@ const fileExtensionsMap = {
   '.csv': ['csv'],
   '.resx': ['resx'],
   '.yaml': ['yaml', 'yaml-rails', 'yaml-nested'],
+  '.yml': ['yaml', 'yaml-rails', 'yaml-nested'],
   '.xlsx': ['xlsx'],
   '.xliff': ['xliff2', 'xliff12'],
   '.xlf': ['xlf2', 'xlf12'],
