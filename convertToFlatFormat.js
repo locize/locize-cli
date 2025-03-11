@@ -117,19 +117,28 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
       cb(null, data);
       return;
     }
-    if (opt.format === 'yaml') {
+    if (
+      opt.format === 'yaml' ||
+      opt.format === 'yml'
+    ) {
       const d = data.toString();
       if (!d || d === '') return cb(null, {});
       cb(null, flatten(jsyaml.load(d)));
       return;
     }
-    if (opt.format === 'yaml-nested') {
+    if (
+      opt.format === 'yaml-nested' ||
+      opt.format === 'yml-nested'
+    ) {
       const d = data.toString();
       if (!d || d === '') return cb(null, {});
       cb(null, flatten(jsyaml.load(d)));
       return;
     }
-    if (opt.format === 'yaml-rails') {
+    if (
+      opt.format === 'yaml-rails' ||
+      opt.format === 'yml-rails'
+    ) {
       const d = data.toString();
       if (!d || d === '') return cb(null, {});
       const jsObj = jsyaml.load(d);

@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.6.1](https://github.com/locize/locize-cli/compare/v8.6.0...v8.6.1) - 2025-03-11
+
+- fix .yml yaml format variats to address [104](https://github.com/locize/locize-cli/issues/104)
+
 ## [8.6.0](https://github.com/locize/locize-cli/compare/v8.5.1...v8.6.0) - 2025-03-10
 
 - introduce .yml yaml format variats to address [104](https://github.com/locize/locize-cli/issues/104)
