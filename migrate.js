@@ -69,28 +69,79 @@ const transfer = (opt, ns, cb) => {
 
   if (!opt.replace) url = url.replace('/update/', '/missing/');
 
-  request(url + `?replace=${!!opt.replace}`, {
-    method: 'post',
-    body: ns.value,
-    headers: {
-      'Authorization': opt.apiKey
-    }
-  }, (err, res, obj) => {
-    if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (url.indexOf('/missing/') > -1 && res.status === 412) {
-        console.log(colors.green(`transfered ${opt.version}/${ns.language}/${ns.namespace} (but all keys already existed)...`));
-        cb(null);
-        return;
-      }
-      console.log(colors.red(`transfer failed for ${opt.version}/${ns.language}/${ns.namespace}...`));
+  var data = ns.value;
+  var keysToSend = Object.keys(data).length;
+  if (keysToSend === 0) return cb(null);
 
-      if (err) return cb(err);
-      if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)));
+  var payloadKeysLimit = 1000;
+
+  function send(d, so, isFirst, clb, isRetrying) {
+    const queryParams = new URLSearchParams();
+    if (so) {
+      queryParams.append('omitstatsgeneration', 'true');
     }
-    if (res.status >= 300 && res.status !== 412) return cb(new Error(res.statusText + ' (' + res.status + ')'));
-    console.log(colors.green(`transfered ${opt.version}/${ns.language}/${ns.namespace}...`));
-    cb(null);
-  });
+    if (isFirst && opt.replace) {
+      queryParams.append('replace', 'true');
+    }
+
+    const queryString = queryParams.size > 0 ? '?' + queryParams.toString() : '';
+
+    request(url + queryString, {
+      method: 'post',
+      body: d,
+      headers: {
+        'Authorization': opt.apiKey
+      }
+    }, (err, res, obj) => {
+      if (err || (obj && (obj.errorMessage || obj.message))) {
+        if (url.indexOf('/missing/') > -1 && res.status === 412) {
+          console.log(colors.green(`transfered ${Object.keys(d).length} keys ${opt.version}/${ns.language}/${ns.namespace} (but all keys already existed)...`));
+          clb(null);
+          return;
+        }
+        if (res.status === 504 && !isRetrying) {
+          return setTimeout(() => send(d, so, isFirst, clb, true), 3000);
+        }
+        console.log(colors.red(`transfer failed for ${Object.keys(d).length} keys ${opt.version}/${ns.language}/${ns.namespace}...`));
+
+        if (err) return clb(err);
+        if (obj && (obj.errorMessage || obj.message)) return clb(new Error((obj.errorMessage || obj.message)));
+      }
+      if (res.status >= 300 && res.status !== 412) {
+        if (obj && (obj.errorMessage || obj.message)) {
+          return clb(new Error((obj.errorMessage || obj.message)));
+        }
+        return clb(new Error(res.statusText + ' (' + res.status + ')'));
+      }
+      console.log(colors.green(`transfered ${Object.keys(d).length} keys ${opt.version}/${ns.language}/${ns.namespace}...`));
+      clb(null);
+    });
+  }
+
+  if (keysToSend > payloadKeysLimit) {
+    var tasks = [];
+    var keysInObj = Object.keys(data);
+
+    while (keysInObj.length > payloadKeysLimit) {
+      (function() {
+        var pagedData = {};
+        keysInObj.splice(0, payloadKeysLimit).forEach((k) => pagedData[k] = data[k]);
+        var hasMoreKeys = keysInObj.length > 0;
+        tasks.push((c) => send(pagedData, hasMoreKeys, false, c));
+      })();
+    }
+
+    if (keysInObj.length === 0) return cb(null);
+
+    var finalPagedData = {};
+    keysInObj.splice(0, keysInObj.length).forEach((k) => finalPagedData[k] = data[k]);
+    tasks.push((c) => send(finalPagedData, false, false, c));
+
+    async.series(tasks, cb);
+    return;
+  }
+
+  send(data, false, true, cb);
 };
 
 const upload = (opt, nss, cb) => {

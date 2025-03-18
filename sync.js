@@ -272,7 +272,6 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
       queryParams.append('autotranslate', 'true');
     }
     if (so) {
-      // no API docs for this
       queryParams.append('omitstatsgeneration', 'true');
     }
 
