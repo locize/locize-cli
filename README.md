@@ -161,6 +161,7 @@ This is useful, when i.e. using [i18next-scanner](https://github.com/i18next/i18
 The save-missing command uses the [missing API](https://www.locize.com/docs/api#missing-translations) and the sync command uses the [update API](https://www.locize.com/docs/api#update-remove-translations).
 So, if you want to save new keys (that does not exist in locize), the save-missing command is the better choice.
 Doing so, you can then for example make use of the “created by missing API" filter in the locize UI.
+Also, using this save-missing command does not generate extra modification costs.
 
 But if you need to update existing keys, the sync command is the correct choice.
 
