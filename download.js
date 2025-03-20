@@ -12,6 +12,15 @@ const convertToDesiredFormat = require('./convertToDesiredFormat');
 const formats = require('./formats');
 const getProjectStats = require('./getProjectStats');
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap;
+const locize2xcstrings = require('locize-xcstrings/cjs/locize2xcstrings');
+
+function getInfosInUrl(download) {
+  const splitted = download.key.split('/');
+  const version = splitted[download.isPrivate ? 2 : 1];
+  const language = splitted[download.isPrivate ? 3 : 2];
+  const namespace = splitted[download.isPrivate ? 4 : 3];
+  return { version, language, namespace };
+}
 
 function handleDownload(opt, url, err, res, downloads, cb) {
   if (err || (downloads && (downloads.errorMessage || downloads.message))) {
@@ -34,113 +43,263 @@ function handleDownload(opt, url, err, res, downloads, cb) {
     return;
   }
 
-  async.eachLimit(downloads, 20, (download, clb) => {
-    const splitted = download.key.split('/');
-    const version = splitted[download.isPrivate ? 2 : 1];
-    const lng = splitted[download.isPrivate ? 3 : 2];
-    const namespace = splitted[download.isPrivate ? 4 : 3];
-    opt.isPrivate = download.isPrivate;
+  if (opt.format === 'xcstrings') { // 1 file per namespace including all languages
+    const downloadsByNamespace = {};
+    downloads.forEach((download) => {
+      const { version, namespace } = getInfosInUrl(download);
+      opt.isPrivate = download.isPrivate;
 
-    if (opt.namespace && opt.namespace !== namespace) return clb(null);
-    if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return clb(null);
-
-    getRemoteNamespace(opt, lng, namespace, (err, ns, lastModified) => {
-      if (err) return clb(err);
-
-      if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
-        return clb(null);
-      }
-
-      convertToDesiredFormat(opt, namespace, lng, ns, lastModified, (err, converted) => {
-        if (err) {
-          err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
-          return clb(err);
-        }
-        var filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format];
-        var mkdirPath;
-        if (filledMask.lastIndexOf(path.sep) > 0) {
-          mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep));
-        }
-        if (!opt.version) {
-          if (mkdirPath) mkdirp.sync(path.join(opt.path, version, mkdirPath));
-          fs.writeFile(path.join(opt.path, version, filledMask), converted, clb);
-          return;
-        }
-        if (!opt.language) {
-          if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath));
-          fs.writeFile(path.join(opt.path, filledMask), converted, clb);
-          return;
-        }
-
-        if (filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + lng, '');
-        const parentDir = path.dirname(path.join(opt.path, filledMask));
-        mkdirp.sync(parentDir);
-        fs.writeFile(path.join(opt.path, filledMask), converted, clb);
-      });
+      downloadsByNamespace[version] = downloadsByNamespace[version] || {};
+      downloadsByNamespace[version][namespace] = downloadsByNamespace[version][namespace] || [];
+      downloadsByNamespace[version][namespace].push(download);
     });
-  }, (err) => {
-    if (err) {
-      if (!cb) {
-        console.error(colors.red(err.message));
-        process.exit(1);
-      }
-      if (cb) cb(err);
-      return;
-    }
 
-    if (!cb) console.log(colors.green(`downloaded ${url} to ${opt.path}...`));
-    if (cb) cb(null);
-  });
+    async.eachSeries(Object.keys(downloadsByNamespace), (version, clb) => {
+      async.eachLimit(Object.keys(downloadsByNamespace[version]), 20, (ns, clb) => {
+        if (opt.namespace && opt.namespace !== ns) return clb(null);
+        if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(ns) < 0) return clb(null);
+
+        const locizeData = {
+          sourceLng: opt.referenceLanguage,
+          resources: {}
+        };
+        async.eachLimit(downloadsByNamespace[version][ns], 20, (download, clb2) => {
+          const { language } = getInfosInUrl(download);
+          getRemoteNamespace(opt, language, ns, (err, ns, lastModified) => {
+            if (err) return clb2(err);
+
+            if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
+              return clb2(null);
+            }
+
+            locizeData.resources[language] = ns;
+            clb2();
+          });
+        }, (err) => {
+          if (err) return clb(err);
+
+          try {
+            const result = locize2xcstrings(locizeData);
+            const converted = JSON.stringify(result, null, 2);
+
+            var filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, ns) + reversedFileExtensionsMap[opt.format];
+            var mkdirPath;
+            if (filledMask.lastIndexOf(path.sep) > 0) {
+              mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep));
+            }
+
+            function logAndClb(err) {
+              if (err) return clb(err);
+              if (!cb) console.log(colors.green(`downloaded ${version}/${ns} to ${opt.path}...`));
+              if (clb) clb(null);
+            }
+
+            if (!opt.version) {
+              if (mkdirPath) mkdirp.sync(path.join(opt.path, version, mkdirPath));
+              fs.writeFile(path.join(opt.path, version, filledMask), converted, logAndClb);
+              return;
+            }
+
+            if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath));
+            fs.writeFile(path.join(opt.path, filledMask), converted, logAndClb);
+          } catch (e) {
+            err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
+            return clb(err);
+          }
+        });
+      }, clb);
+    }, (err) => {
+      if (err) {
+        if (!cb) {
+          console.error(colors.red(err.message));
+          process.exit(1);
+        }
+        if (cb) cb(err);
+        return;
+      }
+
+      if (cb) cb(null);
+    });
+  } else { // 1 file per namespace/lng
+    async.eachLimit(downloads, 20, (download, clb) => {
+      const { version, language, namespace } = getInfosInUrl(download);
+      opt.isPrivate = download.isPrivate;
+
+      if (opt.namespace && opt.namespace !== namespace) return clb(null);
+      if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return clb(null);
+
+      getRemoteNamespace(opt, language, namespace, (err, ns, lastModified) => {
+        if (err) return clb(err);
+
+        if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
+          return clb(null);
+        }
+
+        convertToDesiredFormat(opt, namespace, language, ns, lastModified, (err, converted) => {
+          if (err) {
+            err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
+            return clb(err);
+          }
+          var filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, language).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format];
+          var mkdirPath;
+          if (filledMask.lastIndexOf(path.sep) > 0) {
+            mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep));
+          }
+          if (!opt.version) {
+            if (mkdirPath) mkdirp.sync(path.join(opt.path, version, mkdirPath));
+            fs.writeFile(path.join(opt.path, version, filledMask), converted, clb);
+            return;
+          }
+          if (!opt.language) {
+            if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath));
+            fs.writeFile(path.join(opt.path, filledMask), converted, clb);
+            return;
+          }
+
+          if (filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + language, '');
+          const parentDir = path.dirname(path.join(opt.path, filledMask));
+          mkdirp.sync(parentDir);
+          fs.writeFile(path.join(opt.path, filledMask), converted, clb);
+        });
+      });
+    }, (err) => {
+      if (err) {
+        if (!cb) {
+          console.error(colors.red(err.message));
+          process.exit(1);
+        }
+        if (cb) cb(err);
+        return;
+      }
+
+      if (!cb) console.log(colors.green(`downloaded ${url} to ${opt.path}...`));
+      if (cb) cb(null);
+    });
+  }
 }
 
 function handlePull(opt, toDownload, cb) {
   const url = opt.apiPath + '/pull/' + opt.projectId + '/' + opt.version;
-  async.eachLimit(toDownload, 5, (download, clb) => {
-    const lng = download.language;
-    const namespace = download.namespace;
 
-    getRemoteNamespace(opt, lng, namespace, (err, ns, lastModified) => {
-      if (err) return clb(err);
+  if (opt.format === 'xcstrings') { // 1 file per namespace including all languages
+    const downloadsByNamespace = {};
+    toDownload.forEach((download) => {
+      const { namespace } = download;
+      downloadsByNamespace[namespace] = downloadsByNamespace[namespace] || [];
+      downloadsByNamespace[namespace].push(download);
+    });
 
-      if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
-        return clb(null);
-      }
+    async.eachLimit(Object.keys(downloadsByNamespace), 5, (namespace, clb) => {
+      if (opt.namespace && opt.namespace !== namespace) return clb(null);
+      if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return clb(null);
 
-      convertToDesiredFormat(opt, namespace, lng, ns, lastModified, (err, converted) => {
-        if (err) {
+      const locizeData = {
+        sourceLng: opt.referenceLanguage,
+        resources: {}
+      };
+
+      async.eachLimit(downloadsByNamespace[namespace], 5, (download, clb2) => {
+        const { language } = download;
+        opt.raw = true;
+        getRemoteNamespace(opt, language, namespace, (err, ns, lastModified) => {
+          if (err) return clb2(err);
+
+          if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
+            return clb2(null);
+          }
+
+          locizeData.resources[language] = ns;
+          clb2();
+        });
+      }, (err) => {
+        if (err) return clb(err);
+
+        try {
+          const result = locize2xcstrings(locizeData);
+          const converted = JSON.stringify(result, null, 2);
+
+          var filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format];
+          var mkdirPath;
+          if (filledMask.lastIndexOf(path.sep) > 0) {
+            mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep));
+          }
+
+          function logAndClb(err) {
+            if (err) return clb(err);
+            if (!cb) console.log(colors.green(`downloaded ${opt.version}/${namespace} to ${opt.path}...`));
+            if (clb) clb(null);
+          }
+
+          if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath));
+          fs.writeFile(path.join(opt.path, filledMask), converted, logAndClb);
+        } catch (e) {
           err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
           return clb(err);
         }
-        var filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format];
-        var mkdirPath;
-        if (filledMask.lastIndexOf(path.sep) > 0) {
-          mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep));
-        }
-        if (!opt.language) {
-          if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath));
-          fs.writeFile(path.join(opt.path, filledMask), converted, clb);
-          return;
-        }
-
-        if (filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + lng, '');
-        const parentDir = path.dirname(path.join(opt.path, filledMask));
-        mkdirp.sync(parentDir);
-        fs.writeFile(path.join(opt.path, filledMask), converted, clb);
       });
-    });
-  }, (err) => {
-    if (err) {
-      if (!cb) {
-        console.error(colors.red(err.message));
-        process.exit(1);
+    }, (err) => {
+      if (err) {
+        if (!cb) {
+          console.error(colors.red(err.message));
+          process.exit(1);
+        }
+        if (cb) cb(err);
+        return;
       }
-      if (cb) cb(err);
-      return;
-    }
 
-    if (!cb) console.log(colors.green(`downloaded ${url} to ${opt.path}...`));
-    if (cb) cb(null);
-  });
+      if (cb) cb(null);
+    });
+  } else { // 1 file per namespace/lng
+    async.eachLimit(toDownload, 5, (download, clb) => {
+      const lng = download.language;
+      const namespace = download.namespace;
+
+      if (opt.namespace && opt.namespace !== namespace) return clb(null);
+      if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return clb(null);
+
+      getRemoteNamespace(opt, lng, namespace, (err, ns, lastModified) => {
+        if (err) return clb(err);
+
+        if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
+          return clb(null);
+        }
+
+        convertToDesiredFormat(opt, namespace, lng, ns, lastModified, (err, converted) => {
+          if (err) {
+            err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
+            return clb(err);
+          }
+          var filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format];
+          var mkdirPath;
+          if (filledMask.lastIndexOf(path.sep) > 0) {
+            mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep));
+          }
+          if (!opt.language) {
+            if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath));
+            fs.writeFile(path.join(opt.path, filledMask), converted, clb);
+            return;
+          }
+
+          if (filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + lng, '');
+          const parentDir = path.dirname(path.join(opt.path, filledMask));
+          mkdirp.sync(parentDir);
+          fs.writeFile(path.join(opt.path, filledMask), converted, clb);
+        });
+      });
+    }, (err) => {
+      if (err) {
+        if (!cb) {
+          console.error(colors.red(err.message));
+          process.exit(1);
+        }
+        if (cb) cb(err);
+        return;
+      }
+
+      if (!cb) console.log(colors.green(`downloaded ${url} to ${opt.path}...`));
+      if (cb) cb(null);
+    });
+  }
 }
 
 const handleError = (err, cb) => {

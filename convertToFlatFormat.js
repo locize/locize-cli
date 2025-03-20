@@ -13,6 +13,7 @@ const ftl2js = require('fluent_conv/cjs/ftl2js');
 const tmx2js = require('tmexchange/cjs/tmx2js');
 const laravel2js = require('laravelphp/cjs/laravel2js');
 const javaProperties = require('@js.properties/properties');
+const xcstrings2locize = require('locize-xcstrings/cjs/xcstrings2locize');
 const flatten = require('flat');
 const prepareCombinedImport = require('./combineSubkeyPreprocessor').prepareImport;
 
@@ -291,6 +292,10 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
     }
     if (opt.format === 'properties') {
       cb(null, javaProperties.parseToProperties(data.toString()));
+      return;
+    }
+    if (opt.format === 'xcstrings') {
+      cb(null, xcstrings2locize(data.toString()));
       return;
     }
     cb(new Error(`${opt.format} is not a valid format!`));

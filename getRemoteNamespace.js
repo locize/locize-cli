@@ -4,9 +4,26 @@ const sortFlatResources = require('./sortFlatResources');
 
 const getRandomDelay = (delayFrom, delayTo) => Math.floor(Math.random() * delayTo) + delayFrom;
 
+function onlyKeysFlat(resources, prefix, ret) {
+  if (!resources) resources;
+  ret = ret || {};
+  Object.keys(resources).forEach((k) => {
+    if (typeof resources[k] === 'string' || !resources[k] || typeof resources[k].value === 'string') {
+      if (prefix) {
+        ret[prefix + '.' + k] = resources[k];
+      } else {
+        ret[k] = resources[k];
+      }
+    } else {
+      onlyKeysFlat(resources[k], prefix ? prefix + '.' + k : k, ret);
+    }
+  });
+  return ret;
+}
+
 const pullNamespacePaged = (opt, lng, ns, cb, next, retry) => {
   next = next || '';
-  request(opt.apiPath + '/pull/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns + '?' + 'next=' + next + '&ts=' + Date.now(), {
+  request(opt.apiPath + '/pull/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns + '?' + 'next=' + next + (opt.raw ? '&raw=true' : '') + '&ts=' + Date.now(), {
     method: 'get',
     headers: {
       'Authorization': opt.apiKey
@@ -31,7 +48,7 @@ const pullNamespacePaged = (opt, lng, ns, cb, next, retry) => {
     }
 
     cb(null, {
-      result: sortFlatResources(flatten(obj)),
+      result: opt.raw ? sortFlatResources(onlyKeysFlat(obj)) : sortFlatResources(flatten(obj)),
       next: res.headers.get('x-next-page'),
       lastModified: res.headers.get('last-modified') ? new Date(res.headers.get('last-modified')) : undefined
     });

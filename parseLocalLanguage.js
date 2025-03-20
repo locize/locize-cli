@@ -6,6 +6,7 @@ const convertToFlatFormat = require('./convertToFlatFormat');
 const formats = require('./formats');
 const fileExtensionsMap = formats.fileExtensionsMap;
 const acceptedFileExtensions = formats.acceptedFileExtensions;
+const xcstrings2locize = require('locize-xcstrings/cjs/xcstrings2locize');
 
 const getFiles = (srcpath) => {
   return fs.readdirSync(srcpath).filter((file) => {
@@ -21,7 +22,7 @@ const getDirectories = (srcpath) => {
 
 const parseLocalLanguage = (opt, lng, cb) => {
   const hasNamespaceInPath = opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) > -1;
-  const filledLngMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng);
+  const filledLngMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, opt.format === 'xcstrings' ? '' : lng);
   var firstPartLngMask, lastPartLngMask;
   if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`)) {
     const secondPartMask = opt.pathMask.substring(opt.pathMask.lastIndexOf(path.sep) + 1);
@@ -138,28 +139,63 @@ const parseLocalLanguage = (opt, lng, cb) => {
         }
       }
 
-      convertToFlatFormat(opt, data, lng, (err, content) => {
-        if (err) {
+      if (opt.format === 'xcstrings') { // 1 file per namespace including all languages
+        try {
+          const content = xcstrings2locize(JSON.parse(data));
+
+          fs.stat(fPath, (err, stat) => {
+            if (err) return clb(err);
+
+            clb(null, Object.keys(content.resources).map((l) => ({
+              namespace: namespace,
+              path: fPath,
+              extension: fExt,
+              content: content.resources[l],
+              language: l,
+              mtime: stat.mtime
+            })));
+          });
+        } catch (e) {
           err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
           err.message += '\n' + fPath;
           return clb(err);
         }
+      } else { // 1 file per namespace/lng
+        convertToFlatFormat(opt, data, lng, (err, content) => {
+          if (err) {
+            err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
+            err.message += '\n' + fPath;
+            return clb(err);
+          }
 
-        fs.stat(fPath, (err, stat) => {
-          if (err) return clb(err);
+          fs.stat(fPath, (err, stat) => {
+            if (err) return clb(err);
 
-          clb(null, {
-            namespace: namespace,
-            path: fPath,
-            extension: fExt,
-            content: content,
-            language: lng,
-            mtime: stat.mtime
+            clb(null, {
+              namespace: namespace,
+              path: fPath,
+              extension: fExt,
+              content: content,
+              language: lng,
+              mtime: stat.mtime
+            });
           });
         });
-      });
+      }
     });
-  }, cb);
+  }, (err, ret) => {
+    if (err) return cb(err);
+    // xcstrings, returns array in array
+    const r = ret.reduce((prev, cur) => {
+      if (Array.isArray(cur)) {
+        prev = prev.concat(cur);
+      } else {
+        prev.push(cur);
+      }
+      return prev;
+    }, []);
+    cb(null, r);
+  });
 };
 
 module.exports = parseLocalLanguage;

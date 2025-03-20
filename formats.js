@@ -13,7 +13,8 @@ const fileExtensionsMap = {
   '.ftl': ['fluent'],
   '.tmx': ['tmx'],
   '.php': ['laravel'],
-  '.properties': ['properties']
+  '.properties': ['properties'],
+  '.xcstrings': ['xcstrings']
 };
 
 const acceptedFileExtensions = Object.keys(fileExtensionsMap);
