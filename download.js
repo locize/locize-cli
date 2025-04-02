@@ -94,9 +94,10 @@ function handleDownload(opt, url, err, res, downloads, cb) {
               if (clb) clb(null);
             }
 
+            const fileContent = opt.format !== 'xlsx' ? (converted + '\n') : converted;
             if (!opt.version) {
               if (mkdirPath) mkdirp.sync(path.join(opt.path, version, mkdirPath));
-              fs.writeFile(path.join(opt.path, version, filledMask), converted, logAndClb);
+              fs.writeFile(path.join(opt.path, version, filledMask), fileContent, logAndClb);
               return;
             }
 
@@ -145,21 +146,22 @@ function handleDownload(opt, url, err, res, downloads, cb) {
           if (filledMask.lastIndexOf(path.sep) > 0) {
             mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep));
           }
+          const fileContent = opt.format !== 'xlsx' ? (converted + '\n') : converted;
           if (!opt.version) {
             if (mkdirPath) mkdirp.sync(path.join(opt.path, version, mkdirPath));
-            fs.writeFile(path.join(opt.path, version, filledMask), converted, clb);
+            fs.writeFile(path.join(opt.path, version, filledMask), fileContent, clb);
             return;
           }
           if (!opt.language) {
             if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath));
-            fs.writeFile(path.join(opt.path, filledMask), converted, clb);
+            fs.writeFile(path.join(opt.path, filledMask), fileContent, clb);
             return;
           }
 
           if (filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + language, '');
           const parentDir = path.dirname(path.join(opt.path, filledMask));
           mkdirp.sync(parentDir);
-          fs.writeFile(path.join(opt.path, filledMask), converted, clb);
+          fs.writeFile(path.join(opt.path, filledMask), fileContent, clb);
         });
       });
     }, (err) => {
@@ -231,7 +233,8 @@ function handlePull(opt, toDownload, cb) {
           }
 
           if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath));
-          fs.writeFile(path.join(opt.path, filledMask), converted, logAndClb);
+          const fileContent = opt.format !== 'xlsx' ? (converted + '\n') : converted;
+          fs.writeFile(path.join(opt.path, filledMask), fileContent, logAndClb);
         } catch (e) {
           err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
           return clb(err);
@@ -274,16 +277,17 @@ function handlePull(opt, toDownload, cb) {
           if (filledMask.lastIndexOf(path.sep) > 0) {
             mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep));
           }
+          const fileContent = opt.format !== 'xlsx' ? (converted + '\n') : converted;
           if (!opt.language) {
             if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath));
-            fs.writeFile(path.join(opt.path, filledMask), converted, clb);
+            fs.writeFile(path.join(opt.path, filledMask), fileContent, clb);
             return;
           }
 
           if (filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + lng, '');
           const parentDir = path.dirname(path.join(opt.path, filledMask));
           mkdirp.sync(parentDir);
-          fs.writeFile(path.join(opt.path, filledMask), converted, clb);
+          fs.writeFile(path.join(opt.path, filledMask), fileContent, clb);
         });
       });
     }, (err) => {

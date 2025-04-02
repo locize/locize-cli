@@ -268,7 +268,8 @@ const downloadAll = (opt, remoteLanguages, omitRef, manipulate, cb) => {
             }
             const parentDir = path.dirname(path.join(opt.path, filledMask));
             mkdirp.sync(parentDir);
-            fs.writeFile(path.join(opt.path, filledMask), converted, clb);
+            const fileContent = opt.format !== 'xlsx' ? (converted + '\n') : converted;
+            fs.writeFile(path.join(opt.path, filledMask), fileContent, clb);
           } catch (e) {
             err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
             return clb(err);
@@ -307,7 +308,8 @@ const downloadAll = (opt, remoteLanguages, omitRef, manipulate, cb) => {
             }
             const parentDir = path.dirname(path.join(opt.path, filledMask));
             mkdirp.sync(parentDir);
-            fs.writeFile(path.join(opt.path, filledMask), converted, clb);
+            const fileContent = opt.format !== 'xlsx' ? (converted + '\n') : converted;
+            fs.writeFile(path.join(opt.path, filledMask), fileContent, clb);
           });
         });
       }, cb);
@@ -487,7 +489,9 @@ const backupDeleted = (opt, ns, now) => {
     return prev;
   }, {});
   mkdirp.sync(path.join(currentBackupPath, ns.language));
-  fs.writeFileSync(path.join(currentBackupPath, ns.language, `${ns.namespace}.json`), JSON.stringify(removingRemote, null, 2));
+  const content = JSON.stringify(removingRemote, null, 2);
+  const fileContent = opt.format !== 'xlsx' ? (content + '\n') : content;
+  fs.writeFileSync(path.join(currentBackupPath, ns.language, `${ns.namespace}.json`), fileContent);
 };
 
 const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {

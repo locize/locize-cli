@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [8.7.1](https://github.com/locize/locize-cli/compare/v8.7.0...v8.7.1) - 2025-04-02
+
+- make generated files POSIX compliant, addresses [107](https://github.com/locize/locize-cli/issues/107)
+
 ## [8.7.0](https://github.com/locize/locize-cli/compare/v8.6.2...v8.7.0) - 2025-03-20
 
 - intruduce xcstrings format [106](https://github.com/locize/locize-cli/issues/106)
