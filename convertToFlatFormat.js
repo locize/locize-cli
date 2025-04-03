@@ -141,13 +141,28 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
       opt.format === 'yml-rails'
     ) {
       const d = data.toString();
-      if (!d || d === '') return cb(null, {});
+      if (!d || d.trim() === '') return cb(null, {});
       const jsObj = jsyaml.load(d);
       cb(
         null,
         flatten(
-          jsObj[Object.keys(jsObj)[0]][
-            Object.keys(jsObj[Object.keys(jsObj)[0]])[0]
+          jsObj[Object.keys(jsObj)[0]]
+        )
+      );
+      return;
+    }
+    if (
+      opt.format === 'yaml-rails-ns' ||
+      opt.format === 'yml-rails-ns'
+    ) {
+      const dn = data.toString();
+      if (!dn || dn.trim() === '') return cb(null, {});
+      const jsObjn = jsyaml.load(dn);
+      cb(
+        null,
+        flatten(
+          jsObjn[Object.keys(jsObjn)[0]][
+            Object.keys(jsObjn[Object.keys(jsObjn)[0]])[0]
           ]
         )
       );

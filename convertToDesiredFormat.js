@@ -161,9 +161,19 @@ const convertToDesiredFormat = (
     ) {
       if (isEmpty) return cb(null, '');
       var newData = {};
-      newData[lng] = {};
-      newData[lng][namespace] = shouldUnflatten(data) ? unflatten(data) : data;
+      newData[lng] = shouldUnflatten(data) ? unflatten(data) : data;
       cb(null, jsyaml.dump(removeUndefinedFromArrays(newData)));
+      return;
+    }
+    if (
+      opt.format === 'yaml-rails-ns' ||
+      opt.format === 'yml-rails-ns'
+    ) {
+      if (isEmpty) return cb(null, '');
+      var newDataNs = {};
+      newDataNs[lng] = {};
+      newDataNs[lng][namespace] = shouldUnflatten(data) ? unflatten(data) : data;
+      cb(null, jsyaml.dump(removeUndefinedFromArrays(newDataNs)));
       return;
     }
     if (opt.format === 'android') {

@@ -84,7 +84,11 @@ or
 locize download
 ```
 
-or add a format like (json, nested, flat, xliff2, xliff12, xlf2, xlf12, android, yaml, yaml-rails, yaml-nested, yml, yml-rails, yml-nested, csv, xlsx, po, strings, resx, fluent, tmx, laravel, properties, xcstrings)
+or add a format like (json, nested, flat, xliff2, xliff12, xlf2, xlf12, android, yaml, yaml-rails, yaml-rails-ns, yaml-nested, yml, yml-rails, yml-nested, csv, xlsx, po, strings, resx, fluent, tmx, laravel, properties, xcstrings)
+
+*Special formats:*
+- use yaml-rails to have the language code in the resulting yaml as root object
+- use yaml-rails-ns to have the namespace in the resulting yaml as first key scope
 
 ```sh
 locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1 --path ./backup --format android
@@ -133,7 +137,11 @@ Add your api-key and your project-id and let's go...
 locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba
 ```
 
-or add a format like (json, nested, flat, xliff2, xliff12, xlf2, xlf12, android, yaml, yaml-rails, yaml-nested, yml, yml-rails, yml-nested, csv, xlsx, po, strings, resx, fluent, tmx, laravel, properties, xcstrings)
+or add a format like (json, nested, flat, xliff2, xliff12, xlf2, xlf12, android, yaml, yaml-rails, yaml-rails-ns, yaml-nested, yml, yml-rails, yml-nested, csv, xlsx, po, strings, resx, fluent, tmx, laravel, properties, xcstrings)
+
+*Special formats:*
+- use yaml-rails to have the language code in the resulting yaml as root object
+- use yaml-rails-ns to have the namespace in the resulting yaml as first key scope
 
 ```sh
 locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --format android
@@ -193,7 +201,7 @@ Add your api-key and your project-id and let's go...
 locize save-missing --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba
 ```
 
-or add a format like (json, nested, flat, xliff2, xliff12, xlf2, xlf12, android, yaml, yaml-rails, yaml-nested, yml, yml-rails, yml-nested, csv, xlsx, po, strings, resx, fluent, tmx, laravel, properties, xcstrings)
+or add a format like (json, nested, flat, xliff2, xliff12, xlf2, xlf12, android, yaml, yaml-rails, yaml-rails-ns, yaml-nested, yml, yml-rails, yml-nested, csv, xlsx, po, strings, resx, fluent, tmx, laravel, properties, xcstrings)
 
 ```sh
 locize save-missing --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --format android
