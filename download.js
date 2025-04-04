@@ -79,8 +79,7 @@ function handleDownload(opt, url, err, res, downloads, cb) {
           if (err) return clb(err);
 
           try {
-            const result = locize2xcstrings(locizeData);
-            const converted = JSON.stringify(result, null, 2);
+            const converted = locize2xcstrings(locizeData);
 
             var filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, ns) + reversedFileExtensionsMap[opt.format];
             var mkdirPath;

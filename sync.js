@@ -258,8 +258,7 @@ const downloadAll = (opt, remoteLanguages, omitRef, manipulate, cb) => {
           if (err) return clb(err);
 
           try {
-            const result = locize2xcstrings(locizeData);
-            const converted = JSON.stringify(result, null, 2);
+            const converted = locize2xcstrings(locizeData);
 
             const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format];
             if (opt.dry) return clb(null);

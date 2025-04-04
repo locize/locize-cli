@@ -141,7 +141,7 @@ const parseLocalLanguage = (opt, lng, cb) => {
 
       if (opt.format === 'xcstrings') { // 1 file per namespace including all languages
         try {
-          const content = xcstrings2locize(JSON.parse(data));
+          const content = xcstrings2locize(data);
 
           fs.stat(fPath, (err, stat) => {
             if (err) return clb(err);

@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [9.0.1](https://github.com/locize/locize-cli/compare/v9.0.0...v9.0.1) - 2025-04-04
+
+- optimize xcstrings format [106](https://github.com/locize/locize-cli/issues/106)
+
 ## [9.0.0](https://github.com/locize/locize-cli/compare/v8.7.1...v9.0.0) - 2025-04-03
 
 - the format `yaml-rails-ns`/`yml-rails-ns` is the old `yaml-rails`/`yml-rails`
