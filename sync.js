@@ -267,7 +267,7 @@ const downloadAll = (opt, remoteLanguages, omitRef, manipulate, cb) => {
             }
             const parentDir = path.dirname(path.join(opt.path, filledMask));
             mkdirp.sync(parentDir);
-            const fileContent = opt.format !== 'xlsx' ? (converted + '\n') : converted;
+            const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted;
             fs.writeFile(path.join(opt.path, filledMask), fileContent, clb);
           } catch (e) {
             err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
@@ -307,7 +307,7 @@ const downloadAll = (opt, remoteLanguages, omitRef, manipulate, cb) => {
             }
             const parentDir = path.dirname(path.join(opt.path, filledMask));
             mkdirp.sync(parentDir);
-            const fileContent = opt.format !== 'xlsx' ? (converted + '\n') : converted;
+            const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted;
             fs.writeFile(path.join(opt.path, filledMask), fileContent, clb);
           });
         });
@@ -489,7 +489,7 @@ const backupDeleted = (opt, ns, now) => {
   }, {});
   mkdirp.sync(path.join(currentBackupPath, ns.language));
   const content = JSON.stringify(removingRemote, null, 2);
-  const fileContent = opt.format !== 'xlsx' ? (content + '\n') : content;
+  const fileContent = (opt.format !== 'xlsx' && !content.endsWith('\n')) ? (content + '\n') : content;
   fs.writeFileSync(path.join(currentBackupPath, ns.language, `${ns.namespace}.json`), fileContent);
 };
 

@@ -113,7 +113,7 @@ function writeLocalFile(opt, file, clb) {
     return clb(null, true);
   }
 
-  const fileContent = opt.format !== 'xlsx' ? (file.converted + '\n') : file.converted;
+  const fileContent = (opt.format !== 'xlsx' && !file.converted.endsWith('\n')) ? (file.converted + '\n') : file.converted;
 
   fs.writeFile(file.path, fileContent, (err) => clb(err, true));
 }
