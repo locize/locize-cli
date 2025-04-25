@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [9.0.2](https://github.com/locize/locize-cli/compare/v9.0.1...v9.0.2) - 2025-04-25
+
+- Hint: `Using the "--auto-translate true" option together with the "--reference-language-only false" option might result in inconsistent target language translations (automatic translation vs. what is sent direcly to locize).`
+
 ## [9.0.1](https://github.com/locize/locize-cli/compare/v9.0.0...v9.0.1) - 2025-04-04
 
 - optimize xcstrings format [106](https://github.com/locize/locize-cli/issues/106)

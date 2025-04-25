@@ -335,7 +335,7 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
 
   function send(d, so, clb, isRetrying) {
     const queryParams = new URLSearchParams();
-    if (opt.autoTranslate) {
+    if (opt.autoTranslate && lng === opt.referenceLanguage) {
       /** @See https://www.locize.com/docs/api#optional-autotranslate */
       queryParams.append('autotranslate', 'true');
     }
@@ -663,6 +663,10 @@ const sync = (opt, cb) => {
   opt.format = opt.format || 'json';
   if (!reversedFileExtensionsMap[opt.format]) {
     return handleError(new Error(`${opt.format} is not a valid format!`), cb);
+  }
+
+  if (opt.autoTranslate && !opt.referenceLanguageOnly) {
+    console.log(colors.yellow('Using the "--auto-translate true" option together with the "--reference-language-only false" option might result in inconsistent target language translations (automatic translation vs. what is sent direcly to locize).'));
   }
 
   opt.version = opt.version || 'latest';
