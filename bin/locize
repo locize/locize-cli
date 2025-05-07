@@ -22,6 +22,7 @@ const get = require('../get');
 const sync = require('../sync');
 const missing = require('../missing');
 const copyVersion = require('../copyVersion');
+const removeVersion = require('../removeVersion.js');
 const publishVersion = require('../publishVersion');
 const deleteNamespace = require('../deleteNamespace');
 const formatFn = require('../format');
@@ -588,7 +589,50 @@ program
     console.log();
     console.log('    $ locize copy-version latest"');
     console.log('    $ locize copy-version latest --ver production"');
-    console.log('    $ locize copy-version latest production --api-key <apiKey> --project-id <projectId> --ver <version>');
+    console.log('    $ locize copy-version latest --api-key <apiKey> --project-id <projectId> --ver <version>');
+    console.log();
+  });
+
+program
+  .command('remove-version <version>')
+  .alias('rv')
+  .description('remove version')
+  .option('-k, --api-key <apiKey>', 'The api-key that should be used')
+  .option('-i, --project-id <projectId>', 'The project-id that should be used')
+  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .action((version, options) => {
+    try {
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+    } catch (e) {}
+
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    if (!apiKey) {
+      console.error('  error: missing required argument `apiKey`');
+      process.exit(1);
+      return;
+    }
+
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    if (!projectId) {
+      console.error('  error: missing required argument `projectId`');
+      process.exit(1);
+      return;
+    }
+
+    const getPath = options.getPath || config.getPath || getPathUrl;
+
+    removeVersion({
+      apiKey: apiKey,
+      projectId: projectId,
+      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
+      version: version
+    });
+  })
+  .on('--help', () => {
+    console.log('  Examples:');
+    console.log();
+    console.log('    $ locize remove-version tmp-ver"');
+    console.log('    $ locize remove-version tmp-ver --api-key <apiKey> --project-id <projectId>');
     console.log();
   });
 
