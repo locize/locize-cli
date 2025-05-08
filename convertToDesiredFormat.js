@@ -130,8 +130,10 @@ const convertToDesiredFormat = (
 
         const worksheet = xlsx.utils.json_to_sheet(js2XlsxData);
         const workbook = xlsx.utils.book_new();
-        workbook.SheetNames.push(namespace);
-        workbook.Sheets[namespace] = worksheet;
+        let workSheetName = namespace;
+        if (workSheetName.length > 31) workSheetName = workSheetName.substring(0, 31);
+        workbook.SheetNames.push(workSheetName);
+        workbook.Sheets[workSheetName] = worksheet;
 
         const wbout = xlsx.write(workbook, { type: 'buffer' });
 

@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [9.1.1](https://github.com/locize/locize-cli/compare/v9.1.0...v9.1.1) - 2025-05-08
+
+- xlsx: fix for longer namespace names
+
 ## [9.1.0](https://github.com/locize/locize-cli/compare/v9.0.2...v9.1.0) - 2025-05-07
 
 - introduce `remove-version` command
