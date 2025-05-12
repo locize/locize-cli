@@ -527,7 +527,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
       });
       const shouldOmit = lngsInReqs.length > 5 || nsInReqs.length > 5;
 
-      var wasThereSomethingToUpdate = false;
+      var wasThereSomethingToUpdate = opt.autoTranslate || false;
 
       function updateComparedNamespaces() {
         const now = new Date();
@@ -607,7 +607,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
                 if (!cb) console.log(colors.green('FINISHED'));
                 if (cb) cb(null);
               });
-            }, wasThereSomethingToUpdate && !opt.dry ? 5000 : 0);
+            }, wasThereSomethingToUpdate && !opt.dry ? (opt.autoTranslate ? 10000 : 5000) : 0);
           }
 
           if (!shouldOmit) return down();
