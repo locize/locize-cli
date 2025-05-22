@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [9.1.3](https://github.com/locize/locize-cli/compare/v9.1.2...v9.1.3) - 2025-05-22
+
+- mentioning comma separated ns argument
+
 ## [9.1.2](https://github.com/locize/locize-cli/compare/v9.1.1...v9.1.2) - 2025-05-12
 
 - sync: wait a bit longer to download from remote if auto-translate option is passed

@@ -377,7 +377,7 @@ program
   .option('-t, --compare-modification-time <true|false>', 'while comparing the namespace content between local and remote, take the modification time of the local file and the last modified time of the remote namespace into account. (default: false)', 'false')
   .option('-l, --language <lng>', 'The language that should be targeted')
   .option('-ls, --languages <lng1,lng2>', 'The languages that should be targeted')
-  .option('-n, --namespace <ns>', 'The namespace that should be targeted')
+  .option('-n, --namespace <ns>', 'The namespace that should be targeted (you can also pass a comma separated list)')
   .option('-g, --get-path <url>', `Specify the get-path url that should be used (default: ${getPathUrl})`)
   .option('-up, --unpublished <true|false>', 'Downloads the current (unpublished) translations. This will generate private download costs (default: false)', 'false')
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
@@ -479,7 +479,7 @@ program
   .option('-d, --dry <true|false>', 'Dry run (default: false)', 'false')
   .option('-R, --reference-language-only <true|false>', 'Check for changes in reference language only. (default: true)', 'true')
   .option('-l, --language <lng>', 'The language that should be targeted')
-  .option('-n, --namespace <ns>', 'The namespace that should be targeted')
+  .option('-n, --namespace <ns>', 'The namespace that should be targeted (you can also pass a comma separated list)')
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((options) => {
     try {

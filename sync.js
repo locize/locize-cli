@@ -681,7 +681,7 @@ const sync = (opt, cb) => {
   }
   if (!opt.dry) mkdirp.sync(opt.path);
 
-  if (opt.namespace && opt.namespace.indexOf(',') > 0) {
+  if (opt.namespace && opt.namespace.indexOf(',') > 0 && opt.namespace.indexOf(' ') < 0) {
     opt.namespaces = opt.namespace.split(',');
     delete opt.namespace;
   }
