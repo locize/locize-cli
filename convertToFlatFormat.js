@@ -1,7 +1,7 @@
 const po2i18next = require('gettext-converter/cjs/po2i18next');
 const csvjson = require('csvjson');
 const xlsx = require('xlsx');
-const jsyaml = require('js-yaml');
+const yaml = require('yaml');
 const asr2js = require('android-string-resource/cjs/asr2js');
 const stringsFile = require('strings-file');
 const xliff2js = require('xliff/cjs/xliff2js');
@@ -123,8 +123,8 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
       opt.format === 'yml'
     ) {
       const d = data.toString();
-      if (!d || d === '') return cb(null, {});
-      cb(null, flatten(jsyaml.load(d)));
+      if (!d || d === '' || d === '\n') return cb(null, {});
+      cb(null, flatten(yaml.parse(d)));
       return;
     }
     if (
@@ -132,8 +132,8 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
       opt.format === 'yml-nested'
     ) {
       const d = data.toString();
-      if (!d || d === '') return cb(null, {});
-      cb(null, flatten(jsyaml.load(d)));
+      if (!d || d === '' || d === '\n') return cb(null, {});
+      cb(null, flatten(yaml.parse(d)));
       return;
     }
     if (
@@ -142,7 +142,7 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
     ) {
       const d = data.toString();
       if (!d || d.trim() === '') return cb(null, {});
-      const jsObj = jsyaml.load(d);
+      const jsObj = yaml.parse(d);
       cb(
         null,
         flatten(
@@ -157,7 +157,7 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
     ) {
       const dn = data.toString();
       if (!dn || dn.trim() === '') return cb(null, {});
-      const jsObjn = jsyaml.load(dn);
+      const jsObjn = yaml.parse(dn);
       cb(
         null,
         flatten(

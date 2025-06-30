@@ -1,4 +1,4 @@
-const jsyaml = require('js-yaml');
+const yaml = require('yaml');
 
 const delimiter = {
   i18next: '_',
@@ -26,7 +26,7 @@ const getBaseKey = (delimiter) => (k) => {
 const uniq = (value, index, self) => self.indexOf(value) === index;
 
 const stringify = (o) => {
-  let str = jsyaml.dump(o);
+  let str = yaml.stringify(o);
   const subKeys = Object.keys(o);
   subKeys.forEach((sk) => {
     if (isNaN(sk)) {
@@ -123,7 +123,7 @@ const parse = (s) => {
       s = s.replace(new RegExp(`^(?:${escapedMatch}: )+`, 'm'), `${sk}: `);
     }
   }
-  return jsyaml.load(s);
+  return yaml.parse(s);
 };
 
 const prepareImport = (resources) => {

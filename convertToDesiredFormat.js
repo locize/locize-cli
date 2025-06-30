@@ -2,7 +2,7 @@ const flatten = require('flat');
 const i18next2po = require('gettext-converter/cjs/i18next2po');
 const csvjson = require('csvjson');
 const xlsx = require('xlsx');
-const jsyaml = require('js-yaml');
+const yaml = require('yaml');
 const js2asr = require('android-string-resource/cjs/js2asr');
 const stringsFile = require('strings-file');
 const createxliff = require('xliff/cjs/createxliff');
@@ -146,7 +146,7 @@ const convertToDesiredFormat = (
       opt.format === 'yml'
     ) {
       if (isEmpty) return cb(null, '');
-      cb(null, jsyaml.dump(flatten(data)));
+      cb(null, yaml.stringify(flatten(data)));
       return;
     }
     if (
@@ -154,7 +154,7 @@ const convertToDesiredFormat = (
       opt.format === 'yml-nested'
     ) {
       if (isEmpty) return cb(null, '');
-      cb(null, jsyaml.dump(shouldUnflatten(data) ? unflatten(data) : data));
+      cb(null, yaml.stringify(shouldUnflatten(data) ? unflatten(data) : data));
       return;
     }
     if (
@@ -164,7 +164,7 @@ const convertToDesiredFormat = (
       if (isEmpty) return cb(null, '');
       var newData = {};
       newData[lng] = shouldUnflatten(data) ? unflatten(data) : data;
-      cb(null, jsyaml.dump(removeUndefinedFromArrays(newData)));
+      cb(null, yaml.stringify(removeUndefinedFromArrays(newData)));
       return;
     }
     if (
@@ -175,7 +175,7 @@ const convertToDesiredFormat = (
       var newDataNs = {};
       newDataNs[lng] = {};
       newDataNs[lng][namespace] = shouldUnflatten(data) ? unflatten(data) : data;
-      cb(null, jsyaml.dump(removeUndefinedFromArrays(newDataNs)));
+      cb(null, yaml.stringify(removeUndefinedFromArrays(newDataNs)));
       return;
     }
     if (opt.format === 'android') {
