@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [9.1.4](https://github.com/locize/locize-cli/compare/v9.1.3...v9.1.4) - 2025-06-30
+
+- download: fix issue with reversed pathMask in combination with no languageFolderPrefix
+
 ## [9.1.3](https://github.com/locize/locize-cli/compare/v9.1.2...v9.1.3) - 2025-05-22
 
 - mentioning comma separated ns argument

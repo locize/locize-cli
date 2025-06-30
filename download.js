@@ -157,7 +157,10 @@ function handleDownload(opt, url, err, res, downloads, cb) {
             return;
           }
 
-          if (filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + language, '');
+          if (opt.languageFolderPrefix && filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + language, '');
+          // if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) && filledMask.lastIndexOf(path.sep) > 0) {
+          //   mkdirp.sync(path.join(opt.path, filledMask.substring(0, filledMask.lastIndexOf(path.sep))));
+          // }
           const parentDir = path.dirname(path.join(opt.path, filledMask));
           mkdirp.sync(parentDir);
           fs.writeFile(path.join(opt.path, filledMask), fileContent, clb);
@@ -283,7 +286,10 @@ function handlePull(opt, toDownload, cb) {
             return;
           }
 
-          if (filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + lng, '');
+          if (opt.languageFolderPrefix && filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + lng, '');
+          // if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) && filledMask.lastIndexOf(path.sep) > 0) {
+          //   mkdirp.sync(path.join(opt.path, filledMask.substring(0, filledMask.lastIndexOf(path.sep))));
+          // }
           const parentDir = path.dirname(path.join(opt.path, filledMask));
           mkdirp.sync(parentDir);
           fs.writeFile(path.join(opt.path, filledMask), fileContent, clb);
