@@ -124,6 +124,7 @@ const parseLocalLanguage = (opt, lng, cb) => {
       fPath = path.join(opt.path, dirPath.replace(nsMask, namespace), file);
     }
     if (!namespace) return clb(new Error(`namespace could not be found in ${fPath}`));
+    if (opt.namespaces && opt.namespaces.indexOf(namespace) < 0) return clb(null);
     fs.readFile(fPath, (err, data) => {
       if (err) return clb(err);
 
@@ -186,7 +187,7 @@ const parseLocalLanguage = (opt, lng, cb) => {
   }, (err, ret) => {
     if (err) return cb(err);
     // xcstrings, returns array in array
-    const r = ret.reduce((prev, cur) => {
+    const r = ret.filter((r) => r !== undefined).reduce((prev, cur) => {
       if (Array.isArray(cur)) {
         prev = prev.concat(cur);
       } else {
