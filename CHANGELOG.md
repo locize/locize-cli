@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [10.0.2](https://github.com/locize/locize-cli/compare/v10.0.1...v10.0.2) - 2025-07-02
+
+- respect opt.namespace when parsing local namespaces
+
 ## [10.0.1](https://github.com/locize/locize-cli/compare/v10.0.0...v10.0.1) - 2025-07-02
 
 - respect opt.namespaces when parsing local namespaces

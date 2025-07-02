@@ -125,6 +125,7 @@ const parseLocalLanguage = (opt, lng, cb) => {
     }
     if (!namespace) return clb(new Error(`namespace could not be found in ${fPath}`));
     if (opt.namespaces && opt.namespaces.indexOf(namespace) < 0) return clb(null);
+    if (opt.namespace && opt.namespace !== namespace) return clb(null);
     fs.readFile(fPath, (err, data) => {
       if (err) return clb(err);
 
