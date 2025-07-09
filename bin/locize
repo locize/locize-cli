@@ -552,6 +552,7 @@ program
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-v, --ver <version>', 'The target version to be used to copy to (default: latest)')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
+  .option('-iv, --ignore-if-version-exists <true|false>', 'The project-id that should be used (default: false)', 'false')
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((fromVersion, options) => {
     try {
@@ -576,12 +577,15 @@ program
 
     const getPath = options.getPath || config.getPath || getPathUrl;
 
+    const ignoreIfVersionExists = options.ignoreIfVersionExists === 'true';
+
     copyVersion({
       apiKey: apiKey,
       projectId: projectId,
       apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
       fromVersion: fromVersion,
-      toVersion: version
+      toVersion: version,
+      ignoreIfVersionExists: ignoreIfVersionExists
     });
   })
   .on('--help', () => {

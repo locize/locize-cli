@@ -3,7 +3,12 @@ const request = require('./request');
 const getJob = require('./getJob');
 
 const copyVersion = (opt, cb) => {
-  request(opt.apiPath + '/copy/' + opt.projectId + '/version/' + opt.fromVersion + '/' + opt.toVersion, {
+  const queryParams = new URLSearchParams();
+  if (opt.ignoreIfVersionExists) {
+    queryParams.append('ignoreIfVersionExists', 'true');
+  }
+  const queryString = queryParams.size > 0 ? '?' + queryParams.toString() : '';
+  request(opt.apiPath + '/copy/' + opt.projectId + '/version/' + opt.fromVersion + '/' + opt.toVersion + queryString, {
     method: 'post',
     headers: {
       'Authorization': opt.apiKey
