@@ -18,6 +18,8 @@ const deleteNamespace = require('./deleteNamespace');
 const getProjectStats = require('./getProjectStats');
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap;
 const locize2xcstrings = require('locize-xcstrings/cjs/locize2xcstrings');
+const getBranches = require('./getBranches');
+const isValidUuid = require('./isValidUuid');
 
 const getDirectories = (srcpath) => {
   return fs.readdirSync(srcpath).filter((file) => {
@@ -659,42 +661,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
   });
 };
 
-const sync = (opt, cb) => {
-  opt.format = opt.format || 'json';
-  if (!reversedFileExtensionsMap[opt.format]) {
-    return handleError(new Error(`${opt.format} is not a valid format!`), cb);
-  }
-
-  if (opt.autoTranslate && !opt.referenceLanguageOnly) {
-    console.log(colors.yellow('Using the "--auto-translate true" option together with the "--reference-language-only false" option might result in inconsistent target language translations (automatic translation vs. what is sent direcly to locize).'));
-  }
-
-  opt.version = opt.version || 'latest';
-  opt.apiPath = opt.apiPath || 'https://api.locize.app';
-
-  if (!opt.dry && opt.clean) rimraf.sync(path.join(opt.path, '*'));
-
-  if (opt.autoCreatePath === false) {
-    if (!doesDirectoryExist(opt.path)) {
-      return handleError(new Error(`${opt.path} does not exist!`), cb);
-    }
-  }
-  if (!opt.dry) mkdirp.sync(opt.path);
-
-  if (opt.namespace && opt.namespace.indexOf(',') > 0 && opt.namespace.indexOf(' ') < 0) {
-    opt.namespaces = opt.namespace.split(',');
-    delete opt.namespace;
-  }
-
-  opt.pathMaskInterpolationPrefix = opt.pathMaskInterpolationPrefix || '{{';
-  opt.pathMaskInterpolationSuffix = opt.pathMaskInterpolationSuffix || '}}';
-  opt.pathMask = opt.pathMask || `${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}${path.sep}${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`;
-  opt.languageFolderPrefix = opt.languageFolderPrefix || '';
-  opt.pathMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, `${opt.languageFolderPrefix}${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`);
-  if (opt.unpublished && !opt.apiKey) {
-    return handleError(new Error('Please provide also an api-key!'), cb);
-  }
-
+const continueToSync = (opt, cb) => {
   console.log(colors.grey('checking remote (locize)...'));
   getRemoteLanguages(opt, (err, remoteLanguages) => {
     if (err) return handleError(err, cb);
@@ -735,6 +702,63 @@ const sync = (opt, cb) => {
       handleSync(opt, remoteLanguages, localNamespaces, cb);
     });
   });
+};
+
+const sync = (opt, cb) => {
+  opt.format = opt.format || 'json';
+  if (!reversedFileExtensionsMap[opt.format]) {
+    return handleError(new Error(`${opt.format} is not a valid format!`), cb);
+  }
+
+  if (opt.autoTranslate && !opt.referenceLanguageOnly) {
+    console.log(colors.yellow('Using the "--auto-translate true" option together with the "--reference-language-only false" option might result in inconsistent target language translations (automatic translation vs. what is sent direcly to locize).'));
+  }
+
+  opt.version = opt.version || 'latest';
+  opt.apiPath = opt.apiPath || 'https://api.locize.app';
+
+  if (!opt.dry && opt.clean) rimraf.sync(path.join(opt.path, '*'));
+
+  if (opt.autoCreatePath === false) {
+    if (!doesDirectoryExist(opt.path)) {
+      return handleError(new Error(`${opt.path} does not exist!`), cb);
+    }
+  }
+  if (!opt.dry) mkdirp.sync(opt.path);
+
+  if (opt.namespace && opt.namespace.indexOf(',') > 0 && opt.namespace.indexOf(' ') < 0) {
+    opt.namespaces = opt.namespace.split(',');
+    delete opt.namespace;
+  }
+
+  opt.pathMaskInterpolationPrefix = opt.pathMaskInterpolationPrefix || '{{';
+  opt.pathMaskInterpolationSuffix = opt.pathMaskInterpolationSuffix || '}}';
+  opt.pathMask = opt.pathMask || `${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}${path.sep}${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`;
+  opt.languageFolderPrefix = opt.languageFolderPrefix || '';
+  opt.pathMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, `${opt.languageFolderPrefix}${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`);
+  if (opt.unpublished && !opt.apiKey) {
+    return handleError(new Error('Please provide also an api-key!'), cb);
+  }
+
+  if (opt.branch) {
+    getBranches(opt, (err, branches) => {
+      if (err) return handleError(err, cb);
+
+      let b;
+      if (isValidUuid(opt.branch)) b = branches.find((br) => br.id === opt.branch);
+      if (!b) b = branches.find((br) => br.name === opt.branch);
+      if (!b) {
+        return handleError(new Error(`Branch ${opt.branch} not found!`), cb);
+      }
+      opt.projectId = b.id;
+      opt.version = b.version;
+
+      continueToSync(opt, cb);
+    });
+    return;
+  }
+
+  continueToSync(opt, cb);
 };
 
 module.exports = sync;

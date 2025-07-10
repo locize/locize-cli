@@ -325,6 +325,27 @@ locize format path/to/dictionary --format android
 ```
 
 
+## Working with branches
+### Create a new branch
+
+```sh
+locize create-branch featureXYZ --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest
+```
+
+### Sync or Download that branch
+
+```sh
+locize sync --branch featureXYZ --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba
+
+locize download --branch featureXYZ --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba
+```
+
+### Merge that branch
+
+```sh
+locize merge-branch featureXYZ --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --delete true
+```
+
 
 ## Other information
 

@@ -1,15 +1,15 @@
 const colors = require('colors');
 const request = require('./request');
 
-const getJob = (opt, jobId, cb) => {
-  request(opt.apiPath + '/jobs/' + opt.projectId + '/' + jobId, {
+const getBranches = (opt, cb) => {
+  request(opt.apiPath + '/branches/' + opt.projectId, {
     method: 'get',
     headers: {
       'Authorization': opt.apiKey
     }
   }, (err, res, obj) => {
     if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (!cb) console.log(colors.red('getting job failed...'));
+      if (!cb) console.log(colors.red('getting branches failed...'));
 
       if (err) {
         if (!cb) { console.error(colors.red(err.message)); process.exit(1); }
@@ -32,9 +32,9 @@ const getJob = (opt, jobId, cb) => {
       if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'));
       return;
     }
-    if (!cb) console.log(colors.green('getting job successful'));
+    if (!cb) console.log(colors.green('getting branches successful'));
     if (cb) cb(null, obj);
   });
 };
 
-module.exports = getJob;
+module.exports = getBranches;

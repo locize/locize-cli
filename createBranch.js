@@ -1,15 +1,16 @@
 const colors = require('colors');
 const request = require('./request');
 
-const getJob = (opt, jobId, cb) => {
-  request(opt.apiPath + '/jobs/' + opt.projectId + '/' + jobId, {
-    method: 'get',
+const createBranch = (opt, cb) => {
+  request(opt.apiPath + '/branch/create/' + opt.projectId + '/' + opt.version, {
+    method: 'post',
     headers: {
       'Authorization': opt.apiKey
-    }
+    },
+    body: { name: opt.branch }
   }, (err, res, obj) => {
     if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (!cb) console.log(colors.red('getting job failed...'));
+      if (!cb) console.log(colors.red('creating branch failed...'));
 
       if (err) {
         if (!cb) { console.error(colors.red(err.message)); process.exit(1); }
@@ -32,9 +33,9 @@ const getJob = (opt, jobId, cb) => {
       if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'));
       return;
     }
-    if (!cb) console.log(colors.green('getting job successful'));
+    if (!cb) console.log(colors.green('creating branch "' + obj.name + '" (' + obj.id + ') successful'));
     if (cb) cb(null, obj);
   });
 };
 
-module.exports = getJob;
+module.exports = createBranch;

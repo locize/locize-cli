@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [10.1.0](https://github.com/locize/locize-cli/compare/v10.0.3...v10.1.0) - 2025-07-10
+
+- introduce branching features
+
 ## [10.0.3](https://github.com/locize/locize-cli/compare/v10.0.2...v10.0.3) - 2025-07-09
 
 - introduce `--ignore-if-version-exists` option for `copy-version`

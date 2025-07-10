@@ -32,7 +32,7 @@ const getProjectStats = (opt, cb) => {
       if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'));
       return;
     }
-    if (!cb) console.log(colors.green('getting project stats succesfull'));
+    if (!cb) console.log(colors.green('getting project stats successful'));
     if (cb) cb(null, obj);
   });
 };

@@ -13,6 +13,8 @@ const formats = require('./formats');
 const getProjectStats = require('./getProjectStats');
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap;
 const locize2xcstrings = require('locize-xcstrings/cjs/locize2xcstrings');
+const getBranches = require('./getBranches');
+const isValidUuid = require('./isValidUuid');
 
 function getInfosInUrl(download) {
   const splitted = download.key.split('/');
@@ -370,25 +372,7 @@ const filterDownloads = (opt, downloads) => {
   return filterDownloadsLanguages(opt, downloads);
 };
 
-const download = (opt, cb) => {
-  opt.format = opt.format || 'json';
-  if (!reversedFileExtensionsMap[opt.format]) {
-    return handleError(new Error(`${opt.format} is not a valid format!`), cb);
-  }
-
-  if (opt.skipEmpty === undefined) opt.skipEmpty = true;
-  opt.apiPath = opt.apiPath || 'https://api.locize.app';
-  opt.version = opt.version || 'latest';
-  opt.languageFolderPrefix = opt.languageFolderPrefix || '';
-  opt.path = opt.path || opt.target;
-  opt.pathMaskInterpolationPrefix = opt.pathMaskInterpolationPrefix || '{{';
-  opt.pathMaskInterpolationSuffix = opt.pathMaskInterpolationSuffix || '}}';
-  opt.pathMask = opt.pathMask || `${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}${path.sep}${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`;
-  opt.pathMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, `${opt.languageFolderPrefix}${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`);
-  if (opt.unpublished && !opt.apiKey) {
-    return handleError(new Error('Please provide also an api-key!'), cb);
-  }
-
+const continueToDownload = (opt, cb) => {
   var url = opt.apiPath + '/download/' + opt.projectId;
 
   if (opt.namespace && opt.namespace.indexOf(',') > 0 && opt.namespace.indexOf(' ') < 0) {
@@ -466,6 +450,46 @@ const download = (opt, cb) => {
       handlePull(opt, toDownload, cb);
     });
   });
+};
+
+const download = (opt, cb) => {
+  opt.format = opt.format || 'json';
+  if (!reversedFileExtensionsMap[opt.format]) {
+    return handleError(new Error(`${opt.format} is not a valid format!`), cb);
+  }
+
+  if (opt.skipEmpty === undefined) opt.skipEmpty = true;
+  opt.apiPath = opt.apiPath || 'https://api.locize.app';
+  opt.version = opt.version || 'latest';
+  opt.languageFolderPrefix = opt.languageFolderPrefix || '';
+  opt.path = opt.path || opt.target;
+  opt.pathMaskInterpolationPrefix = opt.pathMaskInterpolationPrefix || '{{';
+  opt.pathMaskInterpolationSuffix = opt.pathMaskInterpolationSuffix || '}}';
+  opt.pathMask = opt.pathMask || `${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}${path.sep}${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`;
+  opt.pathMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, `${opt.languageFolderPrefix}${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`);
+  if (opt.unpublished && !opt.apiKey) {
+    return handleError(new Error('Please provide also an api-key!'), cb);
+  }
+
+  if (opt.branch) {
+    getBranches(opt, (err, branches) => {
+      if (err) return handleError(err, cb);
+
+      let b;
+      if (isValidUuid(opt.branch)) b = branches.find((br) => br.id === opt.branch);
+      if (!b) b = branches.find((br) => br.name === opt.branch);
+      if (!b) {
+        return handleError(new Error(`Branch ${opt.branch} not found!`), cb);
+      }
+      opt.projectId = b.id;
+      opt.version = b.version;
+
+      continueToDownload(opt, cb);
+    });
+    return;
+  }
+
+  continueToDownload(opt, cb);
 };
 
 module.exports = download;
