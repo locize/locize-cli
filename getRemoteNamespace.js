@@ -23,7 +23,7 @@ function onlyKeysFlat(resources, prefix, ret) {
 
 const pullNamespacePaged = (opt, lng, ns, cb, next, retry) => {
   next = next || '';
-  request(opt.apiPath + '/pull/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns + '?' + 'next=' + next + (opt.raw ? '&raw=true' : '') + '&ts=' + Date.now(), {
+  request(opt.apiPath + '/pull/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns + '?' + 'next=' + next + ((opt.raw || opt.overriddenOnly) ? '&raw=true' : '') + '&ts=' + Date.now(), {
     method: 'get',
     headers: {
       'Authorization': opt.apiKey
@@ -45,6 +45,20 @@ const pullNamespacePaged = (opt, lng, ns, cb, next, retry) => {
         return cb(new Error((obj.errorMessage || obj.message)));
       }
       return cb(new Error(res.statusText + ' (' + res.status + ')'));
+    }
+
+    if (opt.overriddenOnly && obj) {
+      const newObj = {};
+      Object.keys(obj).forEach((k) => {
+        if (obj[k].overrides !== undefined) {
+          if (opt.raw) {
+            newObj[k] = obj[k];
+          } else {
+            newObj[k] = obj[k].value;
+          }
+        }
+      });
+      obj = newObj;
     }
 
     cb(null, {

@@ -736,6 +736,9 @@ const sync = (opt, cb) => {
   opt.pathMask = opt.pathMask || `${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}${path.sep}${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`;
   opt.languageFolderPrefix = opt.languageFolderPrefix || '';
   opt.pathMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, `${opt.languageFolderPrefix}${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`);
+  if (opt.overriddenOnly) {
+    opt.unpublished = true;
+  }
   if (opt.unpublished && !opt.apiKey) {
     return handleError(new Error('Please provide also an api-key!'), cb);
   }

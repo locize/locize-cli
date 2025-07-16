@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+
+## [10.2.0](https://github.com/locize/locize-cli/compare/v10.1.1...v10.2.0) - 2025-07-16
+
+- download/sync introduce `--overridden-only` option for branches or tenants
+
 ## [10.1.1](https://github.com/locize/locize-cli/compare/v10.1.0...v10.1.1) - 2025-07-12
 
 - create-branch: nicer feedback, if branch already exists

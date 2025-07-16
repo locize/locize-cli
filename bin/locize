@@ -241,6 +241,7 @@ program
   .option('-m, --path-mask <mask>', 'This will define the folder and file structure; do not add a file extension (default: {{language}}/{{namespace}})', `{{language}}${path.sep}{{namespace}}`)
   .option('-c, --clean <true|false>', 'Removes all local files by removing the whole folder (default: false)', 'false')
   .option('-up, --unpublished <true|false>', 'Downloads the current (unpublished) translations. This will generate private download costs (default: false)', 'false')
+  .option('-oo, --overridden-only <true|false>', 'Downloads only the current overridden (unpublished) translations of a tenant or branch project. This will generate private download costs (default: false)', 'false')
   .option('-b, --branch <branch>', 'The branch name (or id) that should be targeted')
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((options) => {
@@ -274,6 +275,8 @@ program
 
     const unpublished = options.unpublished === 'true';
 
+    const overriddenOnly = options.overriddenOnly === 'true';
+
     const languageFolderPrefix = options.languageFolderPrefix || '';
 
     const pathMask = options.pathMask;
@@ -295,7 +298,8 @@ program
       languageFolderPrefix: languageFolderPrefix,
       pathMask: pathMask,
       unpublished: unpublished,
-      branch: branch
+      branch: branch,
+      overriddenOnly: overriddenOnly
     });
   })
   .on('--help', () => {
@@ -386,6 +390,7 @@ program
   .option('-n, --namespace <ns>', 'The namespace that should be targeted (you can also pass a comma separated list)')
   .option('-g, --get-path <url>', `Specify the get-path url that should be used (default: ${getPathUrl})`)
   .option('-up, --unpublished <true|false>', 'Downloads the current (unpublished) translations. This will generate private download costs (default: false)', 'false')
+  .option('-oo, --overridden-only <true|false>', 'Downloads only the current overridden (unpublished) translations of a tenant or branch project. This will generate private download costs (default: false)', 'false')
   .option('-b, --branch <branch>', 'The branch name (or id) that should be targeted')
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((options) => {
@@ -433,6 +438,7 @@ program
     const compareModificationTime = options.compareModificationTime === 'true';
     const pathMask = options.pathMask;
     const unpublished = options.unpublished === 'true';
+    const overriddenOnly = options.overriddenOnly === 'true';
     const autoCreatePath = options.autoCreatePath === 'true';
     const backupDeletedPath = options.backupDeletedPath;
     const branch = options.branch;
@@ -462,7 +468,8 @@ program
       unpublished: unpublished,
       autoCreatePath: autoCreatePath,
       backupDeletedPath: backupDeletedPath,
-      branch: branch
+      branch: branch,
+      overriddenOnly: overriddenOnly
     });
   })
   .on('--help', () => {
