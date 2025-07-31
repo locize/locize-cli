@@ -23,6 +23,23 @@ iwr https://raw.githubusercontent.com/locize/locize-cli/master/install.ps1 -useb
 ```
 
 
+> ⚠️ **Filename restrictions**  
+> The namespace you choose becomes your on-disk filename, so please avoid these characters:
+> ```
+> <   (less than)
+> >   (greater than)
+> :   (colon)
+> "   (double quote)
+> /   (forward slash)
+> \   (backslash)
+> |   (vertical bar or pipe)
+> ?   (question mark)
+> *   (asterisk)
+> ```
+> These are sometimes illegal on various operating systems, so using them may lead to files not being written or being written incorrectly. If necessary, use only letters, numbers, hyphens ("-") and underscores ("_") in your namespace names.
+
+
+
 ## Adding/Updating new keys
 ### Step 1: execute
 
