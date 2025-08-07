@@ -743,6 +743,10 @@ const sync = (opt, cb) => {
     return handleError(new Error('Please provide also an api-key!'), cb);
   }
 
+  if (opt.branch === '') {
+    return handleError(new Error('The branch name seems invalid!'), cb);
+  }
+
   if (opt.branch) {
     getBranches(opt, (err, branches) => {
       if (err) return handleError(err, cb);

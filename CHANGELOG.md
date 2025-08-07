@@ -6,6 +6,10 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## [10.2.1](https://github.com/locize/locize-cli/compare/v10.2.0...v10.2.1) - 2025-08-07
+
+- download/sync: check if branch name is empty string
+
 ## [10.2.0](https://github.com/locize/locize-cli/compare/v10.1.1...v10.2.0) - 2025-07-16
 
 - download/sync introduce `--overridden-only` option for branches or tenants
