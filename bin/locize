@@ -895,7 +895,7 @@ program
 
 program
   .command('delete-branch <branch>')
-  .alias('cb')
+  .alias('db')
   .description('delete branch')
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
