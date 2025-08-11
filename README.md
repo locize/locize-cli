@@ -363,6 +363,12 @@ locize download --branch featureXYZ --api-key my-api-key-d9de-4f55-9855-a9ef0ed4
 locize merge-branch featureXYZ --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --delete true
 ```
 
+### Delete an unmerged branch
+
+```sh
+locize delete-branch featureXYZ --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba
+```
+
 
 ## Other information
 

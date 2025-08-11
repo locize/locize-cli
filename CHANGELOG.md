@@ -6,6 +6,11 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## [10.3.0](https://github.com/locize/locize-cli/compare/v10.2.1...v10.3.0) - 2025-08-11
+
+- introduce delete-branch command
+- sync/download: try to check if version exists also on dry-run
+
 ## [10.2.1](https://github.com/locize/locize-cli/compare/v10.2.0...v10.2.1) - 2025-08-07
 
 - download/sync: check if branch name is empty string

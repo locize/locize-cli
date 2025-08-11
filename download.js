@@ -417,15 +417,27 @@ const continueToDownload = (opt, cb) => {
           return;
         }
 
-        obj = filterDownloads(opt, obj || []);
-        handleDownload(opt, url, err, res, obj, cb);
+        if (obj.length > 0) {
+          obj = filterDownloads(opt, obj || []);
+          return handleDownload(opt, url, err, res, obj, cb);
+        }
+
+        getProjectStats(opt, (err, res) => {
+          if (err) return handleError(err, cb);
+          if (!res) return handleError(new Error('Nothing found!'), cb);
+          if (!res[opt.version]) return handleError(new Error(`Version "${opt.version}" not found!`), cb);
+
+          obj = filterDownloads(opt, obj || []);
+          return handleDownload(opt, url, err, res, obj, cb);
+        });
       });
       return;
     }
 
     getProjectStats(opt, (err, res) => {
       if (err) return handleError(err, cb);
-      if (!res || !res[opt.version]) return handleError(new Error('Nothing found!'), cb);
+      if (!res) return handleError(new Error('Nothing found!'), cb);
+      if (!res[opt.version]) return handleError(new Error(`Version "${opt.version}" not found!`), cb);
 
       const toDownload = [];
       const lngsToCheck = opt.language ? [opt.language] : Object.keys(res[opt.version]);

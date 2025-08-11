@@ -1,23 +1,26 @@
 const colors = require('colors');
 const request = require('./request');
 const getBranches = require('./getBranches');
-const isValidUuid = require('./isValidUuid');
 const getJob = require('./getJob');
+const isValidUuid = require('./isValidUuid');
 
-const mergeBranch = (opt, cb) => {
-  const queryParams = new URLSearchParams();
-  if (opt.delete) {
-    queryParams.append('delete', 'true');
+const handleError = (err, cb) => {
+  if (!cb && err) {
+    console.error(colors.red(err.stack));
+    process.exit(1);
   }
-  const queryString = queryParams.size > 0 ? '?' + queryParams.toString() : '';
-  request(opt.apiPath + '/branch/merge/' + opt.branch + queryString, {
-    method: 'post',
+  if (cb) cb(err);
+};
+
+const deleteBranch = (opt, cb) => {
+  request(opt.apiPath + '/branch/' + opt.branch, {
+    method: 'delete',
     headers: {
       'Authorization': opt.apiKey
     }
   }, (err, res, obj) => {
     if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (!cb) console.log(colors.red('merging branch failed...'));
+      if (!cb) console.log(colors.red('deleting branch failed...'));
 
       if (err) {
         if (!cb) { console.error(colors.red(err.message)); process.exit(1); }
@@ -70,19 +73,11 @@ const mergeBranch = (opt, cb) => {
           return;
         }
 
-        if (!cb) console.log(colors.green('merging branch successful'));
+        if (!cb) console.log(colors.green(`deleting branch "${opt.branch}" succesfully requested`));
         if (cb) cb(null);
       });
     })();
   });
-};
-
-const handleError = (err, cb) => {
-  if (!cb && err) {
-    console.error(colors.red(err.stack));
-    process.exit(1);
-  }
-  if (cb) cb(err);
 };
 
 module.exports = (opt, cb) => {
@@ -97,6 +92,6 @@ module.exports = (opt, cb) => {
     }
     opt.branch = b.id;
 
-    mergeBranch(opt, cb);
+    deleteBranch(opt, cb);
   });
 };

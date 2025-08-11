@@ -53,13 +53,24 @@ const getDownloads = (opt, cb) => {
         }
         return cb(new Error(res.statusText + ' (' + res.status + ')'));
       }
-      if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
-      cb(null, obj);
+      if (obj.length > 0) {
+        if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2);
+        return cb(null, obj);
+      }
+
+      getProjectStats(opt, (err, res) => {
+        if (err) return handleError(err, cb);
+        if (!res) return handleError(new Error('Nothing found!'), cb);
+        if (!res[opt.version]) return handleError(new Error(`Version "${opt.version}" not found!`), cb);
+
+        return cb(null, obj);
+      });
     });
   } else {
     getProjectStats(opt, (err, res) => {
       if (err) return handleError(err, cb);
-      if (!res || !res[opt.version]) return handleError(new Error('Nothing found!'), cb);
+      if (!res) return handleError(new Error('Nothing found!'), cb);
+      if (!res[opt.version]) return handleError(new Error(`Version "${opt.version}" not found!`), cb);
 
       const toDownload = [];
       const lngsToCheck = opt.language ? [opt.language] : (opt.languages && opt.languages.length > 0) ? opt.languages : Object.keys(res[opt.version]);
