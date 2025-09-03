@@ -6,6 +6,10 @@ Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 
+## [10.3.2](https://github.com/locize/locize-cli/compare/v10.3.1...v10.3.2) - 2025-09-03
+
+- fix format comparison
+
 ## [10.3.1](https://github.com/locize/locize-cli/compare/v10.3.0...v10.3.1) - 2025-08-11
 
 - fix alias for delete-branch command

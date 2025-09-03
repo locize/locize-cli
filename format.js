@@ -87,6 +87,7 @@ function convertAllFilesToDesiredFormat(opt, files, clb) {
         err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '');
         return cb(err);
       }
+      res = (opt.format !== 'xlsx' && !res.endsWith('\n')) ? (res + '\n') : res;
       file.converted = res;
       cb(null, file);
     });
