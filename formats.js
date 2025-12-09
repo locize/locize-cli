@@ -15,19 +15,19 @@ const fileExtensionsMap = {
   '.php': ['laravel'],
   '.properties': ['properties'],
   '.xcstrings': ['xcstrings']
-};
+}
 
-const acceptedFileExtensions = Object.keys(fileExtensionsMap);
+const acceptedFileExtensions = Object.keys(fileExtensionsMap)
 
-const reversedFileExtensionsMap = {};
+const reversedFileExtensionsMap = {}
 acceptedFileExtensions.forEach((ext) => {
   fileExtensionsMap[ext].forEach((format) => {
-    reversedFileExtensionsMap[format] = ext;
-  });
-});
+    reversedFileExtensionsMap[format] = ext
+  })
+})
 
 module.exports = {
-  fileExtensionsMap: fileExtensionsMap,
-  acceptedFileExtensions: acceptedFileExtensions,
-  reversedFileExtensionsMap: reversedFileExtensionsMap
-};
+  fileExtensionsMap,
+  acceptedFileExtensions,
+  reversedFileExtensionsMap
+}

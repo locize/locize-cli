@@ -36,7 +36,9 @@
   },
   "devDependencies": {
     "@yao-pkg/pkg": "6.4.0",
-    "eslint": "8.56.0",
+    "eslint": "9.39.1",
+    "eslint-plugin-import": "2.32.0",
+    "neostandard": "0.12.2",
     "gh-release": "7.0.2"
   },
   "scripts": {

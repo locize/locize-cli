@@ -6,4 +6,4 @@ module.exports = {
   sync: require('./sync'),
   publishVersion: require('./publishVersion'),
   copyVersion: require('./copyVersion')
-};
+}

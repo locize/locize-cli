@@ -1,47 +1,59 @@
 #!/usr/bin/env node
 
-const program = require('commander');
-const colors = require('colors');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
-const url = require('url');
-const ini = require('ini');
+const program = require('commander')
+const colors = require('colors')
+const path = require('path')
+const fs = require('fs')
+const os = require('os')
+const ini = require('ini')
+const { URL } = require('url')
 
-const configInHome = path.join(os.homedir(), '.locize');
-const configInWorkingDirectory = path.join(process.cwd(), '.locize');
-const dotEnvFile = path.join(process.cwd(), '.env');
-if (fs.existsSync(dotEnvFile)) require('dotenv').config();
-const addPathUrl = 'https://api.locize.app/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
-const getPathUrl = 'https://api.locize.app/{{projectId}}/{{version}}/{{lng}}/{{ns}}';
+const configInHome = path.join(os.homedir(), '.locize')
+const configInWorkingDirectory = path.join(process.cwd(), '.locize')
+const dotEnvFile = path.join(process.cwd(), '.env')
+if (fs.existsSync(dotEnvFile)) require('dotenv').config()
+const defaultCdnType = 'pro'
+const getApiPath = (cdnType) => `https://api${(cdnType || defaultCdnType) === 'standard' ? '.lite' : ''}.locize.app`
+const getAddPath = (cdnType) => `${getApiPath(cdnType || defaultCdnType)}/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}`
+const getGetPath = (cdnType) => `${getApiPath(cdnType || defaultCdnType)}/{{projectId}}/{{version}}/{{lng}}/{{ns}}`
+const addPathUrl = getAddPath(defaultCdnType)
+const getPathUrl = getGetPath(defaultCdnType)
+const fixApiPath = (p, cdnType) => {
+  if (p.indexOf('.locize.app') < 0) return p
+  if (p.indexOf('.lite.locize.app') > 0) {
+    return p.replace('.lite.locize.app', `${(cdnType || defaultCdnType) === 'standard' ? '.lite' : ''}.locize.app`)
+  } else {
+    return p.replace('.locize.app', `${(cdnType || defaultCdnType) === 'standard' ? '.lite' : ''}.locize.app`)
+  }
+}
 
-const migrate = require('../migrate');
-const add = require('../add');
-const download = require('../download');
-const get = require('../get');
-const sync = require('../sync');
-const missing = require('../missing');
-const copyVersion = require('../copyVersion');
-const removeVersion = require('../removeVersion.js');
-const publishVersion = require('../publishVersion');
-const deleteNamespace = require('../deleteNamespace');
-const formatFn = require('../format');
-const createBranch = require('../createBranch');
-const mergeBranch = require('../mergeBranch');
-const deleteBranch = require('../deleteBranch');
+const migrate = require('../migrate')
+const add = require('../add')
+const download = require('../download')
+const get = require('../get')
+const sync = require('../sync')
+const missing = require('../missing')
+const copyVersion = require('../copyVersion')
+const removeVersion = require('../removeVersion.js')
+const publishVersion = require('../publishVersion')
+const deleteNamespace = require('../deleteNamespace')
+const formatFn = require('../format')
+const createBranch = require('../createBranch')
+const mergeBranch = require('../mergeBranch')
+const deleteBranch = require('../deleteBranch')
 
-var config = {};
+let config = {}
 try {
-  config = ini.parse(fs.readFileSync(configInWorkingDirectory, 'utf-8'));
+  config = ini.parse(fs.readFileSync(configInWorkingDirectory, 'utf-8'))
 } catch (e) {
   try {
-    config = ini.parse(fs.readFileSync(configInHome, 'utf-8'));
+    config = ini.parse(fs.readFileSync(configInHome, 'utf-8'))
   } catch (e) {}
 }
 
 program
   .version(require('../package.json').version)
-  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`);
+// .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`);
 // .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`);
 
 program
@@ -56,55 +68,68 @@ program
   .option('-L, --parse-language <true|false>', 'Parse folders as language (default: true)', 'true')
   .option('-f, --format <json>', 'File format of namespaces (default: json)', 'json')
   .option('-r, --replace <true|false>', 'This will empty the optionally existing namespace before saving the new translations. (default: false)', 'false')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const addPath = options.addPath || config.addPath || addPathUrl;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
+    let addPath = options.addPath || config.addPath
+    if (!addPath) {
+      addPath = getAddPath(cdnType) || addPathUrl
+    } else if (cdnType) {
+      addPath = fixApiPath(addPath, cdnType)
+    }
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `apiKey`')
+      process.exit(1)
+      return
     }
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
+    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
     if (!path.isAbsolute(options.path)) {
-      options.path = path.join(process.cwd(), options.path);
+      options.path = path.join(process.cwd(), options.path)
     }
 
+    const apiPath = new URL(addPath)
+
     migrate({
-      apiKey: apiKey,
-      projectId: projectId,
-      addPath: addPath,
-      apiPath: url.parse(addPath).protocol + '//' + url.parse(addPath).host,
+      cdnType: cdnType || defaultCdnType,
+      apiKey,
+      projectId,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
       path: options.path,
       language: options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG,
-      version: version,
+      version,
       parseLanguage: options.parseLanguage === 'true',
       format: options.format,
       replace: options.replace === 'true'
-    });
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize migrate');
-    console.log('    $ locize migrate --path ./en --language en');
-    console.log('    $ locize migrate --api-key <apiKey> --project-id <projectId> --path ./en --language en');
-    console.log();
-  });
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize migrate')
+    console.log('    $ locize migrate --path ./en --language en')
+    console.log('    $ locize migrate --api-key <apiKey> --project-id <projectId> --path ./en --language en')
+    console.log()
+  })
 
 program
   .command('add <namespace> <key> <value>')
@@ -114,56 +139,71 @@ program
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-l, --language <lng>', 'The language that should be targeted')
   .option('-v, --ver <version>', 'The version that should be targeted (default: latest)')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((namespace, key, value, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
+
+    let addPath = options.addPath || config.addPath
+    if (!addPath) {
+      addPath = getAddPath(cdnType) || addPathUrl
+    } else if (cdnType) {
+      addPath = fixApiPath(addPath, cdnType)
+    }
+
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `apiKey`')
+      process.exit(1)
+      return
     }
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
+    const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG
     if (!language) {
-      console.error('  error: missing required argument `language`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `language`')
+      process.exit(1)
+      return
     }
 
-    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
+    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const addPath = options.addPath || config.addPath || addPathUrl;
+    const apiPath = new URL(addPath)
 
     add({
-      apiKey: apiKey,
-      projectId: projectId,
-      addPath: addPath,
-      language: language,
-      version: version,
-      namespace: namespace,
-      key: key,
-      value: value
-    });
+      cdnType: cdnType || defaultCdnType,
+      apiKey,
+      projectId,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
+      language,
+      version,
+      namespace,
+      key,
+      value
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize add common title "the title of my cool app"');
-    console.log('    $ locize add common title "the title of my cool app" --language en');
-    console.log('    $ locize add common title "the title of my cool app" --api-key <apiKey> --project-id <projectId> --language en');
-    console.log();
-  });
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize add common title "the title of my cool app"')
+    console.log('    $ locize add common title "the title of my cool app" --language en')
+    console.log('    $ locize add common title "the title of my cool app" --api-key <apiKey> --project-id <projectId> --language en')
+    console.log()
+  })
 
 program
   .command('remove <namespace> <key>')
@@ -173,56 +213,70 @@ program
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-l, --language <lng>', 'The language that should be targeted (omitting this attribute will result in removing the key from all languages)')
   .option('-v, --ver <version>', 'The version that should be targeted (default: latest)')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((namespace, key, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
+
+    let addPath = options.addPath || config.addPath
+    if (!addPath) {
+      addPath = getAddPath(cdnType) || addPathUrl
+    } else if (cdnType) {
+      addPath = fixApiPath(addPath, cdnType)
+    }
+
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `apiKey`')
+      process.exit(1)
+      return
     }
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
+    const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG
     // if (!language) {
     //   console.error('  error: missing required argument `language`');
     //   process.exit(1);
     //   return;
     // }
 
-    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
+    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const addPath = options.addPath || config.addPath || addPathUrl;
+    const apiPath = new URL(addPath)
 
     add({
-      apiKey: apiKey,
-      projectId: projectId,
-      addPath: addPath,
-      language: language,
-      version: version,
-      namespace: namespace,
-      key: key
-    });
+      cdnType: cdnType || defaultCdnType,
+      apiKey,
+      projectId,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
+      language,
+      version,
+      namespace,
+      key
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize remove common title');
-    console.log('    $ locize remove common title --language en');
-    console.log('    $ locize remove common title --api-key <apiKey> --project-id <projectId> --language en');
-    console.log();
-  });
-
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize remove common title')
+    console.log('    $ locize remove common title --language en')
+    console.log('    $ locize remove common title --api-key <apiKey> --project-id <projectId> --language en')
+    console.log()
+  })
 
 program
   .command('download')
@@ -244,75 +298,89 @@ program
   .option('-up, --unpublished <true|false>', 'Downloads the current (unpublished) translations. This will generate private download costs (default: false)', 'false')
   .option('-oo, --overridden-only <true|false>', 'Downloads only the current overridden (unpublished) translations of a tenant or branch project. This will generate private download costs (default: false)', 'false')
   .option('-b, --branch <branch>', 'The branch name (or id) that should be targeted')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
-    if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
+
+    let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (!getPath) {
+      getPath = getAddPath(cdnType) || getPathUrl
+    } else if (cdnType) {
+      getPath = fixApiPath(getPath, cdnType)
     }
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
+    if (!projectId) {
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
+    }
 
-    const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
-    const languages = options.languages || config.languages || config.lngs || process.env.LOCIZE_LANGUAGES || process.env.LOCIZE_LANGS || process.env.LOCIZE_LNGS;
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
 
-    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
+    const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG
+    const languages = options.languages || config.languages || config.lngs || process.env.LOCIZE_LANGUAGES || process.env.LOCIZE_LANGS || process.env.LOCIZE_LNGS
 
-    const namespace = options.namespace;
+    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const getPath = options.getPath || config.getPath || options.addPath || config.addPath || getPathUrl;
+    const namespace = options.namespace
 
-    const format = options.format;
+    const format = options.format
 
-    const skipEmpty = options.skipEmpty === 'true';
+    const skipEmpty = options.skipEmpty === 'true'
 
-    const clean = options.clean === 'true';
+    const clean = options.clean === 'true'
 
-    const unpublished = options.unpublished === 'true';
+    const unpublished = options.unpublished === 'true'
 
-    const overriddenOnly = options.overriddenOnly === 'true';
+    const overriddenOnly = options.overriddenOnly === 'true'
 
-    const languageFolderPrefix = options.languageFolderPrefix || '';
+    const languageFolderPrefix = options.languageFolderPrefix || ''
 
-    const pathMask = options.pathMask;
+    const pathMask = options.pathMask
 
-    const branch = options.branch;
+    const branch = options.branch
+
+    const apiPath = new URL(getPath)
 
     download({
-      apiKey: apiKey,
-      projectId: projectId,
-      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
-      language: language,
+      cdnType: cdnType || defaultCdnType,
+      apiKey,
+      projectId,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
+      language,
       languages: languages && languages.split(','),
-      version: version,
-      namespace: namespace,
+      version,
+      namespace,
       path: options.path,
-      format: format,
-      skipEmpty: skipEmpty,
-      clean: clean,
-      languageFolderPrefix: languageFolderPrefix,
-      pathMask: pathMask,
-      unpublished: unpublished,
-      branch: branch,
-      overriddenOnly: overriddenOnly
-    });
+      format,
+      skipEmpty,
+      clean,
+      languageFolderPrefix,
+      pathMask,
+      unpublished,
+      branch,
+      overriddenOnly
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize download');
-    console.log('    $ locize download --ver latest');
-    console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common');
-    console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common --format flat');
-    console.log();
-  });
-
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize download')
+    console.log('    $ locize download --ver latest')
+    console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common')
+    console.log('    $ locize download --project-id <projectId> --ver latest --language en --namespace common --format flat')
+    console.log()
+  })
 
 program
   .command('get <namespace> <key>')
@@ -321,47 +389,62 @@ program
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-l, --language <lng>', 'The language that should be targeted')
   .option('-v, --ver <version>', 'The version that should be targeted (default: latest)')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((namespace, key, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
+
+    let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (!getPath) {
+      getPath = getAddPath(cdnType) || getPathUrl
+    } else if (cdnType) {
+      getPath = fixApiPath(getPath, cdnType)
+    }
+
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
+    const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG
     if (!language) {
-      console.error('  error: missing required argument `language`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `language`')
+      process.exit(1)
+      return
     }
 
-    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
+    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const getPath = options.getPath || config.getPath || options.addPath || config.addPath || getPathUrl;
+    const apiPath = new URL(getPath)
 
     get({
-      projectId: projectId,
-      getPath: getPath,
-      language: language,
-      version: version,
-      namespace: namespace,
-      key: key
-    });
+      cdnType: cdnType || defaultCdnType,
+      projectId,
+      apiPath,
+      language,
+      version,
+      namespace,
+      key
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize get common title');
-    console.log('    $ locize get common title --language en');
-    console.log('    $ locize get common title --api-key <apiKey> --project-id <projectId> --language en');
-    console.log();
-  });
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize get common title')
+    console.log('    $ locize get common title --language en')
+    console.log('    $ locize get common title --api-key <apiKey> --project-id <projectId> --language en')
+    console.log()
+  })
 
 program
   .command('sync')
@@ -393,94 +476,109 @@ program
   .option('-up, --unpublished <true|false>', 'Downloads the current (unpublished) translations. This will generate private download costs (default: false)', 'false')
   .option('-oo, --overridden-only <true|false>', 'Downloads only the current overridden (unpublished) translations of a tenant or branch project. This will generate private download costs (default: false)', 'false')
   .option('-b, --branch <branch>', 'The branch name (or id) that should be targeted')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const getPath = options.getPath || config.getPath || options.addPath || config.addPath || getPathUrl;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (!getPath) {
+      getPath = getAddPath(cdnType) || getPathUrl
+    } else if (cdnType) {
+      getPath = fixApiPath(getPath, cdnType)
+    }
+
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `apiKey`')
+      process.exit(1)
+      return
     }
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
+    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
-    const languages = options.languages || config.languages || config.lngs || process.env.LOCIZE_LANGUAGES || process.env.LOCIZE_LANGS || process.env.LOCIZE_LNGS;
+    const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG
+    const languages = options.languages || config.languages || config.lngs || process.env.LOCIZE_LANGUAGES || process.env.LOCIZE_LANGS || process.env.LOCIZE_LNGS
 
-    const namespace = options.namespace;
+    const namespace = options.namespace
 
     if (!path.isAbsolute(options.path)) {
-      options.path = path.join(process.cwd(), options.path);
+      options.path = path.join(process.cwd(), options.path)
     }
 
-    const clean = options.clean === 'true';
-    const cleanLocalFiles = options.cleanLocalFiles === 'true';
-    const dry = options.dry === 'true';
-    const updateValues = options.updateValues === 'true';
-    const autoTranslate = options.autoTranslate === 'true';
-    const skipDelete = options.skipDelete === 'true';
-    const deleteRemoteNamespace = options.deleteRemoteNamespace === 'true';
-    const languageFolderPrefix = options.languageFolderPrefix || '';
-    const skipEmpty = options.skipEmpty === 'true';
-    const referenceLanguageOnly = options.referenceLanguageOnly === 'false' ? false : true;
-    const compareModificationTime = options.compareModificationTime === 'true';
-    const pathMask = options.pathMask;
-    const unpublished = options.unpublished === 'true';
-    const overriddenOnly = options.overriddenOnly === 'true';
-    const autoCreatePath = options.autoCreatePath === 'true';
-    const backupDeletedPath = options.backupDeletedPath;
-    const branch = options.branch;
+    const clean = options.clean === 'true'
+    const cleanLocalFiles = options.cleanLocalFiles === 'true'
+    const dry = options.dry === 'true'
+    const updateValues = options.updateValues === 'true'
+    const autoTranslate = options.autoTranslate === 'true'
+    const skipDelete = options.skipDelete === 'true'
+    const deleteRemoteNamespace = options.deleteRemoteNamespace === 'true'
+    const languageFolderPrefix = options.languageFolderPrefix || ''
+    const skipEmpty = options.skipEmpty === 'true'
+    const referenceLanguageOnly = options.referenceLanguageOnly !== 'false'
+    const compareModificationTime = options.compareModificationTime === 'true'
+    const pathMask = options.pathMask
+    const unpublished = options.unpublished === 'true'
+    const overriddenOnly = options.overriddenOnly === 'true'
+    const autoCreatePath = options.autoCreatePath === 'true'
+    const backupDeletedPath = options.backupDeletedPath
+    const branch = options.branch
+
+    const apiPath = new URL(getPath)
 
     sync({
-      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
-      apiKey: apiKey,
-      projectId: projectId,
-      version: version,
+      cdnType: cdnType || defaultCdnType,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiKey,
+      projectId,
+      version,
       path: options.path,
       format: options.format,
-      updateValues: updateValues,
-      autoTranslate: autoTranslate,
-      skipDelete: skipDelete,
-      deleteRemoteNamespace: deleteRemoteNamespace,
-      languageFolderPrefix: languageFolderPrefix,
-      clean: clean,
-      cleanLocalFiles: cleanLocalFiles,
-      skipEmpty: skipEmpty,
-      referenceLanguageOnly: referenceLanguageOnly,
-      compareModificationTime: compareModificationTime,
-      language: language,
+      updateValues,
+      autoTranslate,
+      skipDelete,
+      deleteRemoteNamespace,
+      languageFolderPrefix,
+      clean,
+      cleanLocalFiles,
+      skipEmpty,
+      referenceLanguageOnly,
+      compareModificationTime,
+      language,
       languages: languages && languages.split(','),
-      namespace: namespace,
-      dry: dry,
-      pathMask: pathMask,
-      unpublished: unpublished,
-      autoCreatePath: autoCreatePath,
-      backupDeletedPath: backupDeletedPath,
-      branch: branch,
-      overriddenOnly: overriddenOnly
-    });
+      namespace,
+      dry,
+      pathMask,
+      unpublished,
+      autoCreatePath,
+      backupDeletedPath,
+      branch,
+      overriddenOnly
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize sync');
-    console.log('    $ locize sync --path ./locales --version production');
-    console.log('    $ locize sync --api-key <apiKey> --project-id <projectId> --path ./locales --version production --format flat');
-    console.log();
-  });
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize sync')
+    console.log('    $ locize sync --path ./locales --version production')
+    console.log('    $ locize sync --api-key <apiKey> --project-id <projectId> --path ./locales --version production --format flat')
+    console.log()
+  })
 
 program
   .command('save-missing')
@@ -497,70 +595,85 @@ program
   .option('-R, --reference-language-only <true|false>', 'Check for changes in reference language only. (default: true)', 'true')
   .option('-l, --language <lng>', 'The language that should be targeted')
   .option('-n, --namespace <ns>', 'The namespace that should be targeted (you can also pass a comma separated list)')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const getPath = options.getPath || config.getPath || options.addPath || config.addPath || getPathUrl;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (!getPath) {
+      getPath = getAddPath(cdnType) || getPathUrl
+    } else if (cdnType) {
+      getPath = fixApiPath(getPath, cdnType)
+    }
+
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `apiKey`')
+      process.exit(1)
+      return
     }
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
+    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG;
+    const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG
 
-    const namespace = options.namespace;
+    const namespace = options.namespace
 
     if (!path.isAbsolute(options.path)) {
-      options.path = path.join(process.cwd(), options.path);
+      options.path = path.join(process.cwd(), options.path)
     }
 
-    const dry = options.dry === 'true';
-    const updateValues = options.updateValues === 'true';
-    const skipDelete = options.skipDelete === 'true';
-    const languageFolderPrefix = options.languageFolderPrefix || '';
-    const referenceLanguageOnly = options.referenceLanguageOnly === 'false' ? false : true;
-    const pathMask = options.pathMask;
+    const dry = options.dry === 'true'
+    const updateValues = options.updateValues === 'true'
+    const skipDelete = options.skipDelete === 'true'
+    const languageFolderPrefix = options.languageFolderPrefix || ''
+    const referenceLanguageOnly = options.referenceLanguageOnly !== 'false'
+    const pathMask = options.pathMask
+
+    const apiPath = new URL(getPath)
 
     missing({
-      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
-      apiKey: apiKey,
-      projectId: projectId,
-      version: version,
+      cdnType: cdnType || defaultCdnType,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiKey,
+      projectId,
+      version,
       path: options.path,
       format: options.format,
-      updateValues: updateValues,
-      skipDelete: skipDelete,
-      languageFolderPrefix: languageFolderPrefix,
-      referenceLanguageOnly: referenceLanguageOnly,
-      language: language,
-      namespace: namespace,
-      dry: dry,
-      pathMask: pathMask
-    });
+      updateValues,
+      skipDelete,
+      languageFolderPrefix,
+      referenceLanguageOnly,
+      language,
+      namespace,
+      dry,
+      pathMask
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize save-missing');
-    console.log('    $ locize save-missing --path ./locales --version production');
-    console.log('    $ locize save-missing --api-key <apiKey> --project-id <projectId> --path ./locales --version production --format flat');
-    console.log();
-  });
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize save-missing')
+    console.log('    $ locize save-missing --path ./locales --version production')
+    console.log('    $ locize save-missing --api-key <apiKey> --project-id <projectId> --path ./locales --version production --format flat')
+    console.log()
+  })
 
 program
   .command('copy-version <fromVersion>')
@@ -570,49 +683,64 @@ program
   .option('-v, --ver <version>', 'The target version to be used to copy to (default: latest)')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-iv, --ignore-if-version-exists <true|false>', 'The project-id that should be used (default: false)', 'false')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((fromVersion, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
+
+    let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (!getPath) {
+      getPath = getAddPath(cdnType) || getPathUrl
+    } else if (cdnType) {
+      getPath = fixApiPath(getPath, cdnType)
+    }
+
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `apiKey`')
+      process.exit(1)
+      return
     }
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
+    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const getPath = options.getPath || config.getPath || getPathUrl;
+    const ignoreIfVersionExists = options.ignoreIfVersionExists === 'true'
 
-    const ignoreIfVersionExists = options.ignoreIfVersionExists === 'true';
+    const apiPath = new URL(getPath)
 
     copyVersion({
-      apiKey: apiKey,
-      projectId: projectId,
-      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
-      fromVersion: fromVersion,
+      cdnType: cdnType || defaultCdnType,
+      apiKey,
+      projectId,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
+      fromVersion,
       toVersion: version,
-      ignoreIfVersionExists: ignoreIfVersionExists
-    });
+      ignoreIfVersionExists
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize copy-version latest');
-    console.log('    $ locize copy-version latest --ver production');
-    console.log('    $ locize copy-version latest --api-key <apiKey> --project-id <projectId> --ver <version>');
-    console.log();
-  });
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize copy-version latest')
+    console.log('    $ locize copy-version latest --ver production')
+    console.log('    $ locize copy-version latest --api-key <apiKey> --project-id <projectId> --ver <version>')
+    console.log()
+  })
 
 program
   .command('remove-version <version>')
@@ -620,42 +748,57 @@ program
   .description('remove version')
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((version, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
+
+    let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (!getPath) {
+      getPath = getAddPath(cdnType) || getPathUrl
+    } else if (cdnType) {
+      getPath = fixApiPath(getPath, cdnType)
+    }
+
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `apiKey`')
+      process.exit(1)
+      return
     }
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const getPath = options.getPath || config.getPath || getPathUrl;
+    const apiPath = new URL(getPath)
 
     removeVersion({
-      apiKey: apiKey,
-      projectId: projectId,
-      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
-      version: version
-    });
+      cdnType: cdnType || defaultCdnType,
+      apiKey,
+      projectId,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
+      version
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize remove-version tmp-ver');
-    console.log('    $ locize remove-version tmp-ver --api-key <apiKey> --project-id <projectId>');
-    console.log();
-  });
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize remove-version tmp-ver')
+    console.log('    $ locize remove-version tmp-ver --api-key <apiKey> --project-id <projectId>')
+    console.log()
+  })
 
 program
   .command('publish-version')
@@ -665,48 +808,63 @@ program
   .option('-v, --ver <version>', 'The version to be used to publish (default: latest)')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-t, --tenants <true|false>', 'Publish also tenants (if using multi-tenant setup) (default: false)', 'false')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
+
+    let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (!getPath) {
+      getPath = getAddPath(cdnType) || getPathUrl
+    } else if (cdnType) {
+      getPath = fixApiPath(getPath, cdnType)
+    }
+
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `apiKey`')
+      process.exit(1)
+      return
     }
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
+    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const getPath = options.getPath || config.getPath || getPathUrl;
+    const tenants = options.tenants === 'true'
 
-    const tenants = options.tenants === 'true';
+    const apiPath = new URL(getPath)
 
     publishVersion({
-      apiKey: apiKey,
-      projectId: projectId,
-      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
-      version: version,
-      tenants: tenants
-    });
+      cdnType: cdnType || defaultCdnType,
+      apiKey,
+      projectId,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
+      version,
+      tenants
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize publish-version');
-    console.log('    $ locize publish-version --ver production');
-    console.log('    $ locize publish-version --api-key <apiKey> --project-id <projectId> --ver <version>');
-    console.log();
-  });
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize publish-version')
+    console.log('    $ locize publish-version --ver production')
+    console.log('    $ locize publish-version --api-key <apiKey> --project-id <projectId> --ver <version>')
+    console.log()
+  })
 
 program
   .command('delete-namespace <namespace>')
@@ -715,46 +873,60 @@ program
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-v, --ver <version>', 'The version that should be targeted (default: latest)')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((namespace, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
+
+    let addPath = options.addPath || config.addPath
+    if (!addPath) {
+      addPath = getAddPath(cdnType) || addPathUrl
+    } else if (cdnType) {
+      addPath = fixApiPath(addPath, cdnType)
+    }
+
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `apiKey`')
+      process.exit(1)
+      return
     }
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
+    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const addPath = options.addPath || config.addPath || addPathUrl;
+    const apiPath = new URL(addPath)
 
     deleteNamespace({
-      apiKey: apiKey,
-      projectId: projectId,
-      apiPath: url.parse(addPath).protocol + '//' + url.parse(addPath).host,
-      version: version,
-      namespace: namespace
-    });
+      cdnType: cdnType || defaultCdnType,
+      apiKey,
+      projectId,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
+      version,
+      namespace
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize delete-namespace common');
-    console.log('    $ locize delete-namespace common --api-key <apiKey> --project-id <projectId>');
-    console.log();
-  });
-
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize delete-namespace common')
+    console.log('    $ locize delete-namespace common --api-key <apiKey> --project-id <projectId>')
+    console.log()
+  })
 
 program
   .command('format [fileOrDirectory]')
@@ -763,40 +935,35 @@ program
   .option('-f, --format <json>', 'File format of namespaces (default: json; [nested, flat, xliff2, xliff12, xlf2, xlf12, android, yaml, yaml-rails, yaml-rails-ns, yaml-nested, yml, yml-rails, yml-nested, csv, xlsx, po, strings, resx, fluent, tmx, laravel, properties, xcstrings])', 'json')
   .option('-l, --reference-language <lng>', 'Some format conversions need to know the reference language.', 'en')
   .option('-d, --dry <true|false>', 'Dry run (default: false)', 'false')
-  .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .action((fileOrDirectory, options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
-    } catch (e) {}
-
-    fileOrDirectory = fileOrDirectory || '.';
+    fileOrDirectory = fileOrDirectory || '.'
 
     if (!path.isAbsolute(fileOrDirectory)) {
-      fileOrDirectory = path.join(process.cwd(), fileOrDirectory);
+      fileOrDirectory = path.join(process.cwd(), fileOrDirectory)
     }
 
-    const format = options.format;
-    const dry = options.dry === 'true';
-    const referenceLanguage = options.referenceLanguage;
+    const format = options.format
+    const dry = options.dry === 'true'
+    const referenceLanguage = options.referenceLanguage
 
     formatFn({
-      fileOrDirectory: fileOrDirectory,
-      format: format,
-      referenceLanguage: referenceLanguage,
-      dry: dry
-    });
+      fileOrDirectory,
+      format,
+      referenceLanguage,
+      dry
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize format');
-    console.log('    $ locize format path/to/file');
-    console.log('    $ locize format path/to/dictionary');
-    console.log('    $ locize format path/to/dictionary --format android');
-    console.log('    $ locize format path/to/dictionary --format android --dry true');
-    console.log('    $ locize format path/to/dictionary --format xliff2 --reference-language en');
-    console.log();
-  });
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize format')
+    console.log('    $ locize format path/to/file')
+    console.log('    $ locize format path/to/dictionary')
+    console.log('    $ locize format path/to/dictionary --format android')
+    console.log('    $ locize format path/to/dictionary --format android --dry true')
+    console.log('    $ locize format path/to/dictionary --format xliff2 --reference-language en')
+    console.log()
+  })
 
 program
   .command('create-branch <branch>')
@@ -805,46 +972,61 @@ program
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-v, --ver <version>', 'The target version to be used to copy to (default: latest)')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((branch, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
+
+    let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (!getPath) {
+      getPath = getAddPath(cdnType) || getPathUrl
+    } else if (cdnType) {
+      getPath = fixApiPath(getPath, cdnType)
+    }
+
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `apiKey`')
+      process.exit(1)
+      return
     }
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest';
+    const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const getPath = options.getPath || config.getPath || options.addPath || config.addPath || getPathUrl;
+    const apiPath = new URL(getPath)
 
     createBranch({
-      apiKey: apiKey,
-      projectId: projectId,
-      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
-      version: version,
-      branch: branch
-    });
+      cdnType: cdnType || defaultCdnType,
+      apiKey,
+      projectId,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
+      version,
+      branch
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize create-branch featureX');
-    console.log('    $ locize create-branch featureX --ver production');
-    console.log('    $ locize create-branch featureX --api-key <apiKey> --project-id <projectId> --ver <version>');
-    console.log();
-  });
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize create-branch featureX')
+    console.log('    $ locize create-branch featureX --ver production')
+    console.log('    $ locize create-branch featureX --api-key <apiKey> --project-id <projectId> --ver <version>')
+    console.log()
+  })
 
 program
   .command('merge-branch <branch>')
@@ -853,45 +1035,60 @@ program
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-d, --delete <true|false>', 'This will delete the branch after merging. (default: false)', 'false')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((branch, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
+
+    let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (!getPath) {
+      getPath = getAddPath(cdnType) || getPathUrl
+    } else if (cdnType) {
+      getPath = fixApiPath(getPath, cdnType)
+    }
+
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `apiKey`')
+      process.exit(1)
+      return
     }
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const getPath = options.getPath || config.getPath || options.addPath || config.addPath || getPathUrl;
+    const apiPath = new URL(getPath)
 
     mergeBranch({
-      apiKey: apiKey,
-      projectId: projectId,
-      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
+      cdnType: cdnType || defaultCdnType,
+      apiKey,
+      projectId,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
       delete: options.delete === 'true',
-      branch: branch
-    });
+      branch
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize merge-branch featureX');
-    console.log('    $ locize merge-branch <projectId-of-branch>');
-    console.log('    $ locize merge-branch featureX --delete true');
-    console.log('    $ locize merge-branch featureX --api-key <apiKey> --project-id <projectId> --delete true');
-    console.log();
-  });
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize merge-branch featureX')
+    console.log('    $ locize merge-branch <projectId-of-branch>')
+    console.log('    $ locize merge-branch featureX --delete true')
+    console.log('    $ locize merge-branch featureX --api-key <apiKey> --project-id <projectId> --delete true')
+    console.log()
+  })
 
 program
   .command('delete-branch <branch>')
@@ -899,45 +1096,60 @@ program
   .description('delete branch')
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
+  .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
+  .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((branch, options) => {
     try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config;
+      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY;
+    const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
+    // if (!cdnType) {
+    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
+    // }
+
+    let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (!getPath) {
+      getPath = getAddPath(cdnType) || getPathUrl
+    } else if (cdnType) {
+      getPath = fixApiPath(getPath, cdnType)
+    }
+
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `apiKey`')
+      process.exit(1)
+      return
     }
 
-    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID;
+    const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`');
-      process.exit(1);
-      return;
+      console.error('  error: missing required argument `projectId`')
+      process.exit(1)
+      return
     }
 
-    const getPath = options.getPath || config.getPath || options.addPath || config.addPath || getPathUrl;
+    const apiPath = new URL(getPath)
 
     deleteBranch({
-      apiKey: apiKey,
-      projectId: projectId,
-      apiPath: url.parse(getPath).protocol + '//' + url.parse(getPath).host,
-      branch: branch
-    });
+      cdnType: cdnType || defaultCdnType,
+      apiKey,
+      projectId,
+      apiPath: apiPath.protocol + '//' + apiPath.host,
+      branch
+    })
   })
   .on('--help', () => {
-    console.log('  Examples:');
-    console.log();
-    console.log('    $ locize delete-branch featureX');
-    console.log('    $ locize delete-branch featureX --api-key <apiKey> --project-id <projectId>');
-    console.log();
-  });
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize delete-branch featureX')
+    console.log('    $ locize delete-branch featureX --api-key <apiKey> --project-id <projectId>')
+    console.log()
+  })
 
-program.parse(process.argv);
+program.parse(process.argv)
 
 if (!process.argv.slice(2).length) {
-  return program.outputHelp(colors.red);
+  program.outputHelp(colors.red)
 }

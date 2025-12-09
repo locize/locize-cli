@@ -382,6 +382,7 @@ apiKey = my-api-key-d9de-4f55-9855-a9ef0ed44672
 projectId = my-project-id-93e1-442a-ab35-24331fa294ba
 language = en
 version = latest
+cdnType = standard
 ```
 
 like this you can just work like this:
@@ -402,6 +403,7 @@ locize add common title "the title of my cool app"
 - LOCIZE_API_KEY or LOCIZE_KEY
 - LOCIZE_VERSION or LOCIZE_VER
 - LOCIZE_LANGUAGE or LOCIZE_LANG or LOCIZE_LNG
+- LOCIZE_CDN_TYPE
 
 they will also be considered with this priority:
 

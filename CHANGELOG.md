@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [10.4.0](https://github.com/locize/locize-cli/compare/v10.3.2...v10.4.0) - 2025-12-09
+
+- introducing --cdn-type option
 
 ## [10.3.2](https://github.com/locize/locize-cli/compare/v10.3.1...v10.3.2) - 2025-09-03
 
