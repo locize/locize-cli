@@ -2,7 +2,7 @@ const colors = require('colors')
 const request = require('./request')
 
 const getBranches = (opt, cb) => {
-  request(opt.apiPath + '/branches/' + opt.projectId, {
+  request(opt.apiEndpoint + '/branches/' + opt.projectId, {
     method: 'get',
     headers: {
       Authorization: opt.apiKey

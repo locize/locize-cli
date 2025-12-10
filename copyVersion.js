@@ -8,7 +8,7 @@ const copyVersion = (opt, cb) => {
     queryParams.append('ignoreIfVersionExists', 'true')
   }
   const queryString = queryParams.size > 0 ? '?' + queryParams.toString() : ''
-  request(opt.apiPath + '/copy/' + opt.projectId + '/version/' + opt.fromVersion + '/' + opt.toVersion + queryString, {
+  request(opt.apiEndpoint + '/copy/' + opt.projectId + '/version/' + opt.fromVersion + '/' + opt.toVersion + queryString, {
     method: 'post',
     headers: {
       Authorization: opt.apiKey

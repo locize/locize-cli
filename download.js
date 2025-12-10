@@ -185,7 +185,7 @@ function handleDownload (opt, url, err, res, downloads, cb) {
 }
 
 function handlePull (opt, toDownload, cb) {
-  const url = opt.apiPath + '/pull/' + opt.projectId + '/' + opt.version
+  const url = opt.apiEndpoint + '/pull/' + opt.projectId + '/' + opt.version
 
   if (opt.format === 'xcstrings') { // 1 file per namespace including all languages
     const downloadsByNamespace = {}
@@ -359,7 +359,7 @@ const filterDownloads = (opt, downloads) => {
         allNamespaces.forEach((namespace) => {
           if (!downloadMap[projectId][version][language][namespace]) {
             downloads.push({
-              url: `${opt.apiPath}/${projectId}/${version}/${language}/${namespace}`,
+              url: `${opt.apiEndpoint}/${projectId}/${version}/${language}/${namespace}`,
               key: `${projectId}/${version}/${language}/${namespace}`,
               lastModified: '1960-01-01T00:00:00.000Z',
               size: 0
@@ -373,7 +373,7 @@ const filterDownloads = (opt, downloads) => {
 }
 
 const continueToDownload = (opt, cb) => {
-  let url = opt.apiPath + '/download/' + opt.projectId
+  let url = opt.apiEndpoint + '/download/' + opt.projectId
 
   if (opt.namespace && opt.namespace.indexOf(',') > 0 && opt.namespace.indexOf(' ') < 0) {
     opt.namespaces = opt.namespace.split(',')
@@ -473,7 +473,7 @@ const download = (opt, cb) => {
   }
 
   if (opt.skipEmpty === undefined) opt.skipEmpty = true
-  opt.apiPath = opt.apiPath || 'https://api.locize.app'
+  opt.apiEndpoint = opt.apiEndpoint || 'https://api.locize.app'
   opt.version = opt.version || 'latest'
   opt.languageFolderPrefix = opt.languageFolderPrefix || ''
   opt.path = opt.path || opt.target

@@ -12,12 +12,15 @@ const configInHome = path.join(os.homedir(), '.locize')
 const configInWorkingDirectory = path.join(process.cwd(), '.locize')
 const dotEnvFile = path.join(process.cwd(), '.env')
 if (fs.existsSync(dotEnvFile)) require('dotenv').config()
+// TODO: change this to 'standard' on next major version
 const defaultCdnType = 'pro'
+// TODO: remove this on next major version
 const getApiPath = (cdnType) => `https://api${(cdnType || defaultCdnType) === 'standard' ? '.lite' : ''}.locize.app`
 const getAddPath = (cdnType) => `${getApiPath(cdnType || defaultCdnType)}/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}`
 const getGetPath = (cdnType) => `${getApiPath(cdnType || defaultCdnType)}/{{projectId}}/{{version}}/{{lng}}/{{ns}}`
 const addPathUrl = getAddPath(defaultCdnType)
 const getPathUrl = getGetPath(defaultCdnType)
+
 const fixApiPath = (p, cdnType) => {
   if (p.indexOf('.locize.app') < 0) return p
   if (p.indexOf('.lite.locize.app') > 0) {
@@ -26,6 +29,7 @@ const fixApiPath = (p, cdnType) => {
     return p.replace('.locize.app', `${(cdnType || defaultCdnType) === 'standard' ? '.lite' : ''}.locize.app`)
   }
 }
+const defaultApiEndpoint = fixApiPath('https://api.locize.app', defaultCdnType)
 
 const migrate = require('../migrate')
 const add = require('../add')
@@ -68,7 +72,9 @@ program
   .option('-L, --parse-language <true|false>', 'Parse folders as language (default: true)', 'true')
   .option('-f, --format <json>', 'File format of namespaces (default: json)', 'json')
   .option('-r, --replace <true|false>', 'This will empty the optionally existing namespace before saving the new translations. (default: false)', 'false')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((options) => {
@@ -77,26 +83,37 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let addPath = options.addPath || config.addPath
+    if (addPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!addPath) {
       addPath = getAddPath(cdnType) || addPathUrl
     } else if (cdnType) {
       addPath = fixApiPath(addPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(addPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`')
+      console.error(colors.red('  error: missing required argument `apiKey`'))
       process.exit(1)
       return
     }
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
@@ -107,13 +124,11 @@ program
       options.path = path.join(process.cwd(), options.path)
     }
 
-    const apiPath = new URL(addPath)
-
     migrate({
       cdnType: cdnType || defaultCdnType,
       apiKey,
       projectId,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       path: options.path,
       language: options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG,
       version,
@@ -139,7 +154,9 @@ program
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-l, --language <lng>', 'The language that should be targeted')
   .option('-v, --ver <version>', 'The version that should be targeted (default: latest)')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((namespace, key, value, options) => {
@@ -148,47 +165,55 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let addPath = options.addPath || config.addPath
+    if (addPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!addPath) {
       addPath = getAddPath(cdnType) || addPathUrl
     } else if (cdnType) {
       addPath = fixApiPath(addPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(addPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`')
+      console.error(colors.red('  error: missing required argument `apiKey`'))
       process.exit(1)
       return
     }
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
 
     const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG
     if (!language) {
-      console.error('  error: missing required argument `language`')
+      console.error(colors.red('  error: missing required argument `language`'))
       process.exit(1)
       return
     }
 
     const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const apiPath = new URL(addPath)
-
     add({
       cdnType: cdnType || defaultCdnType,
       apiKey,
       projectId,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       language,
       version,
       namespace,
@@ -213,7 +238,9 @@ program
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-l, --language <lng>', 'The language that should be targeted (omitting this attribute will result in removing the key from all languages)')
   .option('-v, --ver <version>', 'The version that should be targeted (default: latest)')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((namespace, key, options) => {
@@ -222,47 +249,55 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let addPath = options.addPath || config.addPath
+    if (addPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!addPath) {
       addPath = getAddPath(cdnType) || addPathUrl
     } else if (cdnType) {
       addPath = fixApiPath(addPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(addPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`')
+      console.error(colors.red('  error: missing required argument `apiKey`'))
       process.exit(1)
       return
     }
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
 
     const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG
     // if (!language) {
-    //   console.error('  error: missing required argument `language`');
+    //   console.error(colors.red('  error: missing required argument `language`');
     //   process.exit(1);
     //   return;
     // }
 
     const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const apiPath = new URL(addPath)
-
     add({
       cdnType: cdnType || defaultCdnType,
       apiKey,
       projectId,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       language,
       version,
       namespace,
@@ -298,7 +333,9 @@ program
   .option('-up, --unpublished <true|false>', 'Downloads the current (unpublished) translations. This will generate private download costs (default: false)', 'false')
   .option('-oo, --overridden-only <true|false>', 'Downloads only the current overridden (unpublished) translations of a tenant or branch project. This will generate private download costs (default: false)', 'false')
   .option('-b, --branch <branch>', 'The branch name (or id) that should be targeted')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((options) => {
@@ -307,20 +344,31 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (getPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!getPath) {
       getPath = getAddPath(cdnType) || getPathUrl
     } else if (cdnType) {
       getPath = fixApiPath(getPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(getPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
@@ -350,13 +398,11 @@ program
 
     const branch = options.branch
 
-    const apiPath = new URL(getPath)
-
     download({
       cdnType: cdnType || defaultCdnType,
       apiKey,
       projectId,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       language,
       languages: languages && languages.split(','),
       version,
@@ -389,7 +435,9 @@ program
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-l, --language <lng>', 'The language that should be targeted')
   .option('-v, --ver <version>', 'The version that should be targeted (default: latest)')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((namespace, key, options) => {
@@ -398,37 +446,46 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (getPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!getPath) {
       getPath = getAddPath(cdnType) || getPathUrl
     } else if (cdnType) {
       getPath = fixApiPath(getPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(getPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
 
     const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG
     if (!language) {
-      console.error('  error: missing required argument `language`')
+      console.error(colors.red('  error: missing required argument `language`'))
       process.exit(1)
       return
     }
 
     const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const apiPath = new URL(getPath)
-
     get({
       cdnType: cdnType || defaultCdnType,
+      apiEndpoint,
       projectId,
       apiPath,
       language,
@@ -476,7 +533,9 @@ program
   .option('-up, --unpublished <true|false>', 'Downloads the current (unpublished) translations. This will generate private download costs (default: false)', 'false')
   .option('-oo, --overridden-only <true|false>', 'Downloads only the current overridden (unpublished) translations of a tenant or branch project. This will generate private download costs (default: false)', 'false')
   .option('-b, --branch <branch>', 'The branch name (or id) that should be targeted')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((options) => {
@@ -485,27 +544,37 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (getPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!getPath) {
       getPath = getAddPath(cdnType) || getPathUrl
     } else if (cdnType) {
       getPath = fixApiPath(getPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(getPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`')
+      console.error(colors.red('  error: missing required argument `apiKey`'))
       process.exit(1)
       return
     }
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
@@ -539,11 +608,9 @@ program
     const backupDeletedPath = options.backupDeletedPath
     const branch = options.branch
 
-    const apiPath = new URL(getPath)
-
     sync({
       cdnType: cdnType || defaultCdnType,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       apiKey,
       projectId,
       version,
@@ -595,7 +662,9 @@ program
   .option('-R, --reference-language-only <true|false>', 'Check for changes in reference language only. (default: true)', 'true')
   .option('-l, --language <lng>', 'The language that should be targeted')
   .option('-n, --namespace <ns>', 'The namespace that should be targeted (you can also pass a comma separated list)')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((options) => {
@@ -604,27 +673,37 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (getPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!getPath) {
       getPath = getAddPath(cdnType) || getPathUrl
     } else if (cdnType) {
       getPath = fixApiPath(getPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(getPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`')
+      console.error(colors.red('  error: missing required argument `apiKey`'))
       process.exit(1)
       return
     }
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
@@ -646,11 +725,9 @@ program
     const referenceLanguageOnly = options.referenceLanguageOnly !== 'false'
     const pathMask = options.pathMask
 
-    const apiPath = new URL(getPath)
-
     missing({
       cdnType: cdnType || defaultCdnType,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       apiKey,
       projectId,
       version,
@@ -683,7 +760,9 @@ program
   .option('-v, --ver <version>', 'The target version to be used to copy to (default: latest)')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-iv, --ignore-if-version-exists <true|false>', 'The project-id that should be used (default: false)', 'false')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((fromVersion, options) => {
@@ -692,27 +771,37 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (getPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!getPath) {
       getPath = getAddPath(cdnType) || getPathUrl
     } else if (cdnType) {
       getPath = fixApiPath(getPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(getPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`')
+      console.error(colors.red('  error: missing required argument `apiKey`'))
       process.exit(1)
       return
     }
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
@@ -721,13 +810,11 @@ program
 
     const ignoreIfVersionExists = options.ignoreIfVersionExists === 'true'
 
-    const apiPath = new URL(getPath)
-
     copyVersion({
       cdnType: cdnType || defaultCdnType,
       apiKey,
       projectId,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       fromVersion,
       toVersion: version,
       ignoreIfVersionExists
@@ -748,7 +835,9 @@ program
   .description('remove version')
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((version, options) => {
@@ -757,38 +846,46 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (getPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!getPath) {
       getPath = getAddPath(cdnType) || getPathUrl
     } else if (cdnType) {
       getPath = fixApiPath(getPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(getPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`')
+      console.error(colors.red('  error: missing required argument `apiKey`'))
       process.exit(1)
       return
     }
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
-
-    const apiPath = new URL(getPath)
 
     removeVersion({
       cdnType: cdnType || defaultCdnType,
       apiKey,
       projectId,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       version
     })
   })
@@ -808,7 +905,9 @@ program
   .option('-v, --ver <version>', 'The version to be used to publish (default: latest)')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-t, --tenants <true|false>', 'Publish also tenants (if using multi-tenant setup) (default: false)', 'false')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((options) => {
@@ -817,27 +916,37 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (getPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!getPath) {
       getPath = getAddPath(cdnType) || getPathUrl
     } else if (cdnType) {
       getPath = fixApiPath(getPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(getPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`')
+      console.error(colors.red('  error: missing required argument `apiKey`'))
       process.exit(1)
       return
     }
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
@@ -846,13 +955,11 @@ program
 
     const tenants = options.tenants === 'true'
 
-    const apiPath = new URL(getPath)
-
     publishVersion({
       cdnType: cdnType || defaultCdnType,
       apiKey,
       projectId,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       version,
       tenants
     })
@@ -873,7 +980,9 @@ program
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-v, --ver <version>', 'The version that should be targeted (default: latest)')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((namespace, options) => {
@@ -882,40 +991,48 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let addPath = options.addPath || config.addPath
+    if (addPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!addPath) {
       addPath = getAddPath(cdnType) || addPathUrl
     } else if (cdnType) {
       addPath = fixApiPath(addPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(addPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`')
+      console.error(colors.red('  error: missing required argument `apiKey`'))
       process.exit(1)
       return
     }
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
 
     const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const apiPath = new URL(addPath)
-
     deleteNamespace({
       cdnType: cdnType || defaultCdnType,
       apiKey,
       projectId,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       version,
       namespace
     })
@@ -972,7 +1089,9 @@ program
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-v, --ver <version>', 'The target version to be used to copy to (default: latest)')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((branch, options) => {
@@ -981,40 +1100,48 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (getPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!getPath) {
       getPath = getAddPath(cdnType) || getPathUrl
     } else if (cdnType) {
       getPath = fixApiPath(getPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(getPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`')
+      console.error(colors.red('  error: missing required argument `apiKey`'))
       process.exit(1)
       return
     }
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
 
     const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
-    const apiPath = new URL(getPath)
-
     createBranch({
       cdnType: cdnType || defaultCdnType,
       apiKey,
       projectId,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       version,
       branch
     })
@@ -1035,7 +1162,9 @@ program
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-d, --delete <true|false>', 'This will delete the branch after merging. (default: false)', 'false')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((branch, options) => {
@@ -1044,38 +1173,46 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (getPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!getPath) {
       getPath = getAddPath(cdnType) || getPathUrl
     } else if (cdnType) {
       getPath = fixApiPath(getPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(getPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`')
+      console.error(colors.red('  error: missing required argument `apiKey`'))
       process.exit(1)
       return
     }
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
-
-    const apiPath = new URL(getPath)
 
     mergeBranch({
       cdnType: cdnType || defaultCdnType,
       apiKey,
       projectId,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       delete: options.delete === 'true',
       branch
     })
@@ -1096,7 +1233,9 @@ program
   .description('delete branch')
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
+  // TODO: remove this on next major version
   .option('-a, --add-path <url>', `Specify the add-path url that should be used (default: ${addPathUrl})`)
+  .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('-ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
   .action((branch, options) => {
@@ -1105,38 +1244,46 @@ program
     } catch (e) {}
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
-    // if (!cdnType) {
-    //   console.error('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.')
-    // }
-
+    // TODO: remove this on next major version
+    if (!cdnType) {
+      console.error(colors.red('In the next major version, the default \'cdnType\' will be \'standard\'. Please set \'cdnType\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     let getPath = options.getPath || config.getPath || options.addPath || config.addPath
+    if (getPath) {
+      console.error(colors.red('In the next major version, the \'addPath\' / \'--add-path\' option will be removed. Please set \'apiEndpoint\' / \'--api-endpoint\' explicitly in your config or environment variables or via cli parameter to avoid issues.'))
+    }
+    // TODO: remove this on next major version
     if (!getPath) {
       getPath = getAddPath(cdnType) || getPathUrl
     } else if (cdnType) {
       getPath = fixApiPath(getPath, cdnType)
     }
 
+    // TODO: remove and adjust this on next major version
+    const apiPath = new URL(getPath)
+    let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || (apiPath.protocol + '//' + apiPath.host) || defaultApiEndpoint
+    if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
+
     const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
     if (!apiKey) {
-      console.error('  error: missing required argument `apiKey`')
+      console.error(colors.red('  error: missing required argument `apiKey`'))
       process.exit(1)
       return
     }
 
     const projectId = options.projectId || config.projectId || process.env.LOCIZE_PROJECTID || process.env.LOCIZE_PID
     if (!projectId) {
-      console.error('  error: missing required argument `projectId`')
+      console.error(colors.red('  error: missing required argument `projectId`'))
       process.exit(1)
       return
     }
-
-    const apiPath = new URL(getPath)
 
     deleteBranch({
       cdnType: cdnType || defaultCdnType,
       apiKey,
       projectId,
-      apiPath: apiPath.protocol + '//' + apiPath.host,
+      apiEndpoint,
       branch
     })
   })

@@ -48,7 +48,7 @@ const saveMissing = (opt, lng, ns, cb) => {
   const payloadKeysLimit = 1000
 
   function send (d, clb, isRetrying) {
-    request(opt.apiPath + '/missing/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace, {
+    request(opt.apiEndpoint + '/missing/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace, {
       method: 'post',
       body: d,
       headers: {

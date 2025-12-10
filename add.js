@@ -1,13 +1,11 @@
 const colors = require('colors')
 const flatten = require('flat')
-const { URL } = require('url')
 const async = require('async')
 const getRemoteLanguages = require('./getRemoteLanguages')
 const request = require('./request')
 
 const _add = (opt, cb) => {
-  if (!opt.addPath) opt.addPath = `${opt.apiPath}/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}`
-  const url = opt.addPath
+  const url = `${opt.apiEndpoint}/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}`
     .replace('{{projectId}}', opt.projectId)
     .replace('{{ver}}', opt.version)
     .replace('{{version}}', opt.version)
@@ -75,11 +73,6 @@ const _add = (opt, cb) => {
 
 const add = (opt, cb) => {
   if (opt.language) return _add(opt, cb)
-
-  if (!opt.apiPath) {
-    const parsed = new URL(opt.addPath)
-    opt.apiPath = parsed.protocol + '//' + parsed.host
-  }
 
   getRemoteLanguages(opt, (err, lngs) => {
     if (err) {

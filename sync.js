@@ -37,7 +37,7 @@ function getInfosInUrl (download) {
 
 const getDownloads = (opt, cb) => {
   if (!opt.unpublished) {
-    request(opt.apiPath + '/download/' + opt.projectId + '/' + opt.version, {
+    request(opt.apiEndpoint + '/download/' + opt.projectId + '/' + opt.version, {
       method: 'get',
       headers: opt.apiKey
         ? {
@@ -82,7 +82,7 @@ const getDownloads = (opt, cb) => {
             if (!res[opt.version][l][n]) return
             if (opt.skipEmpty && res[opt.version][l][n].segmentsTranslated === 0) return
             toDownload.push({
-              url: `${opt.apiPath}/${opt.projectId}/${opt.version}/${l}/${n}`,
+              url: `${opt.apiEndpoint}/${opt.projectId}/${opt.version}/${l}/${n}`,
               key: `${opt.projectId}/${opt.version}/${l}/${n}`,
               lastModified: '1960-01-01T00:00:00.000Z',
               size: 0
@@ -92,7 +92,7 @@ const getDownloads = (opt, cb) => {
           if (!res[opt.version][l][opt.namespace]) return
           if (opt.skipEmpty && res[opt.version][l][opt.namespace].segmentsTranslated === 0) return
           toDownload.push({
-            url: `${opt.apiPath}/${opt.projectId}/${opt.version}/${l}/${opt.namespace}`,
+            url: `${opt.apiEndpoint}/${opt.projectId}/${opt.version}/${l}/${opt.namespace}`,
             key: `${opt.projectId}/${opt.version}/${l}/${opt.namespace}`,
             lastModified: '1960-01-01T00:00:00.000Z',
             size: 0
@@ -101,7 +101,7 @@ const getDownloads = (opt, cb) => {
           Object.keys(res[opt.version][l]).forEach((n) => {
             if (opt.skipEmpty && res[opt.version][l][n].segmentsTranslated === 0) return
             toDownload.push({
-              url: `${opt.apiPath}/${opt.projectId}/${opt.version}/${l}/${n}`,
+              url: `${opt.apiEndpoint}/${opt.projectId}/${opt.version}/${l}/${n}`,
               key: `${opt.projectId}/${opt.version}/${l}/${n}`,
               lastModified: '1960-01-01T00:00:00.000Z',
               size: 0
@@ -198,7 +198,7 @@ const ensureAllNamespacesInLanguages = (opt, remoteLanguages, downloads) => {
           key: `${opt.projectId}/${opt.version}/${lng}/${n}`,
           lastModified: '1960-01-01T00:00:00.000Z',
           size: 0,
-          url: `${opt.apiPath}/${opt.projectId}/${opt.version}/${lng}/${n}`
+          url: `${opt.apiEndpoint}/${opt.projectId}/${opt.version}/${lng}/${n}`
         })
       }
     })
@@ -360,7 +360,7 @@ const update = (opt, lng, ns, shouldOmit, cb) => {
 
     const queryString = queryParams.size > 0 ? '?' + queryParams.toString() : ''
 
-    request(opt.apiPath + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace + queryString, {
+    request(opt.apiEndpoint + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace + queryString, {
       method: 'post',
       body: d,
       headers: {
@@ -631,7 +631,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
           if (opt.dry) return down()
 
           // optimize stats generation...
-          request(opt.apiPath + '/stats/project/regenerate/' + opt.projectId + '/' + opt.version + (lngsInReqs.length === 1 ? `/${lngsInReqs[0]}` : '') + (nsInReqs.length === 1 ? `?namespace=${nsInReqs[0]}` : ''), {
+          request(opt.apiEndpoint + '/stats/project/regenerate/' + opt.projectId + '/' + opt.version + (lngsInReqs.length === 1 ? `/${lngsInReqs[0]}` : '') + (nsInReqs.length === 1 ? `?namespace=${nsInReqs[0]}` : ''), {
             method: 'post',
             body: {},
             headers: {
@@ -659,7 +659,7 @@ const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
           }
           console.log(colors.red(`deleting complete namespace ${n.namespace}...`))
           deleteNamespace({
-            apiPath: opt.apiPath,
+            apiEndpoint: opt.apiEndpoint,
             apiKey: opt.apiKey,
             projectId: opt.projectId,
             version: opt.version,
@@ -730,7 +730,7 @@ const sync = (opt, cb) => {
   }
 
   opt.version = opt.version || 'latest'
-  opt.apiPath = opt.apiPath || 'https://api.locize.app'
+  opt.apiEndpoint = opt.apiEndpoint || 'https://api.locize.app'
 
   if (!opt.dry && opt.clean) rimraf.sync(path.join(opt.path, '*'))
 

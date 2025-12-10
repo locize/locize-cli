@@ -10,7 +10,7 @@ const mergeBranch = (opt, cb) => {
     queryParams.append('delete', 'true')
   }
   const queryString = queryParams.size > 0 ? '?' + queryParams.toString() : ''
-  request(opt.apiPath + '/branch/merge/' + opt.branch + queryString, {
+  request(opt.apiEndpoint + '/branch/merge/' + opt.branch + queryString, {
     method: 'post',
     headers: {
       Authorization: opt.apiKey
@@ -49,7 +49,7 @@ const mergeBranch = (opt, cb) => {
 
     (function waitForJob () {
       getJob({
-        apiPath: opt.apiPath,
+        apiEndpoint: opt.apiEndpoint,
         apiKey: opt.apiKey,
         projectId: opt.branch
       }, obj.jobId, (err, job) => {

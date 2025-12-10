@@ -13,7 +13,7 @@ const handleError = (err, cb) => {
 }
 
 const deleteBranch = (opt, cb) => {
-  request(opt.apiPath + '/branch/' + opt.branch, {
+  request(opt.apiEndpoint + '/branch/' + opt.branch, {
     method: 'delete',
     headers: {
       Authorization: opt.apiKey
@@ -52,7 +52,7 @@ const deleteBranch = (opt, cb) => {
 
     (function waitForJob () {
       getJob({
-        apiPath: opt.apiPath,
+        apiEndpoint: opt.apiEndpoint,
         apiKey: opt.apiKey,
         projectId: opt.branch
       }, obj.jobId, (err, job) => {

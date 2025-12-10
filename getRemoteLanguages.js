@@ -1,7 +1,7 @@
 const request = require('./request')
 
 const getRemoteLanguages = (opt, cb) => {
-  request(opt.apiPath + '/languages/' + opt.projectId + '?ts=' + Date.now() + (opt.cdnType === 'standard' ? '&cache=no' : ''), {
+  request(opt.apiEndpoint + '/languages/' + opt.projectId + '?ts=' + Date.now() + (opt.cdnType === 'standard' ? '&cache=no' : ''), {
     method: 'get'
   }, (err, res, obj) => {
     if (err || (obj && (obj.errorMessage || obj.message))) {

@@ -3,7 +3,7 @@ const request = require('./request')
 const getJob = require('./getJob')
 
 const removeVersion = (opt, cb) => {
-  request(opt.apiPath + '/version/' + opt.projectId + '/' + opt.version, {
+  request(opt.apiEndpoint + '/version/' + opt.projectId + '/' + opt.version, {
     method: 'delete',
     headers: {
       Authorization: opt.apiKey

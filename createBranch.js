@@ -21,7 +21,7 @@ const createBranch = (opt, cb) => {
       return
     }
 
-    request(opt.apiPath + '/branch/create/' + opt.projectId + '/' + opt.version, {
+    request(opt.apiEndpoint + '/branch/create/' + opt.projectId + '/' + opt.version, {
       method: 'post',
       headers: {
         Authorization: opt.apiKey

@@ -56,8 +56,7 @@ const parseLanguage = (p, cb) => {
 }
 
 const transfer = (opt, ns, cb) => {
-  if (!opt.addPath) opt.addPath = `${opt.apiPath}/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}`
-  let url = opt.addPath
+  let url = `${opt.apiEndpoint}/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}`
     .replace('{{projectId}}', opt.projectId)
     .replace('{{ver}}', opt.version)
     .replace('{{version}}', opt.version)
@@ -176,7 +175,7 @@ const upload = (opt, nss, cb) => {
 }
 
 const addLanguage = (opt, l, cb) => {
-  const url = opt.apiPath + '/language/' + opt.projectId + '/' + l
+  const url = opt.apiEndpoint + '/language/' + opt.projectId + '/' + l
 
   request(url, {
     method: 'post',
@@ -204,7 +203,7 @@ const migrate = (opt, cb) => {
     return
   }
 
-  opt.apiPath = opt.apiPath || 'https://api.locize.app'
+  opt.apiEndpoint = opt.apiEndpoint || 'https://api.locize.app'
 
   if (opt.language) {
     const files = getFiles(opt.path)

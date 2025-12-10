@@ -23,7 +23,7 @@ function onlyKeysFlat (resources, prefix, ret) {
 
 const pullNamespacePaged = (opt, lng, ns, cb, next, retry) => {
   next = next || ''
-  request(opt.apiPath + '/pull/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns + '?' + 'next=' + next + ((opt.raw || opt.overriddenOnly) ? '&raw=true' : '') + '&ts=' + Date.now(), {
+  request(opt.apiEndpoint + '/pull/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns + '?' + 'next=' + next + ((opt.raw || opt.overriddenOnly) ? '&raw=true' : '') + '&ts=' + Date.now(), {
     method: 'get',
     headers: {
       Authorization: opt.apiKey
@@ -95,7 +95,7 @@ const pullNamespace = (opt, lng, ns, cb) => {
 const getRemoteNamespace = (opt, lng, ns, cb) => {
   if (opt.unpublished) return pullNamespace(opt, lng, ns, cb)
 
-  request(opt.apiPath + (opt.isPrivate ? '/private' : '') + '/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns + '?ts=' + Date.now() + (opt.cdnType === 'standard' ? '&cache=no' : ''), {
+  request(opt.apiEndpoint + (opt.isPrivate ? '/private' : '') + '/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns + '?ts=' + Date.now() + (opt.cdnType === 'standard' ? '&cache=no' : ''), {
     method: 'get',
     headers: opt.isPrivate
       ? {

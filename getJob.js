@@ -2,7 +2,7 @@ const colors = require('colors')
 const request = require('./request')
 
 const getJob = (opt, jobId, cb) => {
-  request(opt.apiPath + '/jobs/' + opt.projectId + '/' + jobId, {
+  request(opt.apiEndpoint + '/jobs/' + opt.projectId + '/' + jobId, {
     method: 'get',
     headers: {
       Authorization: opt.apiKey

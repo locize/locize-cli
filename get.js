@@ -3,8 +3,7 @@ const request = require('./request')
 const flatten = require('flat')
 
 const get = (opt, cb) => {
-  if (!opt.getPath) opt.getPath = `${opt.apiPath}/{{projectId}}/{{version}}/{{lng}}/{{ns}}`
-  const url = opt.getPath
+  const url = `${opt.apiEndpoint}/{{projectId}}/{{version}}/{{lng}}/{{ns}}`
     .replace('{{projectId}}', opt.projectId)
     .replace('{{ver}}', opt.version)
     .replace('{{version}}', opt.version)

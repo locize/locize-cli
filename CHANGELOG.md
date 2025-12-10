@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [11.0.0](https://github.com/locize/locize-cli/compare/v10.4.0...v11.0.0) - 2025-12-10
+
+- log/error is shown if cdnType is not defined, because of changing default to 'standard' instead of 'pro'
+- internals: use apiEndpoint instead of addPath, getPath, etc...
+
 ## [10.4.0](https://github.com/locize/locize-cli/compare/v10.3.2...v10.4.0) - 2025-12-09
 
 - introducing --cdn-type option

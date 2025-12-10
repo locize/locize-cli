@@ -2,7 +2,7 @@ const colors = require('colors')
 const request = require('./request')
 
 const getProjectStats = (opt, cb) => {
-  request(opt.apiPath + '/stats/project/' + opt.projectId, {
+  request(opt.apiEndpoint + '/stats/project/' + opt.projectId, {
     method: 'get',
     headers: {
       Authorization: opt.apiKey

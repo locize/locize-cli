@@ -2,7 +2,7 @@ const colors = require('colors')
 const request = require('./request')
 
 const deleteNamespace = (opt, cb) => {
-  const url = opt.apiPath + '/delete/' + opt.projectId + '/' + opt.version + '/' + opt.namespace
+  const url = opt.apiEndpoint + '/delete/' + opt.projectId + '/' + opt.version + '/' + opt.namespace
 
   if (!cb) console.log(colors.yellow(`deleting ${opt.namespace} from ${opt.version}...`))
 
