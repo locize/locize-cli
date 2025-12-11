@@ -1,5 +1,5 @@
 const po2i18next = require('gettext-converter/cjs/po2i18next')
-const csvjson = require('csvjson')
+const csv = require('fast-csv')
 const xlsx = require('xlsx')
 const yaml = require('yaml')
 const asr2js = require('android-string-resource/cjs/asr2js')
@@ -60,50 +60,26 @@ const convertToFlatFormat = (opt, data, lng, cb) => {
       return
     }
     if (opt.format === 'csv') {
-      const options = {
-        delimiter: ',',
-        quote: '"'
-      }
-
       // CRLF => LF
-      let text = data.toString().replace(/\r\n/g, '\n')
+      const text = data.toString().replace(/\r\n/g, '\n')
 
-      // handle multiline stuff
-      const lines = text.split('\n')
-      const toHandle = []
-      lines.forEach((l) => {
-        const amountOfOccurrencies = l.split('"').length - 1
-        if (amountOfOccurrencies % 2 === 1) toHandle.push(l)
-      })
-      while (toHandle.length > 1) {
-        let firstToHandle = toHandle.shift()
-        const secondToHandle = toHandle.shift()
-        const indexOfFirst = lines.indexOf(firstToHandle)
-        const indexOfSecond = lines.indexOf(secondToHandle)
-        let handlingIndex = indexOfFirst
-        while (handlingIndex < indexOfSecond) {
-          firstToHandle += `\\NeWlInE\\${lines[handlingIndex + 1]}`
-          handlingIndex++
-        }
-        lines[indexOfFirst] = firstToHandle
-        lines.splice(indexOfFirst + 1, indexOfSecond - indexOfFirst)
-      }
-      text = lines.join('\n')
-
-      // https://en.wikipedia.org/wiki/Delimiter-separated_values
-      // temporary replace "" with \_\" so we can revert this 3 lines after
-      const jsonData = csvjson.toObject(text.replace(/""/g, '\\_\\"'), options)
-      data = jsonData.reduce((mem, entry) => {
-        if (entry.key && typeof entry[opt.referenceLanguage] === 'string') {
-          mem[
-            entry.key.replace(/\\_\\"/g, '"').replace(/\\NeWlInE\\/g, '\n')
-          ] = entry[opt.referenceLanguage]
-            .replace(/\\_\\"/g, '"')
-            .replace(/\\NeWlInE\\/g, '\n')
-        }
-        return mem
-      }, {})
-      cb(null, data)
+      const res = []
+      csv.parseString(text, { headers: true, ignoreEmpty: true })
+        .on('error', cb)
+        .on('data', (row) => res.push(row))
+        .on('end', () => {
+          try {
+            data = res.reduce((mem, entry) => {
+              if (entry.key && typeof entry[opt.referenceLanguage] === 'string') {
+                mem[entry.key] = entry[opt.referenceLanguage]
+              }
+              return mem
+            }, {})
+            cb(null, data)
+          } catch (err) {
+            cb(err)
+          }
+        })
       return
     }
     if (opt.format === 'xlsx') {

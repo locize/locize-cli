@@ -1,6 +1,6 @@
 const flatten = require('flat')
 const i18next2po = require('gettext-converter/cjs/i18next2po')
-const csvjson = require('csvjson')
+const csv = require('fast-csv')
 const xlsx = require('xlsx')
 const yaml = require('yaml')
 const js2asr = require('android-string-resource/cjs/js2asr')
@@ -81,34 +81,18 @@ const convertToDesiredFormat = (
         const js2CsvData = Object.keys(flatten(data)).reduce((mem, k) => {
           const value = data[k] || ''
           const line = {
-            // https://en.wikipedia.org/wiki/Delimiter-separated_values
-            key: k.replace(/"/g, '""'),
+            key: k,
             [opt.referenceLanguage]: refNs[k] || '',
-            [lng]: value.replace(/"/g, '""')
+            [lng]: value
           }
-          line.key = line.key.replace(/\n/g, '\\NeWlInE\\')
-          line[opt.referenceLanguage] = line[opt.referenceLanguage].replace(
-            /\n/g,
-            '\\NeWlInE\\'
-          )
-          line[lng] = line[lng].replace(/\n/g, '\\NeWlInE\\')
           mem.push(line)
 
           return mem
         }, [])
-        const options = {
-          delimiter: ',',
-          wrap: true,
-          headers: 'relative'
-          // objectDenote: '.',
-          // arrayDenote: '[]'
-        }
-        cb(
-          null,
-          `\ufeff${csvjson
-            .toCSV(js2CsvData, options)
-            .replace(/\\NeWlInE\\/g, '\n')}`
-        )
+
+        csv.writeToString(js2CsvData, { headers: true, quoteColumns: true })
+          .then((data) => cb(null, `\ufeff${data}`))
+          .catch(cb)
       })
       return
     }
