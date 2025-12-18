@@ -25,5 +25,8 @@
     "typescriptreact"
   ],
   // run linting on save
-  "eslint.run": "onSave"
+  "eslint.run": "onSave",
+  "githubPullRequests.ignoredPullRequestBranches": [
+    "master"
+  ]
 }
