@@ -10,6 +10,7 @@ Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 - changed default cdnType to "standard" instead of "prod"
 - fixed some wrong cli short arguments
 - removed deprecated arguments
+- converted to ESM
 
 ## [11.1.0](https://github.com/locize/locize-cli/compare/v11.0.0...v11.1.0) - 2025-12-11
 

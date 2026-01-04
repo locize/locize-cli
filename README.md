@@ -1,6 +1,13 @@
 [![npm](https://img.shields.io/npm/v/locize-cli.svg)](https://npmjs.org/package/locize-cli)
 
+
 # Getting started with the locize-cli
+
+## ⚠️ ECMAScript Modules (ESM) Notice
+
+As of version 11.x, this CLI uses [ECMAScript Modules (ESM)](https://nodejs.org/api/esm.html) throughout the codebase. You need Node.js version **14.13.0 or higher** to use this CLI. All imports/exports use ESM syntax, and the package.json includes `"type": "module"`.
+
+If you are using custom scripts or require this CLI as a dependency, ensure your code is compatible with ESM.
 
 ## Step 0: Install the cli
 
