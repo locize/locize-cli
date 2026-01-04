@@ -44,6 +44,10 @@ describe('missing (fetch-only mock)', () => {
       pathMaskInterpolationPrefix: '{{',
       pathMaskInterpolationSuffix: '}}'
     }
+    // Debug: check file existence and add a short delay
+    const filePath = path.join(enDir, 'common.json')
+    console.log('File exists before CLI:', fs.existsSync(filePath), filePath)
+    await new Promise((resolve) => setTimeout(resolve, 20))
     await expect(missing(opt)).resolves.toBeUndefined()
     fs.rmSync(tempDir, { recursive: true, force: true })
   })
