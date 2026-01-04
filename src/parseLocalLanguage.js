@@ -3,7 +3,7 @@ import path from 'node:path'
 import { mkdirp } from 'mkdirp'
 import convertToFlatFormat from './convertToFlatFormat.js'
 import * as formats from './formats.js'
-import xcstrings2locize from 'locize-xcstrings/cjs/xcstrings2locize'
+import xcstrings2locize from 'locize-xcstrings/xcstrings2locize'
 const fileExtensionsMap = formats.fileExtensionsMap
 const acceptedFileExtensions = formats.acceptedFileExtensions
 

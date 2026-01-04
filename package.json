@@ -58,12 +58,14 @@
     "eslint-plugin-import": "2.32.0",
     "gh-release": "7.0.2",
     "neostandard": "0.12.2",
-    "rollup": "4.54.0"
+    "rollup": "4.54.0",
+    "vitest": "4.0.16"
   },
   "scripts": {
     "lint": "eslint .",
     "build": "rm -rf dist && rollup -c",
-    "test": "npm run lint",
+    "test:watch": "vitest",
+    "test": "npm run lint && vitest run",
     "pkg": "mkdir -p ./bins && pkg ./dist/cjs/cli.js --output ./bins/locize --targets node24-linux-x64,node24-macos-x64,node24-win-x64,node24-alpine-x64",
     "release": "gh-release --assets ./bins/locize-linux,./bins/locize-macos,./bins/locize-win.exe,./bins/locize-alpine",
     "preversion": "npm run test",

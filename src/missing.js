@@ -11,7 +11,7 @@ import mapLimit from './mapLimit.js'
 
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap
 
-const compareNamespace = (local, remote) => {
+export const compareNamespace = (local, remote) => {
   const diff = {
     toAdd: []
   }

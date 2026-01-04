@@ -1,3 +1,4 @@
+[![Tests](https://github.com/locize/locize-cli/workflows/node/badge.svg)](https://github.com/locize/locize-cli/actions?query=workflow%3Anode)
 [![npm](https://img.shields.io/npm/v/locize-cli.svg)](https://npmjs.org/package/locize-cli)
 
 

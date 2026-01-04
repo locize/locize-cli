@@ -1,0 +1,55 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import * as publishVersionModule from '../src/publishVersion.js'
+import { createFetchSimulator, jsonHandler } from './helpers/fetchSimulator.js'
+
+const opt = { apiEndpoint: 'http://api', apiKey: 'key', projectId: 'pid', version: 'v1' }
+
+describe('publishVersion (fetch-only mock)', () => {
+  let origFetch, origSetTimeout
+  beforeEach(() => {
+    origFetch = global.fetch
+    origSetTimeout = global.setTimeout
+  })
+  afterEach(() => {
+    global.fetch = origFetch
+    global.setTimeout = origSetTimeout
+  })
+
+  it('runs without error for minimal happy path', async () => {
+    let jobCallCount = 0
+    global.fetch = createFetchSimulator([
+      jsonHandler('/publish/pid/v1', { jobId: 'jid' }),
+      {
+        match: (url) => url.includes('/jobs/pid/jid'),
+        response: async () => {
+          jobCallCount++
+          if (jobCallCount === 1) return jsonHandler('/jobs/pid/jid', { timeouted: false }).response()
+          return jsonHandler('/jobs/pid/jid', undefined).response()
+        }
+      }
+    ])
+    global.setTimeout = (fn) => { fn(); return 0 }
+    await expect(publishVersionModule.default(opt)).resolves.toBeUndefined()
+  })
+
+  it('throws on error message in obj', async () => {
+    global.fetch = createFetchSimulator([
+      jsonHandler('/publish/pid/v1', { errorMessage: 'fail' })
+    ])
+    await expect(publishVersionModule.default(opt)).rejects.toThrow('fail')
+  })
+
+  it('throws on missing jobId', async () => {
+    global.fetch = createFetchSimulator([
+      jsonHandler('/publish/pid/v1', {})
+    ])
+    await expect(publishVersionModule.default(opt)).rejects.toThrow('No jobId! Something went wrong!')
+  })
+
+  it('throws on HTTP error', async () => {
+    global.fetch = createFetchSimulator([
+      jsonHandler('/publish/pid/v1', { jobId: 'jid' }, 400)
+    ])
+    await expect(publishVersionModule.default(opt)).rejects.toThrow('ERROR (400)')
+  })
+})
