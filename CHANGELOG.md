@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## [11.1.0](https://github.com/locize/locize-cli/compare/v11.1.0...v11.0.0) - 2025-12-11
+## [12.0.0](https://github.com/locize/locize-cli/compare/v11.1.0...v12.0.0) - 2026-01-04
+
+- changed default cdnType to "standard" instead of "prod"
+- fixed some wrong cli short arguments
+- removed deprecated arguments
+
+## [11.1.0](https://github.com/locize/locize-cli/compare/v11.0.0...v11.1.0) - 2025-12-11
 
 - replace internal csv library to address security advisory #110
 
