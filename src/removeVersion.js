@@ -2,63 +2,39 @@ import colors from 'colors'
 import request from './request.js'
 import getJob from './getJob.js'
 
-const removeVersion = (opt, cb) => {
-  request(opt.apiEndpoint + '/version/' + opt.projectId + '/' + opt.version, {
+const removeVersion = async (opt) => {
+  const { res, obj } = await request(opt.apiEndpoint + '/version/' + opt.projectId + '/' + opt.version, {
     method: 'delete',
     headers: {
       Authorization: opt.apiKey
     }
-  }, (err, res, obj) => {
-    if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (!cb) console.log(colors.red(`remove failed for version ${opt.version}...`))
-
-      if (err) {
-        if (!cb) { console.error(colors.red(err.message)); process.exit(1) }
-        if (cb) cb(err)
-        return
-      }
-      if (obj && (obj.errorMessage || obj.message)) {
-        if (!cb) { console.error(colors.red((obj.errorMessage || obj.message))); process.exit(1) }
-        if (cb) cb(new Error((obj.errorMessage || obj.message)))
-        return
-      }
-    }
-    if (res.status >= 300) {
-      if (!cb) { console.error(colors.red(res.statusText + ' (' + res.status + ')')); process.exit(1) }
-      if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'))
-      return
-    }
-
-    if (!obj || !obj.jobId) {
-      if (!cb) { console.error(colors.red('No jobId! Something went wrong!')); process.exit(1) }
-      if (cb) cb(new Error('No jobId! Something went wrong!'))
-      return
-    }
-
-    (function waitForJob () {
-      getJob(opt, obj.jobId, (err, job) => {
-        if (err) {
-          if (!cb) { console.error(colors.red(err.message)); process.exit(1) }
-          if (cb) cb(err)
-          return
-        }
-
-        if (job && !job.timeouted) {
-          setTimeout(waitForJob, 2000)
-          return
-        }
-
-        if (job && job.timeouted) {
-          if (!cb) { console.error(colors.red('Job timeouted!')); process.exit(1) }
-          if (cb) cb(new Error('Job timeouted!'))
-          return
-        }
-
-        if (!cb) console.log(colors.green(`remove version ${opt.version} succesfully requested`))
-        if (cb) cb(null)
-      })
-    })()
   })
+  if (obj && (obj.errorMessage || obj.message)) {
+    console.log(colors.red(`remove failed for version ${opt.version}...`))
+    throw new Error(obj.errorMessage || obj.message)
+  }
+  if (res.status >= 300) {
+    console.error(colors.red(res.statusText + ' (' + res.status + ')'))
+    throw new Error(res.statusText + ' (' + res.status + ')')
+  }
+  if (!obj || !obj.jobId) {
+    console.error(colors.red('No jobId! Something went wrong!'))
+    throw new Error('No jobId! Something went wrong!')
+  }
+  // Poll for job completion
+  while (true) {
+    const job = await getJob(opt, obj.jobId)
+    if (job && !job.timeouted) {
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      continue
+    }
+    if (job && job.timeouted) {
+      console.error(colors.red('Job timeouted!'))
+      throw new Error('Job timeouted!')
+    }
+    break
+  }
+  console.log(colors.green(`remove version ${opt.version} succesfully requested`))
 }
 
 export default removeVersion

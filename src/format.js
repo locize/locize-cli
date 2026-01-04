@@ -1,6 +1,5 @@
 import colors from 'colors'
 import fs from 'node:fs'
-import async from 'async'
 import path from 'node:path'
 import { diffLines } from 'diff'
 import convertToFlatFormat from './convertToFlatFormat.js'
@@ -10,14 +9,6 @@ import * as formats from './formats.js'
 const fileExtensionsMap = formats.fileExtensionsMap
 const acceptedFileExtensions = formats.acceptedFileExtensions
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap
-
-const handleError = (err, cb) => {
-  if (!cb && err) {
-    console.error(colors.red(err.message))
-    process.exit(1)
-  }
-  if (cb) cb(err)
-}
 
 const getFiles = (srcpath) => {
   let files = []
@@ -31,176 +22,132 @@ const getFiles = (srcpath) => {
   return files
 }
 
-function readLocalFile (opt, fPath, clb) {
+async function readLocalFile (opt, fPath) {
   const fExt = path.extname(fPath)
   const namespace = path.basename(fPath, fExt)
   const splitted = fPath.split(path.sep)
   const lng = splitted[splitted.length - 2]
-
-  fs.readFile(fPath, (err, data) => {
-    if (err) return clb(err)
-
-    fs.stat(fPath, (err, stat) => {
-      if (err) return clb(err)
-
-      clb(null, {
-        namespace,
-        path: fPath,
-        extension: fExt,
-        original: data.toString(),
-        language: lng,
-        mtime: stat.mtime
-      })
-    })
-  })
-}
-
-function readLocalFiles (opt, filePaths, clb) {
-  async.map(filePaths, (filePath, cb) => {
-    readLocalFile(opt, filePath, cb)
-  }, clb)
-}
-
-function convertAllFilesToFlatFormat (opt, files, clb) {
-  async.map(files, (file, cb) => {
-    if (fileExtensionsMap[file.extension].indexOf(opt.format) < 0) {
-      return cb(new Error(`Format mismatch! Found ${fileExtensionsMap[file.extension][0]} but requested ${opt.format}!`))
-    }
-
-    convertToFlatFormat(opt, file.original, (err, content) => {
-      if (err) {
-        err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
-        err.message += '\n' + file.path
-        return cb(err)
-      }
-
-      file.content = sortFlatResources(content)
-      cb(null, file)
-    })
-  }, clb)
-}
-
-function convertAllFilesToDesiredFormat (opt, files, clb) {
-  async.map(files, (file, cb) => {
-    convertToDesiredFormat(opt, file.namespace, file.language, file.content, file.mtime, (err, res) => {
-      if (err) {
-        err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
-        return cb(err)
-      }
-      res = (opt.format !== 'xlsx' && !res.endsWith('\n')) ? (res + '\n') : res
-      file.converted = res
-      cb(null, file)
-    })
-  }, clb)
-}
-
-function writeLocalFile (opt, file, clb) {
-  if (file.converted === file.original) {
-    if (opt.noCallback) console.log(colors.grey(`${file.path} unchanged`))
-    return clb(null)
+  const data = await fs.promises.readFile(fPath)
+  const stat = await fs.promises.stat(fPath)
+  return {
+    namespace,
+    path: fPath,
+    extension: fExt,
+    original: data.toString(),
+    language: lng,
+    mtime: stat.mtime
   }
+}
 
+async function readLocalFiles (opt, filePaths) {
+  return await Promise.all(filePaths.map(f => readLocalFile(opt, f)))
+}
+
+async function convertAllFilesToFlatFormat (opt, files) {
+  return await Promise.all(files.map(async file => {
+    if (fileExtensionsMap[file.extension].indexOf(opt.format) < 0) {
+      throw new Error(`Format mismatch! Found ${fileExtensionsMap[file.extension][0]} but requested ${opt.format}!`)
+    }
+    let content
+    try {
+      content = await convertToFlatFormat(opt, file.original)
+    } catch (err) {
+      err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '') + '\n' + file.path
+      throw err
+    }
+    file.content = sortFlatResources(content)
+    return file
+  }))
+}
+
+async function convertAllFilesToDesiredFormat (opt, files) {
+  return await Promise.all(files.map(async file => {
+    let res
+    try {
+      res = await convertToDesiredFormat(opt, file.namespace, file.language, file.content, file.mtime)
+    } catch (err) {
+      err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
+      throw err
+    }
+    res = (opt.format !== 'xlsx' && !res.endsWith('\n')) ? (res + '\n') : res
+    file.converted = res
+    return file
+  }))
+}
+
+async function writeLocalFile (opt, file) {
+  if (file.converted === file.original) {
+    console.log(colors.grey(`${file.path} unchanged`))
+    return false
+  }
   const d = diffLines(file.original, file.converted)
   d.forEach((part) => {
-    // green for additions, red for deletions
-    // grey for common parts
     const color = part.added ? 'green' : part.removed ? 'red' : 'grey'
-    if (opt.noCallback) console.log(part.value[color])
+    console.log(part.value[color])
   })
-
-  if (opt.noCallback) console.log(colors.yellow(`reformatting ${file.path}...`))
+  console.log(colors.yellow(`reformatting ${file.path}...`))
   if (opt.dry) {
-    if (opt.noCallback) console.log(colors.yellow(`would have reformatted ${file.path}...`))
-    return clb(null, true)
+    console.log(colors.yellow(`would have reformatted ${file.path}...`))
+    return true
   }
-
   const fileContent = (opt.format !== 'xlsx' && !file.converted.endsWith('\n')) ? (file.converted + '\n') : file.converted
-
-  fs.writeFile(file.path, fileContent, (err) => clb(err, true))
+  await fs.promises.writeFile(file.path, fileContent)
+  return true
 }
 
-function writeLocalFiles (opt, files, clb) {
-  async.map(files, (file, cb) => {
-    writeLocalFile(opt, file, cb)
-  }, clb)
+async function writeLocalFiles (opt, files) {
+  return await Promise.all(files.map(f => writeLocalFile(opt, f)))
 }
 
-function processFiles (opt, filePaths, clb) {
-  readLocalFiles(opt, filePaths, (err, orgFiles) => {
-    if (err) return clb(err)
-
-    if (!opt.format) {
-      if (orgFiles.length === 0) {
-        return clb(new Error('Please provide a format!'))
-      }
-      // guess format
-      opt.format = fileExtensionsMap[orgFiles[0].extension][0]
-      if (opt.noCallback) console.log(colors.bgYellow(`No format argument was passed, so guessing "${opt.format}" format.`))
+async function processFiles (opt, filePaths) {
+  const orgFiles = await readLocalFiles(opt, filePaths)
+  if (!opt.format) {
+    if (orgFiles.length === 0) {
+      throw new Error('Please provide a format!')
     }
-
-    convertAllFilesToFlatFormat(opt, orgFiles, (err, files) => {
-      if (err) return clb(err)
-
-      opt.getNamespace = (o, lng, ns, cb) => {
-        const foundOrgFile = orgFiles.find((f) => f.namespace === ns && f.language === lng)
-        if (!foundOrgFile) {
-          return cb(new Error(`No file found for language "${lng}" and namespace "${ns}" locally!`))
-        }
-        cb(null, foundOrgFile.content, foundOrgFile.mtime)
-      }
-
-      // just the value
-      files.forEach((f) => {
-        if (f.content) {
-          Object.keys(f.content).forEach((k) => {
-            if (f.content[k] && typeof f.content[k] === 'object' && f.content[k].value !== undefined) {
-              f.content[k] = f.content[k].value
-            }
-          })
-        }
-      })
-
-      convertAllFilesToDesiredFormat(opt, files, (err, convertedFiles) => {
-        if (err) return clb(err)
-
-        writeLocalFiles(opt, convertedFiles, clb)
-      })
-    })
-  })
-}
-
-const format = (opt, cb) => {
-  if (opt.format && !reversedFileExtensionsMap[opt.format]) {
-    return handleError(new Error(`${opt.format} is not a valid format!`), cb)
+    opt.format = fileExtensionsMap[orgFiles[0].extension][0]
+    console.log(colors.bgYellow(`No format argument was passed, so guessing "${opt.format}" format.`))
   }
-
-  opt.noCallback = !cb
-
-  fs.lstat(opt.fileOrDirectory, (err, stat) => {
-    if (err) return handleError(err, cb)
-
-    const isDirectory = stat.isDirectory()
-
-    let filePaths = []
-    if (isDirectory) {
-      try {
-        filePaths = getFiles(opt.fileOrDirectory)
-      } catch (err) {}
-    } else {
-      filePaths = [opt.fileOrDirectory]
+  const files = await convertAllFilesToFlatFormat(opt, orgFiles)
+  opt.getNamespace = async (o, lng, ns) => {
+    const foundOrgFile = orgFiles.find((f) => f.namespace === ns && f.language === lng)
+    if (!foundOrgFile) {
+      throw new Error(`No file found for language "${lng}" and namespace "${ns}" locally!`)
     }
-
-    processFiles(opt, filePaths, (err, writeResults) => {
-      if (err) return handleError(err, cb)
-      if (!cb) {
-        console.log(colors.green('FINISHED'))
-        if (opt.dry && writeResults.find((wr) => !!wr)) {
-          process.exit(1)
+    return { content: foundOrgFile.content, mtime: foundOrgFile.mtime }
+  }
+  files.forEach((f) => {
+    if (f.content) {
+      Object.keys(f.content).forEach((k) => {
+        if (f.content[k] && typeof f.content[k] === 'object' && f.content[k].value !== undefined) {
+          f.content[k] = f.content[k].value
         }
-      }
-      if (cb) cb(null)
-    })
+      })
+    }
   })
+  const convertedFiles = await convertAllFilesToDesiredFormat(opt, files)
+  return await writeLocalFiles(opt, convertedFiles)
+}
+
+async function format (opt) {
+  if (opt.format && !reversedFileExtensionsMap[opt.format]) {
+    throw new Error(`${opt.format} is not a valid format!`)
+  }
+  const stat = await fs.promises.lstat(opt.fileOrDirectory)
+  const isDirectory = stat.isDirectory()
+  let filePaths = []
+  if (isDirectory) {
+    try {
+      filePaths = getFiles(opt.fileOrDirectory)
+    } catch (err) {}
+  } else {
+    filePaths = [opt.fileOrDirectory]
+  }
+  const writeResults = await processFiles(opt, filePaths)
+  console.log(colors.green('FINISHED'))
+  if (opt.dry && writeResults.find((wr) => !!wr)) {
+    process.exit(1)
+  }
 }
 
 export default format

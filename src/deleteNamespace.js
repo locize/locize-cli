@@ -1,39 +1,35 @@
 import colors from 'colors'
 import request from './request.js'
 
-const deleteNamespace = (opt, cb) => {
+const deleteNamespace = async (opt) => {
   const url = opt.apiEndpoint + '/delete/' + opt.projectId + '/' + opt.version + '/' + opt.namespace
 
-  if (!cb) console.log(colors.yellow(`deleting ${opt.namespace} from ${opt.version}...`))
+  console.log(colors.yellow(`deleting ${opt.namespace} from ${opt.version}...`))
 
-  request(url, {
+  const { res, obj, err } = await request(url, {
     method: 'delete',
     headers: {
       Authorization: opt.apiKey
     }
-  }, (err, res, obj) => {
-    if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (!cb) console.log(colors.red(`delete failed for ${opt.namespace} from ${opt.version}...`))
-
-      if (err) {
-        if (!cb) { console.error(colors.red(err.message)); process.exit(1) }
-        if (cb) cb(err)
-        return
-      }
-      if (obj && (obj.errorMessage || obj.message)) {
-        if (!cb) { console.error(colors.red((obj.errorMessage || obj.message))); process.exit(1) }
-        if (cb) cb(new Error((obj.errorMessage || obj.message)))
-        return
-      }
-    }
-    if (res.status >= 300) {
-      if (!cb) { console.error(colors.red(res.statusText + ' (' + res.status + ')')); process.exit(1) }
-      if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'))
-      return
-    }
-    if (!cb) console.log(colors.green(`deleted ${opt.namespace} from ${opt.version}...`))
-    if (cb) cb(null)
   })
+
+  if (err || (obj && (obj.errorMessage || obj.message))) {
+    console.log(colors.red(`delete failed for ${opt.namespace} from ${opt.version}...`))
+    if (err) {
+      console.error(colors.red(err.message))
+      throw err
+    }
+    if (obj && (obj.errorMessage || obj.message)) {
+      console.error(colors.red((obj.errorMessage || obj.message)))
+      throw new Error((obj.errorMessage || obj.message))
+    }
+  }
+  if (res.status >= 300) {
+    console.error(colors.red(res.statusText + ' (' + res.status + ')'))
+    throw new Error(res.statusText + ' (' + res.status + ')')
+  }
+  console.log(colors.green(`deleted ${opt.namespace} from ${opt.version}...`))
+  // done
 }
 
 export default deleteNamespace

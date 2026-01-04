@@ -1,11 +1,11 @@
 import { HttpsProxyAgent } from 'https-proxy-agent'
 import https from 'https'
 import CacheableLookup from 'cacheable-lookup'
+
 const cacheable = new CacheableLookup()
 cacheable.install(https.globalAgent)
 
 const httpProxy = process.env.http_proxy || process.env.HTTP_PROXY || process.env.https_proxy || process.env.HTTPS_PROXY
-
 const isRetriableError = (err) => {
   return err && err.message && (
     err.message.indexOf('ETIMEDOUT') > -1 || // on timeout retry
@@ -28,9 +28,7 @@ const handleResponse = (res) => {
   }
 }
 
-const handleSuccessful = (callback) => (ret) => callback(null, ret.res, ret.obj)
-
-async function request (url, options, callback) {
+async function request (url, options) {
   if (httpProxy) {
     const httpsProxyAgent = new HttpsProxyAgent(httpProxy)
     cacheable.install(httpsProxyAgent)
@@ -48,15 +46,18 @@ async function request (url, options, callback) {
   }
   if (options.headers['Authorization'] === undefined) delete options.headers['Authorization']
 
-  function retriableFetch (maxRetries) {
-    fetch(url, options).then(handleResponse).then(handleSuccessful(callback)).catch((err) => {
-      if (maxRetries < 1) return callback(err)
-      if (!isRetriableError(err)) return callback(err)
-      setTimeout(() => {
-        retriableFetch(--maxRetries)
-      }, 5000)
-    })
+  async function retriableFetch (maxRetries) {
+    try {
+      const response = await fetch(url, options)
+      const result = await handleResponse(response)
+      return result
+    } catch (err) {
+      if (maxRetries < 1) throw err
+      if (!isRetriableError(err)) throw err
+      await new Promise(resolve => setTimeout(resolve, 5000))
+      return retriableFetch(--maxRetries)
+    }
   }
-  retriableFetch(3)
+  return retriableFetch(3)
 }
 export default request

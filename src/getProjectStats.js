@@ -1,40 +1,35 @@
 import colors from 'colors'
 import request from './request.js'
 
-const getProjectStats = (opt, cb) => {
-  request(opt.apiEndpoint + '/stats/project/' + opt.projectId, {
+const getProjectStats = async (opt) => {
+  const { res, obj, err } = await request(opt.apiEndpoint + '/stats/project/' + opt.projectId, {
     method: 'get',
     headers: {
       Authorization: opt.apiKey
     }
-  }, (err, res, obj) => {
-    if (err || (obj && (obj.errorMessage || obj.message))) {
-      if (!cb) console.log(colors.red('getting job failed...'))
-
-      if (err) {
-        if (!cb) { console.error(colors.red(err.message)); process.exit(1) }
-        if (cb) cb(err)
-        return
-      }
-      if (obj && (obj.errorMessage || obj.message)) {
-        if (!cb) { console.error(colors.red((obj.errorMessage || obj.message))); process.exit(1) }
-        if (cb) cb(new Error((obj.errorMessage || obj.message)))
-        return
-      }
-    }
-    if (res.status === 404) {
-      if (!cb) { console.error(colors.yellow(res.statusText + ' (' + res.status + ')')); process.exit(1) }
-      if (cb) cb(null, null)
-      return
-    }
-    if (res.status >= 300) {
-      if (!cb) { console.error(colors.red(res.statusText + ' (' + res.status + ')')); process.exit(1) }
-      if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'))
-      return
-    }
-    if (!cb) console.log(colors.green('getting project stats successful'))
-    if (cb) cb(null, obj)
   })
+
+  if (err || (obj && (obj.errorMessage || obj.message))) {
+    console.log(colors.red('getting job failed...'))
+    if (err) {
+      console.error(colors.red(err.message))
+      throw err
+    }
+    if (obj && (obj.errorMessage || obj.message)) {
+      console.error(colors.red((obj.errorMessage || obj.message)))
+      throw new Error((obj.errorMessage || obj.message))
+    }
+  }
+  if (res.status === 404) {
+    console.error(colors.yellow(res.statusText + ' (' + res.status + ')'))
+    return null
+  }
+  if (res.status >= 300) {
+    console.error(colors.red(res.statusText + ' (' + res.status + ')'))
+    throw new Error(res.statusText + ' (' + res.status + ')')
+  }
+  console.log(colors.green('getting project stats successful'))
+  return obj
 }
 
 export default getProjectStats

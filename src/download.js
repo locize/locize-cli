@@ -4,16 +4,17 @@ import { rimraf } from 'rimraf'
 import request from './request.js'
 import fs from 'node:fs'
 import path from 'node:path'
-import async from 'async'
 import flatten from 'flat'
 import getRemoteNamespace from './getRemoteNamespace.js'
 import getRemoteLanguages from './getRemoteLanguages.js'
 import convertToDesiredFormat from './convertToDesiredFormat.js'
 import * as formats from './formats.js'
 import getProjectStats from './getProjectStats.js'
-import locize2xcstrings from 'locize-xcstrings/cjs/locize2xcstrings'
+import locize2xcstrings from 'locize-xcstrings/locize2xcstrings'
 import getBranches from './getBranches.js'
 import isValidUuid from './isValidUuid.js'
+import mapLimit from './mapLimit.js'
+
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap
 
 function getInfosInUrl (download) {
@@ -24,125 +25,51 @@ function getInfosInUrl (download) {
   return { version, language, namespace }
 }
 
-function handleDownload (opt, url, err, res, downloads, cb) {
+async function handleDownload (opt, url, err, res, downloads) {
   if (err || (downloads && (downloads.errorMessage || downloads.message))) {
-    if (!cb) console.log(colors.red(`download failed for ${url} to ${opt.path}...`))
-
+    console.log(colors.red(`download failed for ${url} to ${opt.path}...`))
     if (err) {
-      if (!cb) { console.error(colors.red(err.message)); process.exit(1) }
-      if (cb) cb(err)
-      return
+      console.error(colors.red(err.message))
+      throw err
     }
     if (downloads && (downloads.errorMessage || downloads.message)) {
-      if (!cb) { console.error(colors.red((downloads.errorMessage || downloads.message))); process.exit(1) }
-      if (cb) cb(new Error((downloads.errorMessage || downloads.message)))
-      return
+      console.error(colors.red((downloads.errorMessage || downloads.message)))
+      throw new Error((downloads.errorMessage || downloads.message))
     }
   }
   if (res.status >= 300) {
-    if (!cb) { console.error(colors.red(res.statusText + ' (' + res.status + ')')); process.exit(1) }
-    if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'))
-    return
+    console.error(colors.red(res.statusText + ' (' + res.status + ')'))
+    throw new Error(res.statusText + ' (' + res.status + ')')
   }
 
-  if (opt.format === 'xcstrings') { // 1 file per namespace including all languages
+  if (opt.format === 'xcstrings') {
     const downloadsByNamespace = {}
     downloads.forEach((download) => {
       const { version, namespace } = getInfosInUrl(download)
       opt.isPrivate = download.isPrivate
-
       downloadsByNamespace[version] = downloadsByNamespace[version] || {}
       downloadsByNamespace[version][namespace] = downloadsByNamespace[version][namespace] || []
       downloadsByNamespace[version][namespace].push(download)
     })
-
-    async.eachSeries(Object.keys(downloadsByNamespace), (version, clb) => {
-      async.eachLimit(Object.keys(downloadsByNamespace[version]), 20, (ns, clb) => {
-        if (opt.namespace && opt.namespace !== ns) return clb(null)
-        if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(ns) < 0) return clb(null)
-
+    for (const version of Object.keys(downloadsByNamespace)) {
+      await mapLimit(Object.keys(downloadsByNamespace[version]), 20, async (ns) => {
+        if (opt.namespace && opt.namespace !== ns) return
+        if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(ns) < 0) return
         const locizeData = {
           sourceLng: opt.referenceLanguage,
           resources: {}
         }
-        async.eachLimit(downloadsByNamespace[version][ns], 20, (download, clb2) => {
+        await mapLimit(downloadsByNamespace[version][ns], 20, async (download) => {
           const { language } = getInfosInUrl(download)
-          getRemoteNamespace(opt, language, ns, (err, ns, lastModified) => {
-            if (err) return clb2(err)
-
-            if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
-              return clb2(null)
-            }
-
-            locizeData.resources[language] = ns
-            clb2()
-          })
-        }, (err) => {
-          if (err) return clb(err)
-
-          try {
-            const converted = locize2xcstrings(locizeData)
-
-            const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, ns) + reversedFileExtensionsMap[opt.format]
-            let mkdirPath
-            if (filledMask.lastIndexOf(path.sep) > 0) {
-              mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep))
-            }
-
-            function logAndClb (err) {
-              if (err) return clb(err)
-              if (!cb) console.log(colors.green(`downloaded ${version}/${ns} to ${opt.path}...`))
-              if (clb) clb(null)
-            }
-
-            const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
-            if (!opt.version) {
-              if (mkdirPath) mkdirp.sync(path.join(opt.path, version, mkdirPath))
-              fs.writeFile(path.join(opt.path, version, filledMask), fileContent, logAndClb)
-              return
-            }
-
-            if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath))
-            fs.writeFile(path.join(opt.path, filledMask), converted, logAndClb)
-          } catch (e) {
-            err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
-            return clb(err)
+          const { result: nsData } = await getRemoteNamespace(opt, language, ns)
+          if (opt.skipEmpty && Object.keys(flatten(nsData)).length === 0) {
+            return
           }
+          locizeData.resources[language] = nsData
         })
-      }, clb)
-    }, (err) => {
-      if (err) {
-        if (!cb) {
-          console.error(colors.red(err.message))
-          process.exit(1)
-        }
-        if (cb) cb(err)
-        return
-      }
-
-      if (cb) cb(null)
-    })
-  } else { // 1 file per namespace/lng
-    async.eachLimit(downloads, 20, (download, clb) => {
-      const { version, language, namespace } = getInfosInUrl(download)
-      opt.isPrivate = download.isPrivate
-
-      if (opt.namespace && opt.namespace !== namespace) return clb(null)
-      if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return clb(null)
-
-      getRemoteNamespace(opt, language, namespace, (err, ns, lastModified) => {
-        if (err) return clb(err)
-
-        if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
-          return clb(null)
-        }
-
-        convertToDesiredFormat(opt, namespace, language, ns, lastModified, (err, converted) => {
-          if (err) {
-            err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
-            return clb(err)
-          }
-          let filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, language).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
+        try {
+          const converted = locize2xcstrings(locizeData)
+          const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, ns) + reversedFileExtensionsMap[opt.format]
           let mkdirPath
           if (filledMask.lastIndexOf(path.sep) > 0) {
             mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep))
@@ -150,176 +77,132 @@ function handleDownload (opt, url, err, res, downloads, cb) {
           const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
           if (!opt.version) {
             if (mkdirPath) mkdirp.sync(path.join(opt.path, version, mkdirPath))
-            fs.writeFile(path.join(opt.path, version, filledMask), fileContent, clb)
-            return
-          }
-          if (!opt.language) {
+            fs.writeFileSync(path.join(opt.path, version, filledMask), fileContent)
+          } else {
             if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath))
-            fs.writeFile(path.join(opt.path, filledMask), fileContent, clb)
-            return
+            fs.writeFileSync(path.join(opt.path, filledMask), fileContent)
           }
-
-          if (opt.languageFolderPrefix && filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + language, '')
-          // if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) && filledMask.lastIndexOf(path.sep) > 0) {
-          //   mkdirp.sync(path.join(opt.path, filledMask.substring(0, filledMask.lastIndexOf(path.sep))));
-          // }
-          const parentDir = path.dirname(path.join(opt.path, filledMask))
-          mkdirp.sync(parentDir)
-          fs.writeFile(path.join(opt.path, filledMask), fileContent, clb)
-        })
-      })
-    }, (err) => {
-      if (err) {
-        if (!cb) {
-          console.error(colors.red(err.message))
-          process.exit(1)
+          console.log(colors.green(`downloaded ${version}/${ns} to ${opt.path}...`))
+        } catch (err) {
+          err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
+          throw err
         }
-        if (cb) cb(err)
+      })
+    }
+  } else {
+    await mapLimit(downloads, 20, async (download) => {
+      const { version, language, namespace } = getInfosInUrl(download)
+      opt.isPrivate = download.isPrivate
+      if (opt.namespace && opt.namespace !== namespace) return
+      if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return
+      const { result: nsData, lastModified } = await getRemoteNamespace(opt, language, namespace)
+      if (opt.skipEmpty && Object.keys(flatten(nsData)).length === 0) {
         return
       }
-
-      if (!cb) console.log(colors.green(`downloaded ${url} to ${opt.path}...`))
-      if (cb) cb(null)
+      let converted
+      try {
+        converted = await convertToDesiredFormat(opt, namespace, language, nsData, lastModified)
+      } catch (err) {
+        err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
+        throw err
+      }
+      let filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, language).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
+      let mkdirPath
+      if (filledMask.lastIndexOf(path.sep) > 0) {
+        mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep))
+      }
+      const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
+      if (!opt.version) {
+        if (mkdirPath) mkdirp.sync(path.join(opt.path, version, mkdirPath))
+        fs.writeFileSync(path.join(opt.path, version, filledMask), fileContent)
+      } else if (!opt.language) {
+        if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath))
+        fs.writeFileSync(path.join(opt.path, filledMask), fileContent)
+      } else {
+        if (opt.languageFolderPrefix && filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + language, '')
+        const parentDir = path.dirname(path.join(opt.path, filledMask))
+        mkdirp.sync(parentDir)
+        fs.writeFileSync(path.join(opt.path, filledMask), fileContent)
+      }
     })
+    console.log(colors.green(`downloaded ${url} to ${opt.path}...`))
   }
 }
 
-function handlePull (opt, toDownload, cb) {
+async function handlePull (opt, toDownload) {
   const url = opt.apiEndpoint + '/pull/' + opt.projectId + '/' + opt.version
 
-  if (opt.format === 'xcstrings') { // 1 file per namespace including all languages
+  if (opt.format === 'xcstrings') {
     const downloadsByNamespace = {}
     toDownload.forEach((download) => {
       const { namespace } = download
       downloadsByNamespace[namespace] = downloadsByNamespace[namespace] || []
       downloadsByNamespace[namespace].push(download)
     })
-
-    async.eachLimit(Object.keys(downloadsByNamespace), 5, (namespace, clb) => {
-      if (opt.namespace && opt.namespace !== namespace) return clb(null)
-      if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return clb(null)
-
+    await mapLimit(Object.keys(downloadsByNamespace), 5, async (namespace) => {
+      if (opt.namespace && opt.namespace !== namespace) return
+      if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return
       const locizeData = {
         sourceLng: opt.referenceLanguage,
         resources: {}
       }
-
-      async.eachLimit(downloadsByNamespace[namespace], 5, (download, clb2) => {
+      await mapLimit(downloadsByNamespace[namespace], 5, async (download) => {
         const { language } = download
         opt.raw = true
-        getRemoteNamespace(opt, language, namespace, (err, ns, lastModified) => {
-          if (err) return clb2(err)
-
-          if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
-            return clb2(null)
-          }
-
-          locizeData.resources[language] = ns
-          clb2()
-        })
-      }, (err) => {
-        if (err) return clb(err)
-
-        try {
-          const result = locize2xcstrings(locizeData)
-          const converted = JSON.stringify(result, null, 2)
-
-          const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
-          let mkdirPath
-          if (filledMask.lastIndexOf(path.sep) > 0) {
-            mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep))
-          }
-
-          function logAndClb (err) {
-            if (err) return clb(err)
-            if (!cb) console.log(colors.green(`downloaded ${opt.version}/${namespace} to ${opt.path}...`))
-            if (clb) clb(null)
-          }
-
-          if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath))
-          const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
-          fs.writeFile(path.join(opt.path, filledMask), fileContent, logAndClb)
-        } catch (e) {
-          err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
-          return clb(err)
+        const { result: nsData } = await getRemoteNamespace(opt, language, namespace)
+        if (opt.skipEmpty && Object.keys(flatten(nsData)).length === 0) {
+          return
         }
+        locizeData.resources[language] = nsData
       })
-    }, (err) => {
-      if (err) {
-        if (!cb) {
-          console.error(colors.red(err.message))
-          process.exit(1)
+      try {
+        const result = locize2xcstrings(locizeData)
+        const converted = JSON.stringify(result, null, 2)
+        const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
+        let mkdirPath
+        if (filledMask.lastIndexOf(path.sep) > 0) {
+          mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep))
         }
-        if (cb) cb(err)
-        return
+        const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
+        if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath))
+        fs.writeFileSync(path.join(opt.path, filledMask), fileContent)
+        console.log(colors.green(`downloaded ${opt.version}/${namespace} to ${opt.path}...`))
+      } catch (err) {
+        err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
+        throw err
       }
-
-      if (cb) cb(null)
     })
-  } else { // 1 file per namespace/lng
-    async.eachLimit(toDownload, 5, (download, clb) => {
+  } else {
+    await mapLimit(toDownload, 5, async (download) => {
       const lng = download.language
       const namespace = download.namespace
-
-      if (opt.namespace && opt.namespace !== namespace) return clb(null)
-      if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return clb(null)
-
-      getRemoteNamespace(opt, lng, namespace, (err, ns, lastModified) => {
-        if (err) return clb(err)
-
-        if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
-          return clb(null)
-        }
-
-        convertToDesiredFormat(opt, namespace, lng, ns, lastModified, (err, converted) => {
-          if (err) {
-            err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
-            return clb(err)
-          }
-          let filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
-          let mkdirPath
-          if (filledMask.lastIndexOf(path.sep) > 0) {
-            mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep))
-          }
-          const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
-          if (!opt.language) {
-            if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath))
-            fs.writeFile(path.join(opt.path, filledMask), fileContent, clb)
-            return
-          }
-
-          if (opt.languageFolderPrefix && filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + lng, '')
-          // if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) && filledMask.lastIndexOf(path.sep) > 0) {
-          //   mkdirp.sync(path.join(opt.path, filledMask.substring(0, filledMask.lastIndexOf(path.sep))));
-          // }
-          const parentDir = path.dirname(path.join(opt.path, filledMask))
-          mkdirp.sync(parentDir)
-          fs.writeFile(path.join(opt.path, filledMask), fileContent, clb)
-        })
-      })
-    }, (err) => {
-      if (err) {
-        if (!cb) {
-          console.error(colors.red(err.message))
-          process.exit(1)
-        }
-        if (cb) cb(err)
+      if (opt.namespace && opt.namespace !== namespace) return
+      if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return
+      const { result: nsData, lastModified } = await getRemoteNamespace(opt, lng, namespace)
+      if (opt.skipEmpty && Object.keys(flatten(nsData)).length === 0) {
         return
       }
-
-      if (!cb) console.log(colors.green(`downloaded ${url} to ${opt.path}...`))
-      if (cb) cb(null)
+      let converted
+      try {
+        converted = await convertToDesiredFormat(opt, namespace, lng, nsData, lastModified)
+      } catch (err) {
+        err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
+        throw err
+      }
+      const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
+      let mkdirPath
+      if (filledMask.lastIndexOf(path.sep) > 0) {
+        mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep))
+      }
+      const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
+      if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath))
+      fs.writeFileSync(path.join(opt.path, filledMask), fileContent)
     })
+    console.log(colors.green(`downloaded ${url} to ${opt.path}...`))
   }
 }
 
-const handleError = (err, cb) => {
-  if (!cb && err) {
-    console.error(colors.red(err.message))
-    process.exit(1)
-  }
-  if (cb) cb(err)
-}
+// handleError removed (unused)
 
 const filterDownloadsLanguages = (opt, downloads) => {
   if (opt.languages) {
@@ -372,7 +255,7 @@ const filterDownloads = (opt, downloads) => {
   return filterDownloadsLanguages(opt, downloads)
 }
 
-const continueToDownload = (opt, cb) => {
+async function continueToDownload (opt) {
   let url = opt.apiEndpoint + '/download/' + opt.projectId
 
   if (opt.namespace && opt.namespace.indexOf(',') > 0 && opt.namespace.indexOf(' ') < 0) {
@@ -391,87 +274,69 @@ const continueToDownload = (opt, cb) => {
   }
 
   if (opt.clean) rimraf.sync(path.join(opt.path, '*'))
-
   mkdirp.sync(opt.path)
-
-  if (!cb) console.log(colors.yellow(`downloading ${url} to ${opt.path}...`))
-
-  getRemoteLanguages(opt, (err) => {
-    if (err) return handleError(err, cb)
-
-    if (!opt.unpublished) {
-      request(url, {
+  console.log(colors.yellow(`downloading ${url} to ${opt.path}...`))
+  await getRemoteLanguages(opt)
+  if (!opt.unpublished) {
+    const { res, obj, err } = await request(url, {
+      method: 'get',
+      headers: opt.apiKey
+        ? {
+            Authorization: opt.apiKey
+          }
+        : undefined
+    })
+    let downloadsObj = obj
+    if (res && res.status === 401) {
+      opt.apiKey = null
+      const { obj: obj2 } = await request(url, {
         method: 'get',
-        headers: opt.apiKey
-          ? {
-              Authorization: opt.apiKey
-            }
-          : undefined
-      }, (err, res, obj) => {
-        if (res && res.status === 401) {
-          opt.apiKey = null
-          request(url, {
-            method: 'get',
-          }, (err, res, obj) => {
-            obj = filterDownloads(opt, obj || [])
-            handleDownload(opt, url, err, res, obj, cb)
-          })
-          return
-        }
-
-        if (obj.length > 0) {
-          obj = filterDownloads(opt, obj || [])
-          return handleDownload(opt, url, err, res, obj, cb)
-        }
-
-        getProjectStats(opt, (err, res) => {
-          if (err) return handleError(err, cb)
-          if (!res) return handleError(new Error('Nothing found!'), cb)
-          if (!res[opt.version]) return handleError(new Error(`Version "${opt.version}" not found!`), cb)
-
-          obj = filterDownloads(opt, obj || [])
-          return handleDownload(opt, url, err, res, obj, cb)
-        })
       })
+      downloadsObj = obj2
+    }
+    downloadsObj = filterDownloads(opt, downloadsObj || [])
+    if (downloadsObj.length > 0) {
+      await handleDownload(opt, url, err, res, downloadsObj)
       return
     }
-
-    getProjectStats(opt, (err, res) => {
-      if (err) return handleError(err, cb)
-      if (!res) return handleError(new Error('Nothing found!'), cb)
-      if (!res[opt.version]) return handleError(new Error(`Version "${opt.version}" not found!`), cb)
-
-      const toDownload = []
-      const lngsToCheck = opt.language ? [opt.language] : Object.keys(res[opt.version])
-      lngsToCheck.forEach((l) => {
-        if (opt.namespaces) {
-          opt.namespaces.forEach((n) => {
-            if (!res[opt.version][l][n]) return
-            if (opt.skipEmpty && res[opt.version][l][n].segmentsTranslated === 0) return
-            toDownload.push({ language: l, namespace: n })
-          })
-        } else if (opt.namespace) {
-          if (!res[opt.version][l][opt.namespace]) return
-          if (opt.skipEmpty && res[opt.version][l][opt.namespace].segmentsTranslated === 0) return
-          toDownload.push({ language: l, namespace: opt.namespace })
-        } else {
-          Object.keys(res[opt.version][l]).forEach((n) => {
-            if (opt.skipEmpty && res[opt.version][l][n].segmentsTranslated === 0) return
-            toDownload.push({ language: l, namespace: n })
-          })
-        }
+    const stats = await getProjectStats(opt)
+    if (!stats) throw new Error('Nothing found!')
+    if (!stats[opt.version]) throw new Error(`Version "${opt.version}" not found!`)
+    downloadsObj = filterDownloads(opt, downloadsObj || [])
+    await handleDownload(opt, url, err, res, downloadsObj)
+    return
+  }
+  const stats = await getProjectStats(opt)
+  if (!stats) throw new Error('Nothing found!')
+  if (!stats[opt.version]) throw new Error(`Version "${opt.version}" not found!`)
+  const toDownload = []
+  const lngsToCheck = opt.language ? [opt.language] : Object.keys(stats[opt.version])
+  lngsToCheck.forEach((l) => {
+    if (opt.namespaces) {
+      opt.namespaces.forEach((n) => {
+        if (!stats[opt.version][l][n]) return
+        if (opt.skipEmpty && stats[opt.version][l][n].segmentsTranslated === 0) return
+        toDownload.push({ language: l, namespace: n })
       })
-      handlePull(opt, toDownload, cb)
-    })
+    } else if (opt.namespace) {
+      if (!stats[opt.version][l][opt.namespace]) return
+      if (opt.skipEmpty && stats[opt.version][l][opt.namespace].segmentsTranslated === 0) return
+      toDownload.push({ language: l, namespace: opt.namespace })
+    } else {
+      Object.keys(stats[opt.version][l]).forEach((n) => {
+        if (opt.skipEmpty && stats[opt.version][l][n].segmentsTranslated === 0) return
+        toDownload.push({ language: l, namespace: n })
+      })
+    }
   })
+  await handlePull(opt, toDownload)
 }
 
-const download = (opt, cb) => {
+async function download (opt) {
   opt.format = opt.format || 'json'
   if (!reversedFileExtensionsMap[opt.format]) {
-    return handleError(new Error(`${opt.format} is not a valid format!`), cb)
+    throw new Error(`${opt.format} is not a valid format!`)
   }
-
   if (opt.skipEmpty === undefined) opt.skipEmpty = true
   opt.apiEndpoint = opt.apiEndpoint || 'https://api.locize.app'
   opt.version = opt.version || 'latest'
@@ -485,32 +350,25 @@ const download = (opt, cb) => {
     opt.unpublished = true
   }
   if (opt.unpublished && !opt.apiKey) {
-    return handleError(new Error('Please provide also an api-key!'), cb)
+    throw new Error('Please provide also an api-key!')
   }
-
   if (opt.branch === '') {
-    return handleError(new Error('The branch name seems invalid!'), cb)
+    throw new Error('The branch name seems invalid!')
   }
-
   if (opt.branch) {
-    getBranches(opt, (err, branches) => {
-      if (err) return handleError(err, cb)
-
-      let b
-      if (isValidUuid(opt.branch)) b = branches.find((br) => br.id === opt.branch)
-      if (!b) b = branches.find((br) => br.name === opt.branch)
-      if (!b) {
-        return handleError(new Error(`Branch ${opt.branch} not found!`), cb)
-      }
-      opt.projectId = b.id
-      opt.version = b.version
-
-      continueToDownload(opt, cb)
-    })
+    const branches = await getBranches(opt)
+    let b
+    if (isValidUuid(opt.branch)) b = branches.find((br) => br.id === opt.branch)
+    if (!b) b = branches.find((br) => br.name === opt.branch)
+    if (!b) {
+      throw new Error(`Branch ${opt.branch} not found!`)
+    }
+    opt.projectId = b.id
+    opt.version = b.version
+    await continueToDownload(opt)
     return
   }
-
-  continueToDownload(opt, cb)
+  await continueToDownload(opt)
 }
 
 export default download

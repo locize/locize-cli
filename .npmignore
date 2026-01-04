@@ -10,3 +10,4 @@ bins
 install.sh
 install.ps1
 eslint.config.js
+src

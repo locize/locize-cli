@@ -9,7 +9,7 @@
     "locize": "./dist/esm/cli.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "exports": {
     "./package.json": "./package.json",
@@ -27,7 +27,6 @@
   "dependencies": {
     "@js.properties/properties": "0.5.4",
     "android-string-resource": "2.3.10",
-    "async": "3.2.6",
     "cacheable-lookup": "6.1.0",
     "colors": "1.4.0",
     "commander": "14.0.2",
@@ -46,7 +45,7 @@
     "resx": "2.0.4",
     "rimraf": "6.1.2",
     "strings-file": "0.0.5",
-    "tmexchange": "2.0.5",
+    "tmexchange": "2.0.6",
     "xliff": "6.2.2",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "yaml": "2.8.2"

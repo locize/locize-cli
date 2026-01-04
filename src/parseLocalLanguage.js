@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import async from 'async'
 import { mkdirp } from 'mkdirp'
 import convertToFlatFormat from './convertToFlatFormat.js'
 import * as formats from './formats.js'
@@ -20,7 +19,7 @@ const getDirectories = (srcpath) => {
   })
 }
 
-const parseLocalLanguage = (opt, lng, cb) => {
+const parseLocalLanguage = async (opt, lng) => {
   const hasNamespaceInPath = opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) > -1
   const filledLngMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, opt.format === 'xcstrings' ? '' : lng)
   let firstPartLngMask, lastPartLngMask
@@ -34,6 +33,7 @@ const parseLocalLanguage = (opt, lng, cb) => {
     lngPath = filledLngMask.substring(0, filledLngMask.lastIndexOf(path.sep))
   }
   if (!opt.dry && lngPath && lngPath.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) < 0) mkdirp.sync(path.join(opt.path, lngPath))
+
   let files = []
   try {
     if (lngPath) {
@@ -96,7 +96,10 @@ const parseLocalLanguage = (opt, lng, cb) => {
       })
     }
   } catch (err) {}
-  async.map(files, (file, clb) => {
+
+  // Async map logic using Promise.all
+  const results = await Promise.all(files.map(async (fileOrig) => {
+    let file = fileOrig
     let dirPath
     if (file.lastIndexOf(path.sep) > 0) {
       dirPath = file.substring(0, file.lastIndexOf(path.sep))
@@ -123,81 +126,68 @@ const parseLocalLanguage = (opt, lng, cb) => {
     if (dirPath && lngPath.indexOf(nsMask) > -1) {
       fPath = path.join(opt.path, dirPath.replace(nsMask, namespace), file)
     }
-    if (!namespace) return clb(new Error(`namespace could not be found in ${fPath}`))
-    if (opt.namespaces && opt.namespaces.indexOf(namespace) < 0) return clb(null)
-    if (opt.namespace && opt.namespace !== namespace) return clb(null)
-    fs.readFile(fPath, (err, data) => {
-      if (err) return clb(err)
-
-      if (fileExtensionsMap[fExt].indexOf(opt.format) < 0) {
-        return clb(new Error(`Format mismatch! Found ${fileExtensionsMap[fExt][0]} but requested ${opt.format}!`))
+    if (!namespace) throw new Error(`namespace could not be found in ${fPath}`)
+    if (opt.namespaces && opt.namespaces.indexOf(namespace) < 0) return undefined
+    if (opt.namespace && opt.namespace !== namespace) return undefined
+    const data = await fs.promises.readFile(fPath)
+    if (fileExtensionsMap[fExt].indexOf(opt.format) < 0) {
+      throw new Error(`Format mismatch! Found ${fileExtensionsMap[fExt][0]} but requested ${opt.format}!`)
+    }
+    if (opt.namespace) {
+      let hasNamespaceInPathPask = !opt.pathMask || !opt.pathMaskInterpolationPrefix || !opt.pathMaskInterpolationSuffix
+      hasNamespaceInPathPask = !hasNamespaceInPathPask && opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) > -1
+      if (!hasNamespaceInPathPask && namespace === lng) {
+        namespace = opt.namespace
       }
-
-      if (opt.namespace) {
-        let hasNamespaceInPathPask = !opt.pathMask || !opt.pathMaskInterpolationPrefix || !opt.pathMaskInterpolationSuffix
-        hasNamespaceInPathPask = !hasNamespaceInPathPask && opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) > -1
-        if (!hasNamespaceInPathPask && namespace === lng) {
-          namespace = opt.namespace
-        }
+    }
+    if (opt.format === 'xcstrings') {
+      try {
+        const content = xcstrings2locize(data)
+        const stat = await fs.promises.stat(fPath)
+        return Object.keys(content.resources).map((l) => ({
+          namespace,
+          path: fPath,
+          extension: fExt,
+          content: content.resources[l],
+          language: l,
+          mtime: stat.mtime
+        }))
+      } catch (err) {
+        err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
+        err.message += '\n' + fPath
+        throw err
       }
-
-      if (opt.format === 'xcstrings') { // 1 file per namespace including all languages
-        try {
-          const content = xcstrings2locize(data)
-
-          fs.stat(fPath, (err, stat) => {
-            if (err) return clb(err)
-
-            clb(null, Object.keys(content.resources).map((l) => ({
-              namespace,
-              path: fPath,
-              extension: fExt,
-              content: content.resources[l],
-              language: l,
-              mtime: stat.mtime
-            })))
-          })
-        } catch (e) {
-          err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
-          err.message += '\n' + fPath
-          return clb(err)
-        }
-      } else { // 1 file per namespace/lng
-        convertToFlatFormat(opt, data, lng, (err, content) => {
-          if (err) {
-            err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
-            err.message += '\n' + fPath
-            return clb(err)
-          }
-
-          fs.stat(fPath, (err, stat) => {
-            if (err) return clb(err)
-
-            clb(null, {
-              namespace,
-              path: fPath,
-              extension: fExt,
-              content,
-              language: lng,
-              mtime: stat.mtime
-            })
-          })
-        })
+    } else {
+      let content
+      try {
+        content = await convertToFlatFormat(opt, data, lng)
+      } catch (err) {
+        err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
+        err.message += '\n' + fPath
+        throw err
       }
-    })
-  }, (err, ret) => {
-    if (err) return cb(err)
-    // xcstrings, returns array in array
-    const r = ret.filter((r) => r !== undefined).reduce((prev, cur) => {
-      if (Array.isArray(cur)) {
-        prev = prev.concat(cur)
-      } else {
-        prev.push(cur)
+      const stat = await fs.promises.stat(fPath)
+      return {
+        namespace,
+        path: fPath,
+        extension: fExt,
+        content,
+        language: lng,
+        mtime: stat.mtime
       }
-      return prev
-    }, [])
-    cb(null, r)
-  })
+    }
+  }))
+
+  // xcstrings, returns array in array
+  const r = results.filter((r) => r !== undefined).reduce((prev, cur) => {
+    if (Array.isArray(cur)) {
+      prev = prev.concat(cur)
+    } else {
+      prev.push(cur)
+    }
+    return prev
+  }, [])
+  return r
 }
 
 export default parseLocalLanguage

@@ -2,60 +2,56 @@ import colors from 'colors'
 import request from './request.js'
 import getBranches from './getBranches.js'
 
-const handleError = (err, cb) => {
-  if (!cb && err) {
+const handleError = (err) => {
+  if (err) {
     console.error(colors.red(err.stack))
     process.exit(1)
   }
-  if (cb) cb(err)
 }
 
-const createBranch = (opt, cb) => {
-  getBranches(opt, (err, branches) => {
-    if (err) return handleError(err, cb)
+const createBranch = async (opt) => {
+  let branches
+  try {
+    branches = await getBranches(opt)
+  } catch (err) {
+    handleError(err)
+  }
 
-    const b = branches.find((br) => br.name === opt.branch)
-    if (b) {
-      if (!cb) console.log(colors.green('creating branch "' + b.name + '" (' + b.id + ') not necessary, because already existing'))
-      if (cb) cb(null, b)
-      return
-    }
+  const b = branches && branches.find((br) => br.name === opt.branch)
+  if (b) {
+    console.log(colors.green('creating branch "' + b.name + '" (' + b.id + ') not necessary, because already existing'))
+    return b
+  }
 
-    request(opt.apiEndpoint + '/branch/create/' + opt.projectId + '/' + opt.version, {
-      method: 'post',
-      headers: {
-        Authorization: opt.apiKey
-      },
-      body: { name: opt.branch }
-    }, (err, res, obj) => {
-      if (err || (obj && (obj.errorMessage || obj.message))) {
-        if (!cb) console.log(colors.red('creating branch failed...'))
-
-        if (err) {
-          if (!cb) { console.error(colors.red(err.message)); process.exit(1) }
-          if (cb) cb(err)
-          return
-        }
-        if (obj && (obj.errorMessage || obj.message)) {
-          if (!cb) { console.error(colors.red((obj.errorMessage || obj.message))); process.exit(1) }
-          if (cb) cb(new Error((obj.errorMessage || obj.message)))
-          return
-        }
-      }
-      if (res.status === 404) {
-        if (!cb) { console.error(colors.yellow(res.statusText + ' (' + res.status + ')')); process.exit(1) }
-        if (cb) cb(null, null)
-        return
-      }
-      if (res.status >= 300) {
-        if (!cb) { console.error(colors.red(res.statusText + ' (' + res.status + ')')); process.exit(1) }
-        if (cb) cb(new Error(res.statusText + ' (' + res.status + ')'))
-        return
-      }
-      if (!cb) console.log(colors.green('creating branch "' + obj.name + '" (' + obj.id + ') successful'))
-      if (cb) cb(null, obj)
-    })
+  const { res, obj, err } = await request(opt.apiEndpoint + '/branch/create/' + opt.projectId + '/' + opt.version, {
+    method: 'post',
+    headers: {
+      Authorization: opt.apiKey
+    },
+    body: { name: opt.branch }
   })
+
+  if (err || (obj && (obj.errorMessage || obj.message))) {
+    console.log(colors.red('creating branch failed...'))
+    if (err) {
+      console.error(colors.red(err.message))
+      throw err
+    }
+    if (obj && (obj.errorMessage || obj.message)) {
+      console.error(colors.red((obj.errorMessage || obj.message)))
+      throw new Error((obj.errorMessage || obj.message))
+    }
+  }
+  if (res.status === 404) {
+    console.error(colors.yellow(res.statusText + ' (' + res.status + ')'))
+    return null
+  }
+  if (res.status >= 300) {
+    console.error(colors.red(res.statusText + ' (' + res.status + ')'))
+    throw new Error(res.statusText + ' (' + res.status + ')')
+  }
+  console.log(colors.green('creating branch "' + obj.name + '" (' + obj.id + ') successful'))
+  return obj
 }
 
 export default createBranch

@@ -2,7 +2,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { mkdirp } from 'mkdirp'
 import { rimraf } from 'rimraf'
-import async from 'async'
 import colors from 'colors'
 import request from './request.js'
 import flatten from 'flat'
@@ -23,6 +22,40 @@ import lngCodes from './lngs.js'
 
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap
 
+// concurrency-limited map: returns array of results
+async function pMapLimit (items, limit, iterator) {
+  if (!Array.isArray(items)) items = Array.from(items || [])
+  const results = new Array(items.length)
+  let i = 0
+  const workers = new Array(Math.min(limit || 1, items.length)).fill(0).map(async () => {
+    while (true) {
+      const idx = i++
+      if (idx >= items.length) break
+      results[idx] = await iterator(items[idx], idx)
+    }
+  })
+  await Promise.all(workers)
+  return results
+}
+
+// concurrency-limited each (ignore results)
+async function pEachLimit (items, limit, iterator) {
+  await pMapLimit(items, limit, async (item, idx) => {
+    await iterator(item, idx)
+    return null
+  })
+}
+
+// run array of functions returning Promises in series
+async function pSeries (tasks) {
+  const results = []
+  for (const t of tasks) {
+    // t may be a function that accepts no args and returns a Promise
+    results.push(await t())
+  }
+  return results
+}
+
 const getDirectories = (srcpath) => {
   return fs.readdirSync(srcpath).filter((file) => {
     return fs.statSync(path.join(srcpath, file)).isDirectory()
@@ -35,85 +68,6 @@ function getInfosInUrl (download) {
   const language = splitted[download.isPrivate ? 3 : 2]
   const namespace = splitted[download.isPrivate ? 4 : 3]
   return { version, language, namespace }
-}
-
-const getDownloads = (opt, cb) => {
-  if (!opt.unpublished) {
-    request(opt.apiEndpoint + '/download/' + opt.projectId + '/' + opt.version, {
-      method: 'get',
-      headers: opt.apiKey
-        ? {
-            Authorization: opt.apiKey
-          }
-        : undefined
-    }, (err, res, obj) => {
-      if (err) return cb(err)
-      if (res.status >= 300) {
-        if (obj && (obj.errorMessage || obj.message)) {
-          if (res.statusText && res.status) {
-            return cb(new Error(res.statusText + ' (' + res.status + ') | ' + (obj.errorMessage || obj.message)))
-          }
-          return cb(new Error((obj.errorMessage || obj.message)))
-        }
-        return cb(new Error(res.statusText + ' (' + res.status + ')'))
-      }
-      if (obj.length > 0) {
-        if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2)
-        return cb(null, obj)
-      }
-
-      getProjectStats(opt, (err, res) => {
-        if (err) return handleError(err, cb)
-        if (!res) return handleError(new Error('Nothing found!'), cb)
-        if (!res[opt.version]) return handleError(new Error(`Version "${opt.version}" not found!`), cb)
-
-        return cb(null, obj)
-      })
-    })
-  } else {
-    getProjectStats(opt, (err, res) => {
-      if (err) return handleError(err, cb)
-      if (!res) return handleError(new Error('Nothing found!'), cb)
-      if (!res[opt.version]) return handleError(new Error(`Version "${opt.version}" not found!`), cb)
-
-      const toDownload = []
-      const lngsToCheck = opt.language ? [opt.language] : (opt.languages && opt.languages.length > 0) ? opt.languages : Object.keys(res[opt.version])
-      lngsToCheck.forEach((l) => {
-        if (opt.namespaces) {
-          opt.namespaces.forEach((n) => {
-            if (!res[opt.version][l][n]) return
-            if (opt.skipEmpty && res[opt.version][l][n].segmentsTranslated === 0) return
-            toDownload.push({
-              url: `${opt.apiEndpoint}/${opt.projectId}/${opt.version}/${l}/${n}`,
-              key: `${opt.projectId}/${opt.version}/${l}/${n}`,
-              lastModified: '1960-01-01T00:00:00.000Z',
-              size: 0
-            })
-          })
-        } else if (opt.namespace) {
-          if (!res[opt.version][l][opt.namespace]) return
-          if (opt.skipEmpty && res[opt.version][l][opt.namespace].segmentsTranslated === 0) return
-          toDownload.push({
-            url: `${opt.apiEndpoint}/${opt.projectId}/${opt.version}/${l}/${opt.namespace}`,
-            key: `${opt.projectId}/${opt.version}/${l}/${opt.namespace}`,
-            lastModified: '1960-01-01T00:00:00.000Z',
-            size: 0
-          })
-        } else {
-          Object.keys(res[opt.version][l]).forEach((n) => {
-            if (opt.skipEmpty && res[opt.version][l][n].segmentsTranslated === 0) return
-            toDownload.push({
-              url: `${opt.apiEndpoint}/${opt.projectId}/${opt.version}/${l}/${n}`,
-              key: `${opt.projectId}/${opt.version}/${l}/${n}`,
-              lastModified: '1960-01-01T00:00:00.000Z',
-              size: 0
-            })
-          })
-        }
-      })
-      cb(null, toDownload)
-    })
-  }
 }
 
 const compareNamespace = (local, remote, lastModifiedLocal, lastModifiedRemote) => {
@@ -163,17 +117,12 @@ const compareNamespace = (local, remote, lastModifiedLocal, lastModifiedRemote) 
   return diff
 }
 
-const compareNamespaces = (opt, localNamespaces, cb) => {
-  async.mapLimit(localNamespaces, 20, (ns, clb) => {
-    getRemoteNamespace(opt, ns.language, ns.namespace, (err, remoteNamespace, lastModified) => {
-      if (err) return clb(err)
-
-      const diff = compareNamespace(ns.content, remoteNamespace, opt.compareModificationTime ? ns.mtime : undefined, opt.compareModificationTime ? lastModified : undefined)
-      ns.diff = diff
-      ns.remoteContent = remoteNamespace
-      clb(null, ns)
-    })
-  }, cb)
+const doesDirectoryExist = (p) => {
+  let directoryExists = false
+  try {
+    directoryExists = fs.statSync(p).isDirectory()
+  } catch (e) {}
+  return directoryExists
 }
 
 const getNamespaceNamesAvailableInReference = (opt, downloads) => {
@@ -205,221 +154,6 @@ const ensureAllNamespacesInLanguages = (opt, remoteLanguages, downloads) => {
       }
     })
   })
-}
-
-const downloadAll = (opt, remoteLanguages, omitRef, manipulate, cb) => {
-  if (typeof cb !== 'function') {
-    if (typeof manipulate === 'function') {
-      cb = manipulate
-      manipulate = undefined
-    }
-    if (typeof omitRef === 'function') {
-      cb = omitRef
-      manipulate = undefined
-      omitRef = false
-    }
-  }
-
-  if (!opt.dry && opt.format !== 'xcstrings') cleanupLanguages(opt, remoteLanguages)
-
-  getDownloads(opt, (err, downloads) => {
-    if (err) return cb(err)
-
-    ensureAllNamespacesInLanguages(opt, remoteLanguages, downloads)
-
-    if (omitRef) {
-      downloads = downloads.filter((d) => {
-        const splitted = d.key.split('/')
-        const lng = splitted[d.isPrivate ? 3 : 2]
-        return lng !== opt.referenceLanguage
-      })
-    }
-
-    if (opt.format === 'xcstrings') { // 1 file per namespace including all languages
-      const downloadsByNamespace = {}
-      downloads.forEach((download) => {
-        const { namespace } = getInfosInUrl(download)
-        downloadsByNamespace[namespace] = downloadsByNamespace[namespace] || []
-        downloadsByNamespace[namespace].push(download)
-      })
-
-      async.eachLimit(Object.keys(downloadsByNamespace), opt.unpublished ? 5 : 20, (namespace, clb) => {
-        const locizeData = {
-          sourceLng: opt.referenceLanguage,
-          resources: {}
-        }
-
-        async.eachLimit(downloadsByNamespace[namespace], opt.unpublished ? 5 : 20, (download, clb) => {
-          const { language } = getInfosInUrl(download)
-          opt.isPrivate = download.isPrivate
-
-          if (opt.language && opt.language !== language && language !== opt.referenceLanguage) return clb(null)
-          if (opt.languages && opt.languages.length > 0 && opt.languages.indexOf(language) < 0 && language !== opt.referenceLanguage) return clb(null)
-          if (opt.namespace && opt.namespace !== namespace) return clb(null)
-          if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return clb(null)
-
-          if (opt.unpublished) opt.raw = true
-          getRemoteNamespace(opt, language, namespace, (err, ns, lastModified) => {
-            if (err) return clb(err)
-
-            if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
-              return clb(null)
-            }
-
-            if (manipulate && typeof manipulate === 'function') manipulate(language, namespace, ns)
-
-            locizeData.resources[language] = ns
-            clb()
-          })
-        }, (err) => {
-          if (err) return clb(err)
-
-          try {
-            const converted = locize2xcstrings(locizeData)
-
-            const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
-            if (opt.dry) return clb(null)
-            if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) && filledMask.lastIndexOf(path.sep) > 0) {
-              mkdirp.sync(path.join(opt.path, filledMask.substring(0, filledMask.lastIndexOf(path.sep))))
-            }
-            const parentDir = path.dirname(path.join(opt.path, filledMask))
-            mkdirp.sync(parentDir)
-            const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
-            fs.writeFile(path.join(opt.path, filledMask), fileContent, clb)
-          } catch (e) {
-            err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
-            return clb(err)
-          }
-        })
-      }, cb)
-    } else { // 1 file per namespace/lng
-      async.eachLimit(downloads, opt.unpublished ? 5 : 20, (download, clb) => {
-        const { language, namespace } = getInfosInUrl(download)
-        opt.isPrivate = download.isPrivate
-
-        if (opt.language && opt.language !== language && language !== opt.referenceLanguage) return clb(null)
-        if (opt.languages && opt.languages.length > 0 && opt.languages.indexOf(language) < 0 && language !== opt.referenceLanguage) return clb(null)
-        if (opt.namespace && opt.namespace !== namespace) return clb(null)
-        if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return clb(null)
-
-        getRemoteNamespace(opt, language, namespace, (err, ns, lastModified) => {
-          if (err) return clb(err)
-
-          if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
-            return clb(null)
-          }
-
-          if (manipulate && typeof manipulate === 'function') manipulate(language, namespace, ns)
-
-          convertToDesiredFormat(opt, namespace, language, ns, lastModified, (err, converted) => {
-            if (err) {
-              err.message = 'Invalid content for "' + opt.format + '" format!\n' + (err.message || '')
-              return clb(err)
-            }
-
-            const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, language).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
-            if (opt.dry) return clb(null)
-            if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) && filledMask.lastIndexOf(path.sep) > 0) {
-              mkdirp.sync(path.join(opt.path, filledMask.substring(0, filledMask.lastIndexOf(path.sep))))
-            }
-            const parentDir = path.dirname(path.join(opt.path, filledMask))
-            mkdirp.sync(parentDir)
-            const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
-            fs.writeFile(path.join(opt.path, filledMask), fileContent, clb)
-          })
-        })
-      }, cb)
-    }
-  })
-}
-
-const update = (opt, lng, ns, shouldOmit, cb) => {
-  const data = {}
-  if (!opt.skipDelete) {
-    ns.diff.toRemove.forEach((k) => { data[k] = null })
-  }
-  ns.diff.toAdd.forEach((k) => { data[k] = ns.content[k] })
-  if (opt.updateValues) {
-    ns.diff.toUpdate.forEach((k) => { data[k] = ns.content[k] })
-  }
-
-  const keysToSend = Object.keys(data).length
-  if (keysToSend === 0) return cb(null)
-
-  if (opt.dry) return cb(null)
-
-  const payloadKeysLimit = 1000
-
-  function send (d, so, clb, isRetrying) {
-    const queryParams = new URLSearchParams()
-    if (opt.autoTranslate && lng === opt.referenceLanguage) {
-      /** @See https://www.locize.com/docs/api#optional-autotranslate */
-      queryParams.append('autotranslate', 'true')
-    }
-    if (so) {
-      queryParams.append('omitstatsgeneration', 'true')
-    }
-
-    const queryString = queryParams.size > 0 ? '?' + queryParams.toString() : ''
-
-    request(opt.apiEndpoint + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace + queryString, {
-      method: 'post',
-      body: d,
-      headers: {
-        Authorization: opt.apiKey
-      }
-    }, (err, res, obj) => {
-      if (err) return clb(err)
-      const cliInfo = res.headers.get('x-cli-info')
-      if (cliInfo && cliInfo !== opt.lastShownCliInfo) {
-        console.log(colors.yellow(cliInfo))
-        opt.lastShownCliInfo = cliInfo
-      }
-      if (res.status === 504 && !isRetrying) {
-        return setTimeout(() => send(d, so, clb, true), 3000)
-      }
-      if (res.status >= 300 && res.status !== 412) {
-        if (obj && (obj.errorMessage || obj.message)) {
-          return clb(new Error((obj.errorMessage || obj.message)))
-        }
-        return clb(new Error(res.statusText + ' (' + res.status + ')'))
-      }
-      setTimeout(() => clb(null), 1000)
-    })
-  }
-
-  if (keysToSend > payloadKeysLimit) {
-    const tasks = []
-    const keysInObj = Object.keys(data)
-
-    while (keysInObj.length > payloadKeysLimit) {
-      (function () {
-        const pagedData = {}
-        keysInObj.splice(0, payloadKeysLimit).forEach((k) => { pagedData[k] = data[k] })
-        const hasMoreKeys = keysInObj.length > 0
-        tasks.push((c) => send(pagedData, hasMoreKeys ? true : shouldOmit, c))
-      })()
-    }
-
-    if (keysInObj.length === 0) return cb(null)
-
-    const finalPagedData = {}
-    keysInObj.splice(0, keysInObj.length).forEach((k) => { finalPagedData[k] = data[k] })
-    tasks.push((c) => send(finalPagedData, shouldOmit, c))
-
-    async.series(tasks, cb)
-    return
-  }
-
-  send(data, shouldOmit, cb)
-}
-
-const doesDirectoryExist = (p) => {
-  let directoryExists = false
-  try {
-    directoryExists = fs.statSync(p).isDirectory()
-  } catch (e) {}
-  return directoryExists
 }
 
 const cleanupLanguages = (opt, remoteLanguages) => {
@@ -458,34 +192,6 @@ const cleanupLanguages = (opt, remoteLanguages) => {
   })
 }
 
-const handleError = (err, cb) => {
-  if (!cb && err) {
-    console.error(colors.red(err.stack))
-    process.exit(1)
-  }
-  if (cb) cb(err)
-}
-
-const checkForMissingLocalNamespaces = (downloads, localNamespaces, opt) => {
-  const localMissingNamespaces = []
-  downloads.forEach((d) => {
-    const splitted = d.url.split('/')
-    const namespace = splitted.pop()
-    const language = splitted.pop()
-    // if (!opt.referenceLanguageOnly || (opt.referenceLanguageOnly && language === opt.referenceLanguage)) {
-    if (language === opt.referenceLanguage) {
-      const foundLocalNamespace = localNamespaces.find((n) => n.namespace === namespace && n.language === language)
-      if (!foundLocalNamespace) {
-        localMissingNamespaces.push({
-          language,
-          namespace
-        })
-      }
-    }
-  })
-  return localMissingNamespaces
-}
-
 const backupDeleted = (opt, ns, now) => {
   if (opt.dry || ns.diff.toRemove.length === 0) return
   let m = now.getMonth() + 1
@@ -510,221 +216,489 @@ const backupDeleted = (opt, ns, now) => {
   fs.writeFileSync(path.join(currentBackupPath, ns.language, `${ns.namespace}.json`), fileContent)
 }
 
-const handleSync = (opt, remoteLanguages, localNamespaces, cb) => {
-  if (!localNamespaces || localNamespaces.length === 0) {
-    downloadAll(opt, remoteLanguages, (err) => {
-      if (err) return handleError(err, cb)
-      if (!cb) console.log(colors.green('FINISHED'))
-      if (cb) cb(null)
+async function getDownloads (opt) {
+  // replicates earlier behavior but returns a Promise that resolves to downloads array
+  if (!opt.unpublished) {
+    const url = opt.apiEndpoint + '/download/' + opt.projectId + '/' + opt.version
+    const headers = opt.apiKey ? { Authorization: opt.apiKey } : undefined
+    let { res, obj } = await request(url, { method: 'get', headers })
+    if (res.status >= 300) {
+      if (obj && (obj.errorMessage || obj.message)) {
+        if (res.statusText && res.status) {
+          throw new Error(res.statusText + ' (' + res.status + ') | ' + (obj.errorMessage || obj.message))
+        }
+        throw new Error((obj.errorMessage || obj.message))
+      }
+      throw new Error(res.statusText + ' (' + res.status + ')')
+    }
+    if (obj.length > 0) {
+      if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2)
+      return obj
+    }
+
+    const resStats = await getProjectStats(opt)
+    const stats = resStats
+    if (!stats) throw new Error('Nothing found!')
+    if (!stats[opt.version]) throw new Error(`Version "${opt.version}" not found!`)
+    return obj
+  } else {
+    const stats = await getProjectStats(opt)
+    if (!stats) throw new Error('Nothing found!')
+    if (!stats[opt.version]) throw new Error(`Version "${opt.version}" not found!`)
+
+    const toDownload = []
+    const lngsToCheck = opt.language ? [opt.language] : (opt.languages && opt.languages.length > 0) ? opt.languages : Object.keys(stats[opt.version])
+    lngsToCheck.forEach((l) => {
+      if (opt.namespaces) {
+        opt.namespaces.forEach((n) => {
+          if (!stats[opt.version][l][n]) return
+          if (opt.skipEmpty && stats[opt.version][l][n].segmentsTranslated === 0) return
+          toDownload.push({
+            url: `${opt.apiEndpoint}/${opt.projectId}/${opt.version}/${l}/${n}`,
+            key: `${opt.projectId}/${opt.version}/${l}/${n}`,
+            lastModified: '1960-01-01T00:00:00.000Z',
+            size: 0
+          })
+        })
+      } else if (opt.namespace) {
+        if (!stats[opt.version][l][opt.namespace]) return
+        if (opt.skipEmpty && stats[opt.version][l][opt.namespace].segmentsTranslated === 0) return
+        toDownload.push({
+          url: `${opt.apiEndpoint}/${opt.projectId}/${opt.version}/${l}/${opt.namespace}`,
+          key: `${opt.projectId}/${opt.version}/${l}/${opt.namespace}`,
+          lastModified: '1960-01-01T00:00:00.000Z',
+          size: 0
+        })
+      } else {
+        Object.keys(stats[opt.version][l]).forEach((n) => {
+          if (opt.skipEmpty && stats[opt.version][l][n].segmentsTranslated === 0) return
+          toDownload.push({
+            url: `${opt.apiEndpoint}/${opt.projectId}/${opt.version}/${l}/${n}`,
+            key: `${opt.projectId}/${opt.version}/${l}/${n}`,
+            lastModified: '1960-01-01T00:00:00.000Z',
+            size: 0
+          })
+        })
+      }
     })
+    return toDownload
+  }
+}
+
+async function compareNamespaces (opt, localNamespaces) {
+  // previously used async.mapLimit -> pMapLimit
+  const limit = 20
+  return pMapLimit(localNamespaces, limit, async (ns) => {
+    const { result: remoteNamespace, lastModified } = await getRemoteNamespace(opt, ns.language, ns.namespace)
+    const diff = compareNamespace(ns.content, remoteNamespace, opt.compareModificationTime ? ns.mtime : undefined, opt.compareModificationTime ? lastModified : undefined)
+    ns.diff = diff
+    ns.remoteContent = remoteNamespace
+    return ns
+  })
+}
+
+async function downloadAll (opt, remoteLanguages, omitRef = false, manipulate) {
+  if (!opt.dry && opt.format !== 'xcstrings') cleanupLanguages(opt, remoteLanguages)
+
+  let downloads = await getDownloads(opt)
+
+  ensureAllNamespacesInLanguages(opt, remoteLanguages, downloads)
+
+  if (omitRef) {
+    downloads = downloads.filter((d) => {
+      const splitted = d.key.split('/')
+      const lng = splitted[d.isPrivate ? 3 : 2]
+      return lng !== opt.referenceLanguage
+    })
+  }
+
+  if (opt.format === 'xcstrings') { // 1 file per namespace including all languages
+    const downloadsByNamespace = {}
+    downloads.forEach((download) => {
+      const { namespace } = getInfosInUrl(download)
+      downloadsByNamespace[namespace] = downloadsByNamespace[namespace] || []
+      downloadsByNamespace[namespace].push(download)
+    })
+
+    const namespaceKeys = Object.keys(downloadsByNamespace)
+    const concurrency = opt.unpublished ? 5 : 20
+
+    await pEachLimit(namespaceKeys, concurrency, async (namespace) => {
+      const locizeData = {
+        sourceLng: opt.referenceLanguage,
+        resources: {}
+      }
+
+      const entries = downloadsByNamespace[namespace]
+      await pEachLimit(entries, opt.unpublished ? 5 : 20, async (download) => {
+        const { language } = getInfosInUrl(download)
+        opt.isPrivate = download.isPrivate
+
+        if (opt.language && opt.language !== language && language !== opt.referenceLanguage) return
+        if (opt.languages && opt.languages.length > 0 && opt.languages.indexOf(language) < 0 && language !== opt.referenceLanguage) return
+        if (opt.namespace && opt.namespace !== namespace) return
+        if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return
+
+        if (opt.unpublished) opt.raw = true
+        const { result: ns } = await getRemoteNamespace(opt, language, namespace)
+
+        if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
+          return
+        }
+
+        if (manipulate && typeof manipulate === 'function') manipulate(language, namespace, ns)
+
+        locizeData.resources[language] = ns
+      })
+
+      try {
+        const converted = locize2xcstrings(locizeData)
+
+        const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
+        if (opt.dry) return
+        if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) && filledMask.lastIndexOf(path.sep) > 0) {
+          mkdirp.sync(path.join(opt.path, filledMask.substring(0, filledMask.lastIndexOf(path.sep))))
+        }
+        const parentDir = path.dirname(path.join(opt.path, filledMask))
+        mkdirp.sync(parentDir)
+        const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
+        await fs.promises.writeFile(path.join(opt.path, filledMask), fileContent)
+      } catch (e) {
+        e.message = 'Invalid content for "' + opt.format + '" format!\n' + (e.message || '')
+        throw e
+      }
+    })
+  } else { // 1 file per namespace/lng
+    const concurrency = opt.unpublished ? 5 : 20
+    await pEachLimit(downloads, concurrency, async (download) => {
+      const { language, namespace } = getInfosInUrl(download)
+      opt.isPrivate = download.isPrivate
+
+      if (opt.language && opt.language !== language && language !== opt.referenceLanguage) return
+      if (opt.languages && opt.languages.length > 0 && opt.languages.indexOf(language) < 0 && language !== opt.referenceLanguage) return
+      if (opt.namespace && opt.namespace !== namespace) return
+      if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return
+
+      const { result: ns, lastModified } = await getRemoteNamespace(opt, language, namespace)
+
+      if (opt.skipEmpty && Object.keys(flatten(ns)).length === 0) {
+        return
+      }
+
+      if (manipulate && typeof manipulate === 'function') manipulate(language, namespace, ns)
+
+      const converted = await convertToDesiredFormat(opt, namespace, language, ns, lastModified)
+      // convertToDesiredFormatP either resolves converted or throws
+      let convertedText = converted
+      if (Array.isArray(converted) && converted.length === 1) convertedText = converted[0]
+
+      const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, language).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
+      if (opt.dry) return
+      if (opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`) > opt.pathMask.indexOf(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`) && filledMask.lastIndexOf(path.sep) > 0) {
+        mkdirp.sync(path.join(opt.path, filledMask.substring(0, filledMask.lastIndexOf(path.sep))))
+      }
+      const parentDir = path.dirname(path.join(opt.path, filledMask))
+      mkdirp.sync(parentDir)
+      const fileContent = (opt.format !== 'xlsx' && !convertedText.endsWith('\n')) ? (convertedText + '\n') : convertedText
+      await fs.promises.writeFile(path.join(opt.path, filledMask), fileContent)
+    })
+  }
+}
+
+async function update (opt, lng, ns, shouldOmit = false) {
+  const data = {}
+  if (!opt.skipDelete) {
+    ns.diff.toRemove.forEach((k) => { data[k] = null })
+  }
+  ns.diff.toAdd.forEach((k) => { data[k] = ns.content[k] })
+  if (opt.updateValues) {
+    ns.diff.toUpdate.forEach((k) => { data[k] = ns.content[k] })
+  }
+
+  const keysToSend = Object.keys(data).length
+  if (keysToSend === 0) return
+
+  if (opt.dry) return
+
+  const payloadKeysLimit = 1000
+
+  async function send (d, so) {
+    const queryParams = new URLSearchParams()
+    if (opt.autoTranslate && lng === opt.referenceLanguage) {
+      /** @See https://www.locize.com/docs/api#optional-autotranslate */
+      queryParams.append('autotranslate', 'true')
+    }
+    if (so) {
+      queryParams.append('omitstatsgeneration', 'true')
+    }
+
+    const queryString = queryParams.size > 0 ? '?' + queryParams.toString() : ''
+
+    // retry once on 504
+    let isRetrying = false
+    while (true) {
+      const { res, obj } = await request(opt.apiEndpoint + '/update/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns.namespace + queryString, {
+        method: 'post',
+        body: d,
+        headers: {
+          Authorization: opt.apiKey
+        }
+      })
+      const cliInfo = res.headers.get('x-cli-info')
+      if (cliInfo && cliInfo !== opt.lastShownCliInfo) {
+        console.log(colors.yellow(cliInfo))
+        opt.lastShownCliInfo = cliInfo
+      }
+      if (res.status === 504 && !isRetrying) {
+        isRetrying = true
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        continue
+      }
+      if (res.status >= 300 && res.status !== 412) {
+        if (obj && (obj.errorMessage || obj.message)) {
+          throw new Error((obj.errorMessage || obj.message))
+        }
+        throw new Error(res.statusText + ' (' + res.status + ')')
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      return
+    }
+  }
+
+  if (keysToSend > payloadKeysLimit) {
+    const tasks = []
+    const keysInObj = Object.keys(data)
+
+    while (keysInObj.length > payloadKeysLimit) {
+      const pagedData = {}
+      keysInObj.splice(0, payloadKeysLimit).forEach((k) => { pagedData[k] = data[k] })
+      const hasMoreKeys = keysInObj.length > 0
+      tasks.push(async () => send(pagedData, hasMoreKeys ? true : shouldOmit))
+    }
+
+    if (keysInObj.length === 0) return
+
+    const finalPagedData = {}
+    keysInObj.splice(0, keysInObj.length).forEach((k) => { finalPagedData[k] = data[k] })
+    tasks.push(async () => send(finalPagedData, shouldOmit))
+
+    // run tasks in series (as original async.series)
+    await pSeries(tasks)
     return
   }
 
-  getDownloads(opt, (err, downloads) => {
-    if (err) return handleError(err, cb)
+  await send(data, shouldOmit)
+}
 
-    opt.isPrivate = downloads.length > 0 && downloads[0].isPrivate
+async function handleSync (opt, remoteLanguages, localNamespaces) {
+  if (!localNamespaces || localNamespaces.length === 0) {
+    await downloadAll(opt, remoteLanguages, false)
+    return
+  }
 
-    const localMissingNamespaces = checkForMissingLocalNamespaces(downloads, localNamespaces, opt)
+  const downloads = await getDownloads(opt)
+  opt.isPrivate = downloads.length > 0 && downloads[0].isPrivate
 
-    compareNamespaces(opt, localNamespaces, (err, compared) => {
-      if (err) return handleError(err, cb)
+  const localMissingNamespaces = checkForMissingLocalNamespaces(downloads, localNamespaces, opt)
 
-      const onlyToUpdate = compared.filter((ns) => ns.diff.toAdd.concat(opt.skipDelete ? [] : ns.diff.toRemove).concat(ns.diff.toUpdate).length > 0)
+  const compared = await compareNamespaces(opt, localNamespaces)
 
-      const lngsInReqs = []
-      const nsInReqs = []
-      onlyToUpdate.forEach((n) => {
-        if (lngsInReqs.indexOf(n.language) < 0) {
-          lngsInReqs.push(n.language)
+  const onlyToUpdate = compared.filter((ns) => ns.diff.toAdd.concat(opt.skipDelete ? [] : ns.diff.toRemove).concat(ns.diff.toUpdate).length > 0)
+
+  const lngsInReqs = []
+  const nsInReqs = []
+  onlyToUpdate.forEach((n) => {
+    if (lngsInReqs.indexOf(n.language) < 0) {
+      lngsInReqs.push(n.language)
+    }
+    if (nsInReqs.indexOf(n.namespace) < 0) {
+      nsInReqs.push(n.namespace)
+    }
+  })
+  const shouldOmit = lngsInReqs.length > 5 || nsInReqs.length > 5
+
+  let wasThereSomethingToUpdate = opt.autoTranslate || false
+
+  async function updateComparedNamespaces () {
+    const now = new Date()
+    const concurrency = Math.max(1, Math.round(os.cpus().length / 2))
+    await pEachLimit(compared, concurrency, async (ns) => {
+      if (ns.diff.toRemove.length > 0) {
+        if (opt.skipDelete) {
+          console.log(colors.bgRed(`skipping the removal of ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`))
+          if (opt.dry) console.log(colors.bgRed(`skipped to remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`))
+        } else {
+          console.log(colors.red(`removing ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`))
+          if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`))
+          if (!opt.dry && opt.backupDeletedPath) backupDeleted(opt, ns, now)
         }
-        if (nsInReqs.indexOf(n.namespace) < 0) {
-          nsInReqs.push(n.namespace)
-        }
-      })
-      const shouldOmit = lngsInReqs.length > 5 || nsInReqs.length > 5
-
-      let wasThereSomethingToUpdate = opt.autoTranslate || false
-
-      function updateComparedNamespaces () {
-        const now = new Date()
-        async.eachLimit(compared, Math.round(os.cpus().length / 2), (ns, clb) => {
-          if (!cb) {
-            if (ns.diff.toRemove.length > 0) {
-              if (opt.skipDelete) {
-                console.log(colors.bgRed(`skipping the removal of ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`))
-                if (opt.dry) console.log(colors.bgRed(`skipped to remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`))
-              } else {
-                console.log(colors.red(`removing ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`))
-                if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`))
-                if (!opt.dry && opt.backupDeletedPath) backupDeleted(opt, ns, now)
-              }
-            }
-            if (ns.diff.toRemoveLocally.length > 0) {
-              console.log(colors.red(`removing ${ns.diff.toRemoveLocally.length} keys in ${ns.language}/${ns.namespace} locally...`))
-              if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemoveLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`))
-            }
-            if (ns.diff.toAdd.length > 0) {
-              console.log(colors.green(`adding ${ns.diff.toAdd.length} keys in ${ns.language}/${ns.namespace}...`))
-              if (opt.dry) console.log(colors.green(`would add ${ns.diff.toAdd.join(', ')} in ${ns.language}/${ns.namespace}...`))
-            }
-            if (ns.diff.toAddLocally.length > 0) {
-              if (opt.skipDelete) {
-                console.log(colors.bgGreen(`skipping the addition of ${ns.diff.toAddLocally.length} keys in ${ns.language}/${ns.namespace} locally...`))
-                if (opt.dry) console.log(colors.bgGreen(`skipped the addition of ${ns.diff.toAddLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`))
-              } else {
-                console.log(colors.green(`adding ${ns.diff.toAddLocally.length} keys in ${ns.language}/${ns.namespace} locally...`))
-                if (opt.dry) console.log(colors.green(`would add ${ns.diff.toAddLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`))
-              }
-            }
-            if (opt.updateValues) {
-              if (ns.diff.toUpdate.length > 0) {
-                console.log(colors.yellow(`updating ${ns.diff.toUpdate.length} keys in ${ns.language}/${ns.namespace}${opt.autoTranslate ? ' with automatic translation' : ''}...`))
-                if (opt.dry) console.log(colors.yellow(`would update ${ns.diff.toUpdate.join(', ')} in ${ns.language}/${ns.namespace}...`))
-              }
-              if (ns.diff.toUpdateLocally.length > 0) {
-                console.log(colors.yellow(`updating ${ns.diff.toUpdateLocally.length} keys in ${ns.language}/${ns.namespace} locally...`))
-                if (opt.dry) console.log(colors.yellow(`would update ${ns.diff.toUpdateLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`))
-              }
-            }
-            const somethingToUpdate = ns.diff.toAdd.concat(opt.skipDelete ? [] : ns.diff.toRemove)/* .concat(ns.diff.toUpdate) */.length > 0
-            if (!somethingToUpdate) console.log(colors.grey(`nothing to update for ${ns.language}/${ns.namespace}`))
-            if (!wasThereSomethingToUpdate && somethingToUpdate) wasThereSomethingToUpdate = true
-          }
-          update(opt, ns.language, ns, shouldOmit, (err) => {
-            if (err) return clb(err)
-            if (ns.diff.toRemove.length === 0 || ns.language !== opt.referenceLanguage) return clb()
-            const nsOnlyRemove = cloneDeep(ns)
-            nsOnlyRemove.diff.toAdd = []
-            nsOnlyRemove.diff.toUpdate = []
-            async.eachLimit(remoteLanguages, Math.round(os.cpus().length / 2), (lng, clb) => update(opt, lng, nsOnlyRemove, shouldOmit, clb), clb)
-          })
-        }, (err) => {
-          if (err) return handleError(err, cb)
-          if (!cb) console.log(colors.grey('syncing...'))
-
-          function down () {
-            setTimeout(() => { // wait a bit before downloading... just to have a chance to get the newly published files
-              downloadAll(opt, remoteLanguages, false, opt.skipDelete
-                ? (lng, namespace, ns) => {
-                    const found = compared.find((n) => n.namespace === namespace && n.language === lng)
-                    if (found && found.diff) {
-                      if (found.diff.toAddLocally && found.diff.toAddLocally.length > 0) {
-                        found.diff.toAddLocally.forEach((k) => {
-                          delete ns[k]
-                        })
-                      }
-                      if (found.diff.toRemove && found.diff.toRemove.length > 0) {
-                        found.diff.toRemove.forEach((k) => {
-                          delete ns[k]
-                        })
-                      }
-                    }
-                  }
-                : undefined, (err) => {
-                if (err) return handleError(err, cb)
-                if (!cb) console.log(colors.green('FINISHED'))
-                if (cb) cb(null)
-              })
-            }, wasThereSomethingToUpdate && !opt.dry ? (opt.autoTranslate ? 10000 : 5000) : 0)
-          }
-
-          if (!shouldOmit) return down()
-          if (opt.dry) return down()
-
-          // optimize stats generation...
-          request(opt.apiEndpoint + '/stats/project/regenerate/' + opt.projectId + '/' + opt.version + (lngsInReqs.length === 1 ? `/${lngsInReqs[0]}` : '') + (nsInReqs.length === 1 ? `?namespace=${nsInReqs[0]}` : ''), {
-            method: 'post',
-            body: {},
-            headers: {
-              Authorization: opt.apiKey
-            }
-          }, (err, res, obj) => {
-            if (err) return handleError(err, cb)
-            if (res.status >= 300 && res.status !== 412) {
-              if (obj && (obj.errorMessage || obj.message)) {
-                return handleError(new Error((obj.errorMessage || obj.message)), cb)
-              }
-              return handleError(new Error(res.statusText + ' (' + res.status + ')'), cb)
-            }
-            down()
-          })
-        })
       }
+      if (ns.diff.toRemoveLocally.length > 0) {
+        console.log(colors.red(`removing ${ns.diff.toRemoveLocally.length} keys in ${ns.language}/${ns.namespace} locally...`))
+        if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemoveLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`))
+      }
+      if (ns.diff.toAdd.length > 0) {
+        console.log(colors.green(`adding ${ns.diff.toAdd.length} keys in ${ns.language}/${ns.namespace}...`))
+        if (opt.dry) console.log(colors.green(`would add ${ns.diff.toAdd.join(', ')} in ${ns.language}/${ns.namespace}...`))
+      }
+      if (ns.diff.toAddLocally.length > 0) {
+        if (opt.skipDelete) {
+          console.log(colors.bgGreen(`skipping the addition of ${ns.diff.toAddLocally.length} keys in ${ns.language}/${ns.namespace} locally...`))
+          if (opt.dry) console.log(colors.bgGreen(`skipped the addition of ${ns.diff.toAddLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`))
+        } else {
+          console.log(colors.green(`adding ${ns.diff.toAddLocally.length} keys in ${ns.language}/${ns.namespace} locally...`))
+          if (opt.dry) console.log(colors.green(`would add ${ns.diff.toAddLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`))
+        }
+      }
+      if (opt.updateValues) {
+        if (ns.diff.toUpdate.length > 0) {
+          console.log(colors.yellow(`updating ${ns.diff.toUpdate.length} keys in ${ns.language}/${ns.namespace}${opt.autoTranslate ? ' with automatic translation' : ''}...`))
+          if (opt.dry) console.log(colors.yellow(`would update ${ns.diff.toUpdate.join(', ')} in ${ns.language}/${ns.namespace}...`))
+        }
+        if (ns.diff.toUpdateLocally.length > 0) {
+          console.log(colors.yellow(`updating ${ns.diff.toUpdateLocally.length} keys in ${ns.language}/${ns.namespace} locally...`))
+          if (opt.dry) console.log(colors.yellow(`would update ${ns.diff.toUpdateLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`))
+        }
+      }
+      const somethingToUpdate = ns.diff.toAdd.concat(opt.skipDelete ? [] : ns.diff.toRemove)/* .concat(ns.diff.toUpdate) */.length > 0
+      if (!somethingToUpdate) console.log(colors.grey(`nothing to update for ${ns.language}/${ns.namespace}`))
+      if (!wasThereSomethingToUpdate && somethingToUpdate) wasThereSomethingToUpdate = true
 
-      if (opt.deleteRemoteNamespace && localMissingNamespaces.length > 0) {
-        wasThereSomethingToUpdate = true
-        async.eachLimit(localMissingNamespaces, 20, (n, clb) => {
-          if (opt.dry) {
-            console.log(colors.red(`would delete complete namespace ${n.namespace}...`))
-            return clb()
-          }
-          console.log(colors.red(`deleting complete namespace ${n.namespace}...`))
-          deleteNamespace({
-            apiEndpoint: opt.apiEndpoint,
-            apiKey: opt.apiKey,
-            projectId: opt.projectId,
-            version: opt.version,
-            namespace: n.namespace
-          }, clb)
-        }, (err) => {
-          if (err) return handleError(err, cb)
-          updateComparedNamespaces()
-        })
+      await update(opt, ns.language, ns, shouldOmit)
+      if (ns.diff.toRemove.length === 0 || ns.language !== opt.referenceLanguage) return
+      const nsOnlyRemove = cloneDeep(ns)
+      nsOnlyRemove.diff.toAdd = []
+      nsOnlyRemove.diff.toUpdate = []
+      await pEachLimit(remoteLanguages, Math.max(1, Math.round(os.cpus().length / 2)), async (lng) => {
+        await update(opt, lng, nsOnlyRemove, shouldOmit)
+      })
+    })
+
+    console.log(colors.grey('syncing...'))
+
+    async function down () {
+      await new Promise((resolve) => setTimeout(resolve, wasThereSomethingToUpdate && !opt.dry ? (opt.autoTranslate ? 10000 : 5000) : 0))
+      await downloadAll(opt, remoteLanguages, false,
+        opt.skipDelete
+          ? (lng, namespace, ns) => {
+              const found = compared.find((n) => n.namespace === namespace && n.language === lng)
+              if (found && found.diff) {
+                if (found.diff.toAddLocally && found.diff.toAddLocally.length > 0) {
+                  found.diff.toAddLocally.forEach((k) => {
+                    delete ns[k]
+                  })
+                }
+                if (found.diff.toRemove && found.diff.toRemove.length > 0) {
+                  found.diff.toRemove.forEach((k) => {
+                    delete ns[k]
+                  })
+                }
+              }
+            }
+          : undefined
+      )
+    }
+
+    if (!shouldOmit) return down()
+    if (opt.dry) return down()
+
+    // optimize stats generation...
+    const url = opt.apiEndpoint + '/stats/project/regenerate/' + opt.projectId + '/' + opt.version + (lngsInReqs.length === 1 ? `/${lngsInReqs[0]}` : '') + (nsInReqs.length === 1 ? `?namespace=${nsInReqs[0]}` : '')
+    const { res, obj } = await request(url, {
+      method: 'post',
+      body: {},
+      headers: {
+        Authorization: opt.apiKey
+      }
+    })
+    if (res.status >= 300 && res.status !== 412) {
+      if (obj && (obj.errorMessage || obj.message)) {
+        throw new Error((obj.errorMessage || obj.message))
+      }
+      throw new Error(res.statusText + ' (' + res.status + ')')
+    }
+    return down()
+  }
+
+  if (opt.deleteRemoteNamespace && localMissingNamespaces.length > 0) {
+    wasThereSomethingToUpdate = true
+    await pEachLimit(localMissingNamespaces, 20, async (n) => {
+      if (opt.dry) {
+        console.log(colors.red(`would delete complete namespace ${n.namespace}...`))
         return
       }
-      updateComparedNamespaces()
-    })
-  })
-}
-
-const continueToSync = (opt, cb) => {
-  console.log(colors.grey('checking remote (locize)...'))
-  getRemoteLanguages(opt, (err, remoteLanguages) => {
-    if (err) return handleError(err, cb)
-
-    if (opt.referenceLanguageOnly && opt.language && opt.referenceLanguage !== opt.language) {
-      opt.referenceLanguage = opt.language
-    }
-    if (opt.referenceLanguageOnly && !opt.language && opt.languages && opt.languages.length > 0 && opt.languages.indexOf(opt.referenceLanguage) < 0) {
-      opt.referenceLanguage = opt.languages[0]
-    }
-
-    if (opt.referenceLanguageOnly) {
-      console.log(colors.grey(`checking local${opt.path !== process.cwd() ? ` (${opt.path})` : ''} only reference language...`))
-      parseLocalReference(opt, (err, localNamespaces) => {
-        if (err) return handleError(err, cb)
-
-        if (!opt.dry && opt.cleanLocalFiles) {
-          localNamespaces.forEach((ln) => fs.unlinkSync(ln.path))
-          localNamespaces = []
-        }
-
-        console.log(colors.grey('calculate diffs...'))
-        handleSync(opt, remoteLanguages, localNamespaces, cb)
+      console.log(colors.red(`deleting complete namespace ${n.namespace}...`))
+      await deleteNamespace({
+        apiEndpoint: opt.apiEndpoint,
+        apiKey: opt.apiKey,
+        projectId: opt.projectId,
+        version: opt.version,
+        namespace: n.namespace
       })
-      return
-    }
-
-    console.log(colors.grey(`checking local${opt.path !== process.cwd() ? ` (${opt.path})` : ''}...`))
-    parseLocalLanguages(opt, remoteLanguages, (err, localNamespaces) => {
-      if (err) return handleError(err, cb)
-
-      if (!opt.dry && opt.cleanLocalFiles) {
-        localNamespaces.forEach((ln) => fs.unlinkSync(ln.path))
-        localNamespaces = []
-      }
-
-      console.log(colors.grey('calculate diffs...'))
-      handleSync(opt, remoteLanguages, localNamespaces, cb)
     })
-  })
+    return updateComparedNamespaces()
+  }
+  return updateComparedNamespaces()
 }
 
-const sync = (opt, cb) => {
+const checkForMissingLocalNamespaces = (downloads, localNamespaces, opt) => {
+  const localMissingNamespaces = []
+  downloads.forEach((d) => {
+    const splitted = d.url.split('/')
+    const namespace = splitted.pop()
+    const language = splitted.pop()
+    if (language === opt.referenceLanguage) {
+      const foundLocalNamespace = localNamespaces.find((n) => n.namespace === namespace && n.language === language)
+      if (!foundLocalNamespace) {
+        localMissingNamespaces.push({
+          language,
+          namespace
+        })
+      }
+    }
+  })
+  return localMissingNamespaces
+}
+
+async function continueToSync (opt) {
+  console.log(colors.grey('checking remote (locize)...'))
+  const remoteLanguages = await getRemoteLanguages(opt)
+
+  if (opt.referenceLanguageOnly && opt.language && opt.referenceLanguage !== opt.language) {
+    opt.referenceLanguage = opt.language
+  }
+  if (opt.referenceLanguageOnly && !opt.language && opt.languages && opt.languages.length > 0 && opt.languages.indexOf(opt.referenceLanguage) < 0) {
+    opt.referenceLanguage = opt.languages[0]
+  }
+
+  if (opt.referenceLanguageOnly) {
+    console.log(colors.grey(`checking local${opt.path !== process.cwd() ? ` (${opt.path})` : ''} only reference language...`))
+    let localNamespaces = await parseLocalReference(opt)
+    if (!opt.dry && opt.cleanLocalFiles) {
+      localNamespaces.forEach((ln) => fs.unlinkSync(ln.path))
+      localNamespaces = []
+    }
+
+    console.log(colors.grey('calculate diffs...'))
+    await handleSync(opt, remoteLanguages, localNamespaces)
+    return
+  }
+
+  console.log(colors.grey(`checking local${opt.path !== process.cwd() ? ` (${opt.path})` : ''}...`))
+  let localNamespaces = await parseLocalLanguages(opt, remoteLanguages)
+  if (!opt.dry && opt.cleanLocalFiles) {
+    localNamespaces.forEach((ln) => fs.unlinkSync(ln.path))
+    localNamespaces = []
+  }
+
+  console.log(colors.grey('calculate diffs...'))
+  await handleSync(opt, remoteLanguages, localNamespaces)
+}
+
+async function syncInternal (opt) {
   opt.format = opt.format || 'json'
   if (!reversedFileExtensionsMap[opt.format]) {
-    return handleError(new Error(`${opt.format} is not a valid format!`), cb)
+    throw new Error(`${opt.format} is not a valid format!`)
   }
 
   if (opt.autoTranslate && !opt.referenceLanguageOnly) {
@@ -738,7 +712,7 @@ const sync = (opt, cb) => {
 
   if (opt.autoCreatePath === false) {
     if (!doesDirectoryExist(opt.path)) {
-      return handleError(new Error(`${opt.path} does not exist!`), cb)
+      throw new Error(`${opt.path} does not exist!`)
     }
   }
   if (!opt.dry) mkdirp.sync(opt.path)
@@ -757,32 +731,40 @@ const sync = (opt, cb) => {
     opt.unpublished = true
   }
   if (opt.unpublished && !opt.apiKey) {
-    return handleError(new Error('Please provide also an api-key!'), cb)
+    throw new Error('Please provide also an api-key!')
   }
 
   if (opt.branch === '') {
-    return handleError(new Error('The branch name seems invalid!'), cb)
+    throw new Error('The branch name seems invalid!')
   }
 
   if (opt.branch) {
-    getBranches(opt, (err, branches) => {
-      if (err) return handleError(err, cb)
+    const branches = await getBranches(opt)
+    let b
+    if (isValidUuid(opt.branch)) b = branches.find((br) => br.id === opt.branch)
+    if (!b) b = branches.find((br) => br.name === opt.branch)
+    if (!b) {
+      throw new Error(`Branch ${opt.branch} not found!`)
+    }
+    opt.projectId = b.id
+    opt.version = b.version
 
-      let b
-      if (isValidUuid(opt.branch)) b = branches.find((br) => br.id === opt.branch)
-      if (!b) b = branches.find((br) => br.name === opt.branch)
-      if (!b) {
-        return handleError(new Error(`Branch ${opt.branch} not found!`), cb)
-      }
-      opt.projectId = b.id
-      opt.version = b.version
-
-      continueToSync(opt, cb)
-    })
-    return
+    return continueToSync(opt)
   }
 
-  continueToSync(opt, cb)
+  return continueToSync(opt)
+}
+
+async function sync (opt) {
+  opt = opt || {}
+
+  try {
+    await syncInternal(opt)
+    console.log(colors.green('FINISHED'))
+  } catch (err) {
+    console.error(colors.red(err.stack))
+    process.exit(1)
+  }
 }
 
 export default sync

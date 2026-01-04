@@ -1,11 +1,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import flatten from 'flat'
-import async from 'async'
 import colors from 'colors'
 import request from './request.js'
 import getRemoteLanguages from './getRemoteLanguages.js'
 import os from 'node:os'
+import mapLimit from './mapLimit.js'
 
 const getDirectories = (srcpath) => {
   return fs.readdirSync(srcpath).filter(function (file) {
@@ -19,32 +19,26 @@ const getFiles = (srcpath) => {
   })
 }
 
-const load = (namespaces, cb) => {
-  async.each(namespaces, (ns, done) => {
-    fs.readFile(ns.path, 'utf8', (err, data) => {
-      if (err) return done(err)
-      try {
-        ns.value = flatten(JSON.parse(data))
-      } catch (err) {
-        console.error(colors.red(err.stack))
-        ns.value = {}
-      }
-      done()
-    })
-  }, (err) => cb(err, namespaces))
+const load = async (namespaces) => {
+  await Promise.all(namespaces.map(async (ns) => {
+    try {
+      const data = await fs.promises.readFile(ns.path, 'utf8')
+      ns.value = flatten(JSON.parse(data))
+    } catch (err) {
+      console.error(colors.red(err.stack))
+      ns.value = {}
+    }
+  }))
+  return namespaces
 }
 
-const parseLanguage = (p, cb) => {
+const parseLanguage = async (p) => {
   const dirs = getDirectories(p)
-
   const namespaces = []
-
   dirs.forEach((lng) => {
     const files = getFiles(path.join(p, lng))
-
     files.forEach((file) => {
       if (path.extname(file) !== '.json') return
-
       namespaces.push({
         language: lng,
         namespace: path.basename(file, '.json'),
@@ -52,11 +46,10 @@ const parseLanguage = (p, cb) => {
       })
     })
   })
-
-  load(namespaces, cb)
+  return await load(namespaces)
 }
 
-const transfer = (opt, ns, cb) => {
+const transfer = async (opt, ns) => {
   let url = `${opt.apiEndpoint}/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}`
     .replace('{{projectId}}', opt.projectId)
     .replace('{{ver}}', opt.version)
@@ -72,11 +65,11 @@ const transfer = (opt, ns, cb) => {
 
   const data = ns.value
   const keysToSend = Object.keys(data).length
-  if (keysToSend === 0) return cb(null)
+  if (keysToSend === 0) return
 
   const payloadKeysLimit = 1000
 
-  function send (d, so, isFirst, clb, isRetrying) {
+  async function send (d, so, isFirst, isRetrying = false) {
     const queryParams = new URLSearchParams()
     if (so) {
       queryParams.append('omitstatsgeneration', 'true')
@@ -84,231 +77,160 @@ const transfer = (opt, ns, cb) => {
     if (isFirst && opt.replace) {
       queryParams.append('replace', 'true')
     }
-
     const queryString = queryParams.size > 0 ? '?' + queryParams.toString() : ''
-
-    request(url + queryString, {
-      method: 'post',
-      body: d,
-      headers: {
-        Authorization: opt.apiKey
+    try {
+      const { res, obj } = await request(url + queryString, {
+        method: 'post',
+        body: d,
+        headers: {
+          Authorization: opt.apiKey
+        }
+      })
+      if (url.indexOf('/missing/') > -1 && res.status === 412) {
+        console.log(colors.green(`transfered ${Object.keys(d).length} keys ${opt.version}/${ns.language}/${ns.namespace} (but all keys already existed)...`))
+        return
       }
-    }, (err, res, obj) => {
-      if (err || (obj && (obj.errorMessage || obj.message))) {
-        if (url.indexOf('/missing/') > -1 && res.status === 412) {
-          console.log(colors.green(`transfered ${Object.keys(d).length} keys ${opt.version}/${ns.language}/${ns.namespace} (but all keys already existed)...`))
-          clb(null)
-          return
-        }
-        if (res.status === 504 && !isRetrying) {
-          return setTimeout(() => send(d, so, isFirst, clb, true), 3000)
-        }
-        console.log(colors.red(`transfer failed for ${Object.keys(d).length} keys ${opt.version}/${ns.language}/${ns.namespace}...`))
-
-        if (err) return clb(err)
-        if (obj && (obj.errorMessage || obj.message)) return clb(new Error((obj.errorMessage || obj.message)))
+      if (res.status === 504 && !isRetrying) {
+        await new Promise(resolve => setTimeout(resolve, 3000))
+        return send(d, so, isFirst, true)
       }
       if (res.status >= 300 && res.status !== 412) {
         if (obj && (obj.errorMessage || obj.message)) {
-          return clb(new Error((obj.errorMessage || obj.message)))
+          throw new Error((obj.errorMessage || obj.message))
         }
-        return clb(new Error(res.statusText + ' (' + res.status + ')'))
+        throw new Error(res.statusText + ' (' + res.status + ')')
       }
       console.log(colors.green(`transfered ${Object.keys(d).length} keys ${opt.version}/${ns.language}/${ns.namespace}...`))
-      clb(null)
-    })
+    } catch (err) {
+      console.log(colors.red(`transfer failed for ${Object.keys(d).length} keys ${opt.version}/${ns.language}/${ns.namespace}...`))
+      throw err
+    }
   }
 
   if (keysToSend > payloadKeysLimit) {
-    const tasks = []
     const keysInObj = Object.keys(data)
-
+    let isFirst = true
     while (keysInObj.length > payloadKeysLimit) {
-      (function () {
-        const pagedData = {}
-        keysInObj.splice(0, payloadKeysLimit).forEach((k) => { pagedData[k] = data[k] })
-        const hasMoreKeys = keysInObj.length > 0
-        tasks.push((c) => send(pagedData, hasMoreKeys, false, c))
-      })()
+      const pagedData = {}
+      keysInObj.splice(0, payloadKeysLimit).forEach((k) => { pagedData[k] = data[k] })
+      const hasMoreKeys = keysInObj.length > 0
+      await send(pagedData, hasMoreKeys, isFirst)
+      isFirst = false
     }
-
-    if (keysInObj.length === 0) return cb(null)
-
+    if (keysInObj.length === 0) return
     const finalPagedData = {}
     keysInObj.splice(0, keysInObj.length).forEach((k) => { finalPagedData[k] = data[k] })
-    tasks.push((c) => send(finalPagedData, false, false, c))
-
-    async.series(tasks, cb)
+    await send(finalPagedData, false, isFirst)
     return
   }
 
-  send(data, false, true, cb)
+  await send(data, false, true)
 }
 
-const upload = (opt, nss, cb) => {
+const upload = async (opt, nss) => {
+  const concurrency = os.cpus().length
   if (!opt.referenceLanguage) {
-    async.eachLimit(
-      nss,
-      os.cpus().length,
-      (ns, done) => transfer(opt, ns, done),
-      cb
-    )
+    await mapLimit(nss, concurrency, async (ns) => transfer(opt, ns))
     return
   }
 
   const nssRefLng = nss.filter((n) => n.language === opt.referenceLanguage)
   const nssNonRefLng = nss.filter((n) => n.language !== opt.referenceLanguage)
 
-  async.eachLimit(
-    nssRefLng,
-    os.cpus().length,
-    (ns, done) => transfer(opt, ns, done),
-    (err) => {
-      if (err) return cb(err)
-      async.eachLimit(
-        nssNonRefLng,
-        os.cpus().length,
-        (ns, done) => transfer(opt, ns, done),
-        cb
-      )
-    }
-  )
+  // Reference language first, then others, but each group in parallel
+  await mapLimit(nssRefLng, concurrency, async (ns) => transfer(opt, ns))
+  await mapLimit(nssNonRefLng, concurrency, async (ns) => transfer(opt, ns))
 }
 
-const addLanguage = (opt, l, cb) => {
+const addLanguage = async (opt, l) => {
   const url = opt.apiEndpoint + '/language/' + opt.projectId + '/' + l
-
-  request(url, {
-    method: 'post',
-    headers: {
-      Authorization: opt.apiKey
-    }
-  }, (err, res, obj) => {
-    if (err || (obj && (obj.errorMessage || obj.message))) {
-      console.log(colors.red(`failed to add language ${l}...`))
-
-      if (err) return cb(err)
-      if (obj && (obj.errorMessage || obj.message)) return cb(new Error((obj.errorMessage || obj.message)))
-    }
-    if (res.status >= 300 && res.status !== 412) return cb(new Error(res.statusText + ' (' + res.status + ')'))
+  try {
+    const { res } = await request(url, {
+      method: 'post',
+      headers: {
+        Authorization: opt.apiKey
+      }
+    })
+    if (res.status >= 300 && res.status !== 412) throw new Error(res.statusText + ' (' + res.status + ')')
     console.log(colors.green(`added language ${l}...`))
-    cb(null)
-  })
+  } catch (err) {
+    console.log(colors.red(`failed to add language ${l}...`))
+    throw err
+  }
 }
 
-const migrate = (opt, cb) => {
+const migrate = async (opt) => {
   if (opt.format !== 'json') {
-    const err = new Error(`Format ${opt.format} is not accepted!`)
-    if (!cb) throw err
-    if (cb) cb(err)
-    return
+    throw new Error(`Format ${opt.format} is not accepted!`)
   }
 
   opt.apiEndpoint = opt.apiEndpoint || 'https://api.locize.app'
 
   if (opt.language) {
     const files = getFiles(opt.path)
-
-    const namespaces = files.map((file) => {
-      return {
-        language: opt.language,
-        namespace: path.basename(file, '.json'),
-        path: path.join(opt.path, file)
-      }
-    })
-
-    load(namespaces, (err, nss) => {
-      if (err) {
-        if (!cb) { console.error(colors.red(err.stack)); process.exit(1) }
-        if (cb) cb(err)
-        return
-      }
-      upload(opt, nss, (err) => {
-        if (err) {
-          if (!cb) {
-            console.error(colors.red(err.stack))
-            process.exit(1)
-          }
-          if (cb) cb(err)
-          return
-        }
-        if (!cb) console.log(colors.green('FINISHED'))
-        if (cb) cb(null)
-      })
-    })
+    const namespaces = files.map((file) => ({
+      language: opt.language,
+      namespace: path.basename(file, '.json'),
+      path: path.join(opt.path, file)
+    }))
+    let nss
+    try {
+      nss = await load(namespaces)
+    } catch (err) {
+      console.error(colors.red(err.stack))
+      process.exit(1)
+    }
+    try {
+      await upload(opt, nss)
+      console.log(colors.green('FINISHED'))
+    } catch (err) {
+      console.error(colors.red(err.stack))
+      process.exit(1)
+    }
     return
   }
 
   if (opt.parseLanguage) {
-    parseLanguage(opt.path, (err, nss) => {
-      if (err) {
-        if (!cb) console.error(colors.red(err.stack)); process.exit(1)
-        if (cb) cb(err)
-        return
-      }
-
-      getRemoteLanguages(opt, (err, remoteLanguages) => {
-        if (err) {
-          if (!cb) { console.error(colors.red(err.stack)); process.exit(1) }
-          if (cb) cb(err)
-          return
-        }
-
-        const localLanguages = []
-        nss.forEach((n) => {
-          if (localLanguages.indexOf(n.language) < 0) localLanguages.push(n.language)
-        })
-
-        const notExistingLanguages = localLanguages.filter((l) => remoteLanguages.indexOf(l) < 0)
-
-        if (notExistingLanguages.length === 0) {
-          upload(opt, nss, (err) => {
-            if (err) {
-              if (!cb) {
-                console.error(colors.red(err.stack))
-                process.exit(1)
-              }
-              if (cb) cb(err)
-              return
-            }
-            if (!cb) console.log(colors.green('FINISHED'))
-            if (cb) cb(null)
-          })
-          return
-        }
-
-        async.eachLimit(
-          notExistingLanguages,
-          os.cpus().length,
-          (l, done) => addLanguage(opt, l, done),
-          (err) => {
-            if (err) {
-              if (!cb) {
-                console.error(colors.red(err.stack))
-                process.exit(1)
-              }
-              if (cb) cb(err)
-              return
-            }
-            setTimeout(() => {
-              // wait a bit to make sure project is up-to-date also in cache
-              upload(opt, nss, (err) => {
-                if (err) {
-                  if (!cb) {
-                    console.error(colors.red(err.stack))
-                    process.exit(1)
-                  }
-                  if (cb) cb(err)
-                  return
-                }
-                if (!cb) console.log(colors.green('FINISHED'))
-                if (cb) cb(null)
-              })
-            }, 5000)
-          }
-        )
-      })
+    let nss
+    try {
+      nss = await parseLanguage(opt.path)
+    } catch (err) {
+      console.error(colors.red(err.stack))
+      process.exit(1)
+    }
+    let remoteLanguages
+    try {
+      remoteLanguages = await getRemoteLanguages(opt)
+    } catch (err) {
+      console.error(colors.red(err.stack))
+      process.exit(1)
+    }
+    const localLanguages = []
+    nss.forEach((n) => {
+      if (localLanguages.indexOf(n.language) < 0) localLanguages.push(n.language)
     })
+    const notExistingLanguages = localLanguages.filter((l) => remoteLanguages.indexOf(l) < 0)
+    if (notExistingLanguages.length === 0) {
+      try {
+        await upload(opt, nss)
+        console.log(colors.green('FINISHED'))
+      } catch (err) {
+        console.error(colors.red(err.stack))
+        process.exit(1)
+      }
+      return
+    }
+    try {
+      for (const l of notExistingLanguages) {
+        await addLanguage(opt, l)
+      }
+      await new Promise(resolve => setTimeout(resolve, 5000))
+      await upload(opt, nss)
+      console.log(colors.green('FINISHED'))
+    } catch (err) {
+      console.error(colors.red(err.stack))
+      process.exit(1)
+    }
   }
 }
 

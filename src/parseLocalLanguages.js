@@ -1,22 +1,16 @@
-import async from 'async'
 import parseLocalLanguage from './parseLocalLanguage.js'
 import filterNamespaces from './filterNamespaces.js'
 
-const parseLocalLanguages = (opt, lngs, cb) => {
+const parseLocalLanguages = async (opt, lngs) => {
   let res = []
-  async.each(lngs, (lng, clb) => {
+  for (const lng of lngs) {
     if (opt.language && (lng !== opt.language && lng !== opt.referenceLanguage)) {
-      return clb()
+      continue
     }
-    parseLocalLanguage(opt, lng, (err, nss) => {
-      if (err) return clb(err)
-      res = res.concat(filterNamespaces(opt, nss))
-      clb()
-    })
-  }, (err) => {
-    if (err) return cb(err)
-    cb(null, res)
-  })
+    const nss = await parseLocalLanguage(opt, lng)
+    res = res.concat(filterNamespaces(opt, nss))
+  }
+  return res
 }
 
 export default parseLocalLanguages
