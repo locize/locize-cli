@@ -1,5 +1,5 @@
 import colors from 'colors'
-import { flatten } from 'flat'
+import flatten from 'flat'
 import async from 'async'
 import getRemoteLanguages from './getRemoteLanguages.js'
 import request from './request.js'

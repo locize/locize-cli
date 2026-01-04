@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { flatten } from 'flat'
+import flatten from 'flat'
 import async from 'async'
 import colors from 'colors'
 import request from './request.js'

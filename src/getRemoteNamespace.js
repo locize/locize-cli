@@ -1,5 +1,5 @@
 import request from './request.js'
-import { flatten } from 'flat'
+import flatten from 'flat'
 import sortFlatResources from './sortFlatResources.js'
 
 const getRandomDelay = (delayFrom, delayTo) => Math.floor(Math.random() * delayTo) + delayFrom

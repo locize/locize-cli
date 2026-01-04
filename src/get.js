@@ -1,6 +1,6 @@
 import colors from 'colors'
 import request from './request.js'
-import { flatten } from 'flat'
+import flatten from 'flat'
 
 const get = (opt, cb) => {
   const url = `${opt.apiEndpoint}/{{projectId}}/{{version}}/{{lng}}/{{ns}}`

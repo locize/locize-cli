@@ -14,7 +14,7 @@ import tmx2js from 'tmexchange/cjs/tmx2js'
 import laravel2js from 'laravelphp/cjs/laravel2js'
 import javaProperties from '@js.properties/properties'
 import xcstrings2locize from 'locize-xcstrings/cjs/xcstrings2locize'
-import { flatten } from 'flat'
+import flatten from 'flat'
 import { prepareImport as prepareCombinedImport } from './combineSubkeyPreprocessor.js'
 
 const convertToFlatFormat = (opt, data, lng, cb) => {

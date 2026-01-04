@@ -1,4 +1,4 @@
-import { flatten } from 'flat'
+import flatten from 'flat'
 import i18next2po from 'gettext-converter/cjs/i18next2po'
 import csv from 'fast-csv'
 import xlsx from 'xlsx'

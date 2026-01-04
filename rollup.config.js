@@ -1,4 +1,4 @@
-import { readFileSync, copyFileSync, writeFileSync, chmodSync } from 'node:fs'
+import { readFileSync, writeFileSync, chmodSync } from 'node:fs'
 import replace from '@rollup/plugin-replace'
 // import terser from '@rollup/plugin-terser'
 
@@ -41,14 +41,16 @@ export default {
     {
       name: 'post-build-steps',
       writeBundle () {
-        // Copy lngs.json
-        copyFileSync('src/lngs.json', 'dist/cjs/lngs.json')
-        copyFileSync('src/lngs.json', 'dist/esm/lngs.json')
         // Make CLI files executable
         try { chmodSync('dist/esm/cli.js', 0o755) } catch {}
         try { chmodSync('dist/cjs/cli.js', 0o755) } catch {}
-        // Write CJS package.json
-        writeFileSync('dist/cjs/package.json', '{"type":"commonjs"}\n')
+        // Write CJS package.json with name, version, and type
+        const cjsPkg = {
+          name: pkg.name,
+          version: pkg.version,
+          type: 'commonjs'
+        }
+        writeFileSync('dist/cjs/package.json', JSON.stringify(cjsPkg, null, 2) + '\n')
       }
     }
   ]

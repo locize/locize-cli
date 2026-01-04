@@ -5,7 +5,7 @@ import { rimraf } from 'rimraf'
 import async from 'async'
 import colors from 'colors'
 import request from './request.js'
-import { flatten } from 'flat'
+import flatten from 'flat'
 import cloneDeep from 'lodash.clonedeep'
 import getRemoteNamespace from './getRemoteNamespace.js'
 import getRemoteLanguages from './getRemoteLanguages.js'
@@ -19,8 +19,8 @@ import locize2xcstrings from 'locize-xcstrings/cjs/locize2xcstrings'
 import getBranches from './getBranches.js'
 import isValidUuid from './isValidUuid.js'
 import os from 'node:os'
+import lngCodes from './lngs.js'
 
-const lngCodes = JSON.parse(fs.readFileSync(new URL('./lngs.json', import.meta.url), 'utf-8'))
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap
 
 const getDirectories = (srcpath) => {
