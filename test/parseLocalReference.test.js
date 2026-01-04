@@ -14,23 +14,6 @@ describe('parseLocalReference (temp dir)', () => {
     const lngDir = path.join(tempDir, 'en')
     fs.mkdirSync(lngDir)
     fs.writeFileSync(path.join(lngDir, 'common.json'), JSON.stringify({ hello: 'world' }))
-    // Debug: print directory structure and file existence
-    function printDir (dir, prefix = '') {
-      const files = fs.readdirSync(dir)
-      for (const file of files) {
-        const fullPath = path.join(dir, file)
-        if (fs.statSync(fullPath).isDirectory()) {
-          console.log(prefix + file + '/')
-          printDir(fullPath, prefix + '  ')
-        } else {
-          console.log(prefix + file)
-        }
-      }
-    }
-    printDir(tempDir)
-    const filePath = path.join(lngDir, 'common.json')
-    console.log('File exists before test:', fs.existsSync(filePath), filePath)
-    return new Promise((resolve) => setTimeout(resolve, 20))
   })
   afterEach(() => {
     fs.rmSync(tempDir, { recursive: true, force: true })
