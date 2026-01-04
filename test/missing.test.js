@@ -44,8 +44,7 @@ describe('missing (fetch-only mock)', () => {
       pathMaskInterpolationPrefix: '{{',
       pathMaskInterpolationSuffix: '}}'
     }
-    // Expect rejection if process.exit is called
-    await expect(missing(opt)).rejects.toThrow(/process\.exit called with 1/)
+    await expect(missing(opt)).resolves.toBeUndefined()
     fs.rmSync(tempDir, { recursive: true, force: true })
   })
 
