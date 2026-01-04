@@ -8,11 +8,15 @@ import * as missingModule from '../src/missing.js'
 
 describe('missing (fetch-only mock)', () => {
   let origFetch
+  let origExit
   beforeEach(() => {
     origFetch = global.fetch
+    origExit = process.exit
+    process.exit = (code) => { throw new Error(`process.exit called with ${code}`) }
   })
   afterEach(() => {
     global.fetch = origFetch
+    process.exit = origExit
   })
 
   it('default export runs without error (minimal happy path)', async () => {

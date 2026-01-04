@@ -32,7 +32,7 @@ describe('parseLocalLanguage (temp dir)', () => {
     expect(result.length).toBe(1)
     expect(result[0].language).toBe('en')
     expect(result[0].namespace).toBe('common')
-    expect(result[0].path).toContain('common.json')
+    expect(result[0].path).toContain(path.join('en', 'common.json'))
     expect(result[0].content).toEqual({ hello: 'world' })
   })
 })
