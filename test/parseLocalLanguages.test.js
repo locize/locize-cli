@@ -17,6 +17,20 @@ describe('parseLocalLanguages (temp dir)', () => {
     fs.mkdirSync(deDir)
     fs.writeFileSync(path.join(enDir, 'common.json'), JSON.stringify({ hello: 'world' }))
     fs.writeFileSync(path.join(deDir, 'common.json'), JSON.stringify({ hallo: 'welt' }))
+    // Debug: print directory structure
+    function printDir (dir, prefix = '') {
+      const files = fs.readdirSync(dir)
+      for (const file of files) {
+        const fullPath = path.join(dir, file)
+        if (fs.statSync(fullPath).isDirectory()) {
+          console.log(prefix + file + '/')
+          printDir(fullPath, prefix + '  ')
+        } else {
+          console.log(prefix + file)
+        }
+      }
+    }
+    printDir(tempDir)
   })
   afterEach(() => {
     fs.rmSync(tempDir, { recursive: true, force: true })

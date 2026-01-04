@@ -13,6 +13,20 @@ describe('parseLocalLanguage (temp dir)', () => {
     const lngDir = path.join(tempDir, 'en')
     fs.mkdirSync(lngDir)
     fs.writeFileSync(path.join(lngDir, 'common.json'), JSON.stringify({ hello: 'world' }))
+    // Debug: print directory structure
+    function printDir (dir, prefix = '') {
+      const files = fs.readdirSync(dir)
+      for (const file of files) {
+        const fullPath = path.join(dir, file)
+        if (fs.statSync(fullPath).isDirectory()) {
+          console.log(prefix + file + '/')
+          printDir(fullPath, prefix + '  ')
+        } else {
+          console.log(prefix + file)
+        }
+      }
+    }
+    printDir(tempDir)
     const mod = await import('../src/parseLocalLanguage.js')
     parseLocalLanguage = mod.default
   })
