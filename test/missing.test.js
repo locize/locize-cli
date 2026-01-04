@@ -40,7 +40,7 @@ describe('missing (fetch-only mock)', () => {
       projectId: 'pid',
       version: 'v1',
       path: tempDir,
-      pathMask: '{{language}}/{{namespace}}',
+      pathMask: ['{{language}}', '{{namespace}}'].join(path.sep),
       pathMaskInterpolationPrefix: '{{',
       pathMaskInterpolationSuffix: '}}'
     }

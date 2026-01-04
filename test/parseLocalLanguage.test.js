@@ -39,7 +39,7 @@ describe('parseLocalLanguage (temp dir)', () => {
   it('parses a local language directory and returns expected structure', async () => {
     const opt = {
       path: tempDir,
-      pathMask: '{{language}}/{{namespace}}',
+      pathMask: ['{{language}}', '{{namespace}}'].join(path.sep),
       pathMaskInterpolationPrefix: '{{',
       pathMaskInterpolationSuffix: '}}',
       format: 'json'
