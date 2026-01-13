@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.0.1](https://github.com/locize/locize-cli/compare/v12.0.0...v12.0.1) - 2026-01-13
+
+- update dependencies
+
 ## [12.0.0](https://github.com/locize/locize-cli/compare/v11.1.0...v12.0.0) - 2026-01-04
 
 - changed default cdnType to "standard" instead of "prod"

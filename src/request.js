@@ -36,7 +36,7 @@ async function request (url, options) {
   }
 
   options.headers = options.headers || {}
-  options.headers['User-Agent'] = `__packageName__/v__packageVersion__ (node/${process.version}; ${process.platform} ${process.arch})` // This string is replaced with the actual version at build time by rollup
+  options.headers['User-Agent'] = `__packageName__/__v_packageVersion__ (node/${process.version}; ${process.platform} ${process.arch})` // This string is replaced with the actual version at build time by rollup
   options.headers['X-User-Agent'] = options.headers['User-Agent']
   if (options.body || options.method !== 'get') options.headers['Content-Type'] = 'application/json'
   if (options.body) {

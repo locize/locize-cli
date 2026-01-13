@@ -30,7 +30,7 @@
     "cacheable-lookup": "6.1.0",
     "colors": "1.4.0",
     "commander": "14.0.2",
-    "diff": "8.0.2",
+    "diff": "8.0.3",
     "dotenv": "17.2.3",
     "fast-csv": "5.0.5",
     "flat": "5.0.2",
@@ -58,8 +58,8 @@
     "eslint-plugin-import": "2.32.0",
     "gh-release": "7.0.2",
     "neostandard": "0.12.2",
-    "rollup": "4.54.0",
-    "vitest": "4.0.16"
+    "rollup": "4.55.1",
+    "vitest": "4.0.17"
   },
   "scripts": {
     "lint": "eslint .",

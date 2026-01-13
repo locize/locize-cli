@@ -33,8 +33,9 @@ export default {
   ],
   plugins: [
     replace({
-      __packageName: pkg.name,
+      __packageName__: pkg.name,
       __packageVersion__: pkg.version,
+      __v_packageVersion__: `v${pkg.version}`,
       preventAssignment: true
     }),
     // terser(), // minifies generated bundles

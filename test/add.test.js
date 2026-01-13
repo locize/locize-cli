@@ -29,7 +29,7 @@ describe('add (fetch-only mock, temp dir)', () => {
     // Check fetch was called for both endpoints with correct arguments
     const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
     const expectedUserAgent = `${pkg.name}/v${pkg.version} (node/${process.version}; ${process.platform} ${process.arch})`
-    const placeholderUserAgent = `__packageName__/v__packageVersion__ (node/${process.version}; ${process.platform} ${process.arch})`
+    const placeholderUserAgent = `__packageName__/__v_packageVersion__ (node/${process.version}; ${process.platform} ${process.arch})`
     // First call: /languages/ endpoint
     const call1 = fetchSim.mock.calls[0]
     expect(call1[0]).toContain('/languages/')

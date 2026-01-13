@@ -43,7 +43,7 @@ describe('get (fetch-only mock)', () => {
     await expect(get(opt)).resolves.toBeUndefined()
     const expectedUrl = 'http://api/pid/v1/en/common'
     const expectedUserAgent = `${pkg.name}/v${pkg.version} (node/${process.version}; ${process.platform} ${process.arch})`
-    const placeholderUserAgent = `__packageName__/v__packageVersion__ (node/${process.version}; ${process.platform} ${process.arch})`
+    const placeholderUserAgent = `__packageName__/__v_packageVersion__ (node/${process.version}; ${process.platform} ${process.arch})`
     const call = fetchSim.mock.calls[0]
     expect(call[0]).toBe(expectedUrl)
     expect(call[1]).toMatchObject({ method: 'get' })
