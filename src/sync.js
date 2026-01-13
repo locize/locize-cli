@@ -14,7 +14,7 @@ import parseLocalReference from './parseLocalReference.js'
 import * as formats from './formats.js'
 import deleteNamespace from './deleteNamespace.js'
 import getProjectStats from './getProjectStats.js'
-import locize2xcstrings from 'locize-xcstrings/locize2xcstrings'
+import xcstrings from 'locize-xcstrings'
 import getBranches from './getBranches.js'
 import isValidUuid from './isValidUuid.js'
 import os from 'node:os'
@@ -352,7 +352,7 @@ async function downloadAll (opt, remoteLanguages, omitRef = false, manipulate) {
       })
 
       try {
-        const converted = locize2xcstrings(locizeData)
+        const converted = xcstrings.locize2xcstrings(locizeData)
 
         const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
         if (opt.dry) return

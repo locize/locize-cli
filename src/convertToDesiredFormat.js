@@ -1,16 +1,15 @@
 import flatten from 'flat'
-import i18next2po from 'gettext-converter/i18next2po'
+import gettextConv from 'gettext-converter'
 import csv from 'fast-csv'
 import xlsx from 'xlsx'
 import yaml from 'yaml'
-import js2asr from 'android-string-resource/js2asr'
+import asr from 'android-string-resource'
 import stringsFile from 'strings-file'
-import createxliff from 'xliff/createxliff'
-import createxliff12 from 'xliff/createxliff12'
-import js2resx from 'resx/js2resx'
-import js2ftl from 'fluent_conv/js2ftl'
-import js2tmx from 'tmexchange/js2tmx'
-import js2laravel from 'laravelphp/js2laravel'
+import xliff from 'xliff'
+import resx from 'resx'
+import fluentConv from 'fluent_conv'
+import tmexchange from 'tmexchange'
+import laravelphp from 'laravelphp'
 import javaProperties from '@js.properties/properties'
 import unflatten from './unflatten.js'
 import getRemoteNamespace from './getRemoteNamespace.js'
@@ -52,7 +51,7 @@ const convertToDesiredFormat = async (
       ctxSeparator: '_ is default but we set it to something that is never found!!!',
       persistMsgIdPlural: true
     }
-    return i18next2po(lng, flatData, gettextOpt)
+    return gettextConv.i18next2po(lng, flatData, gettextOpt)
   }
   if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
     const flatData = flatten(data)
@@ -64,7 +63,7 @@ const convertToDesiredFormat = async (
       poRevisionDate: lastModified,
       compatibilityJSON
     }
-    return i18next2po(lng, flatData, gettextOpt)
+    return gettextConv.i18next2po(lng, flatData, gettextOpt)
   }
   if (opt.format === 'csv') {
     const refNs = await opt.getNamespace(opt, opt.referenceLanguage, namespace)
@@ -134,7 +133,7 @@ const convertToDesiredFormat = async (
     return yaml.stringify(removeUndefinedFromArrays(newDataNs))
   }
   if (opt.format === 'android') {
-    return await js2asr(flatten(data))
+    return await asr.js2asr(flatten(data))
   }
   if (opt.format === 'strings') {
     Object.keys(data).forEach((k) => {
@@ -150,14 +149,14 @@ const convertToDesiredFormat = async (
   ) {
     const fn =
       opt.format === 'xliff12' || opt.format === 'xlf12'
-        ? createxliff12
-        : createxliff
+        ? xliff.createxliff12
+        : xliff.createxliff
     const refNs = await opt.getNamespace(opt, opt.referenceLanguage, namespace)
     const prepared = prepareCombinedExport(refNs, flatten(data))
     return await fn(opt.referenceLanguage, lng, prepared.ref, prepared.trg, namespace)
   }
   if (opt.format === 'resx') {
-    return await js2resx(flatten(data))
+    return await resx.js2resx(flatten(data))
   }
   if (opt.format === 'fluent') {
     Object.keys(data).forEach((k) => {
@@ -167,7 +166,7 @@ const convertToDesiredFormat = async (
         String.fromCharCode(32)
       )
     })
-    return js2ftl(unflatten(data))
+    return fluentConv.js2ftl(unflatten(data))
   }
   if (opt.format === 'tmx') {
     const refNs = await opt.getNamespace(opt, opt.referenceLanguage, namespace)
@@ -189,10 +188,10 @@ const convertToDesiredFormat = async (
         sourceLanguage: opt.referenceLanguage
       }
     )
-    return await js2tmx(js2TmxData)
+    return await tmexchange.js2tmx(js2TmxData)
   }
   if (opt.format === 'laravel') {
-    return await js2laravel(unflatten(data))
+    return await laravelphp.js2laravel(unflatten(data))
   }
   if (opt.format === 'properties') {
     return javaProperties.stringifyFromProperties(data, { eol: '\n' })

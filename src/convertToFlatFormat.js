@@ -1,19 +1,16 @@
-import po2i18next from 'gettext-converter/po2i18next'
+import gettextConv from 'gettext-converter'
 import csv from 'fast-csv'
 import xlsx from 'xlsx'
 import yaml from 'yaml'
-import asr2js from 'android-string-resource/asr2js'
+import asr from 'android-string-resource'
 import stringsFile from 'strings-file'
-import xliff2js from 'xliff/xliff2js'
-import xliff12ToJs from 'xliff/xliff12ToJs'
-import targetOfjs from 'xliff/targetOfjs'
-import sourceOfjs from 'xliff/sourceOfjs'
-import resx2js from 'resx/resx2js'
-import ftl2js from 'fluent_conv/ftl2js'
-import tmx2js from 'tmexchange/tmx2js'
-import laravel2js from 'laravelphp/laravel2js'
+import xliff from 'xliff'
+import resx from 'resx'
+import fluentConv from 'fluent_conv'
+import tmexchange from 'tmexchange'
+import laravelphp from 'laravelphp'
 import javaProperties from '@js.properties/properties'
-import xcstrings2locize from 'locize-xcstrings/xcstrings2locize'
+import xcstrings from 'locize-xcstrings'
 import flatten from 'flat'
 import { prepareImport as prepareCombinedImport } from './combineSubkeyPreprocessor.js'
 
@@ -28,7 +25,7 @@ const convertToFlatFormat = async (opt, data, lng) => {
     return flatten(jsonParsed)
   }
   if (opt.format === 'po' || opt.format === 'gettext') {
-    const ret = po2i18next(data.toString(), {
+    const ret = gettextConv.po2i18next(data.toString(), {
       persistMsgIdPlural: true,
       ignoreCtx: true
     })
@@ -37,7 +34,7 @@ const convertToFlatFormat = async (opt, data, lng) => {
   if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
     const potxt = data.toString()
     const compatibilityJSON = /msgctxt "(zero|one|two|few|many|other)"/.test(potxt) && 'v4'
-    const ret = po2i18next(potxt, { compatibilityJSON })
+    const ret = gettextConv.po2i18next(potxt, { compatibilityJSON })
     return flatten(ret)
   }
   if (opt.format === 'csv') {
@@ -98,7 +95,7 @@ const convertToFlatFormat = async (opt, data, lng) => {
     return flatten(jsObjn[Object.keys(jsObjn)[0]][Object.keys(jsObjn[Object.keys(jsObjn)[0]])[0]])
   }
   if (opt.format === 'android') {
-    const res = await asr2js(data.toString(), { comment: 'right' })
+    const res = await asr.asr2js(data.toString(), { comment: 'right' })
     Object.keys(res).forEach((k) => {
       if (res[k] !== 'string' && typeof res[k].comment === 'string') {
         res[k] = {
@@ -125,8 +122,8 @@ const convertToFlatFormat = async (opt, data, lng) => {
   ) {
     const fn =
       opt.format === 'xliff12' || opt.format === 'xlf12'
-        ? xliff12ToJs
-        : xliff2js
+        ? xliff.xliff12ToJs
+        : xliff.xliff2js
     const res = await fn(data.toString())
     res.resources = res.resources || {}
     const ns = Object.keys(res.resources)[0]
@@ -145,22 +142,22 @@ const convertToFlatFormat = async (opt, data, lng) => {
       return prepareCombinedImport(nsRes)
     }
     if (!res.targetLanguage) {
-      const ret = await sourceOfjs(res)
+      const ret = await xliff.sourceOfjs(res)
       return checkForPostProcessing(ret)
     } else {
-      let ret = targetOfjs(res)
+      let ret = xliff.targetOfjs(res)
       if (lng !== opt.referenceLanguage) return checkForPostProcessing(ret)
       ret = ret || {}
       const keys = Object.keys(ret)
       if (keys.length === 0) return checkForPostProcessing(ret)
       const allEmpty = keys.filter((k) => ret[k] !== '').length === 0
       if (!allEmpty) return checkForPostProcessing(ret)
-      ret = await sourceOfjs(res)
+      ret = await xliff.sourceOfjs(res)
       return checkForPostProcessing(ret)
     }
   }
   if (opt.format === 'resx') {
-    let res = await resx2js(data.toString())
+    let res = await resx.resx2js(data.toString())
     res = Object.keys(res).reduce((mem, k) => {
       const value = res[k]
       if (typeof value === 'string') {
@@ -176,7 +173,7 @@ const convertToFlatFormat = async (opt, data, lng) => {
     return res
   }
   if (opt.format === 'fluent') {
-    const fluentJS = ftl2js(
+    const fluentJS = fluentConv.ftl2js(
       data
         .toString()
         .replace(
@@ -203,7 +200,7 @@ const convertToFlatFormat = async (opt, data, lng) => {
     return res
   }
   if (opt.format === 'tmx') {
-    const jsonData = await tmx2js(data.toString())
+    const jsonData = await tmexchange.tmx2js(data.toString())
     const tmxJsRes = jsonData.resources[Object.keys(jsonData.resources)[0]]
     const res = {}
     if (tmxJsRes) {
@@ -214,14 +211,14 @@ const convertToFlatFormat = async (opt, data, lng) => {
     return res
   }
   if (opt.format === 'laravel') {
-    const res = await laravel2js(data.toString())
+    const res = await laravelphp.laravel2js(data.toString())
     return flatten(res)
   }
   if (opt.format === 'properties') {
     return javaProperties.parseToProperties(data.toString())
   }
   if (opt.format === 'xcstrings') {
-    return xcstrings2locize(data.toString())
+    return xcstrings.xcstrings2locize(data.toString())
   }
   throw new Error(`${opt.format} is not a valid format!`)
 }

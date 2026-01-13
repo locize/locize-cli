@@ -10,7 +10,7 @@ import getRemoteLanguages from './getRemoteLanguages.js'
 import convertToDesiredFormat from './convertToDesiredFormat.js'
 import * as formats from './formats.js'
 import getProjectStats from './getProjectStats.js'
-import locize2xcstrings from 'locize-xcstrings/locize2xcstrings'
+import xcstrings from 'locize-xcstrings'
 import getBranches from './getBranches.js'
 import isValidUuid from './isValidUuid.js'
 import mapLimit from './mapLimit.js'
@@ -68,7 +68,7 @@ async function handleDownload (opt, url, err, res, downloads) {
           locizeData.resources[language] = nsData
         })
         try {
-          const converted = locize2xcstrings(locizeData)
+          const converted = xcstrings.locize2xcstrings(locizeData)
           const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, ns) + reversedFileExtensionsMap[opt.format]
           let mkdirPath
           if (filledMask.lastIndexOf(path.sep) > 0) {
@@ -156,7 +156,7 @@ async function handlePull (opt, toDownload) {
         locizeData.resources[language] = nsData
       })
       try {
-        const result = locize2xcstrings(locizeData)
+        const result = xcstrings.locize2xcstrings(locizeData)
         const converted = JSON.stringify(result, null, 2)
         const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
         let mkdirPath

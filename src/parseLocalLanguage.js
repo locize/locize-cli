@@ -3,7 +3,7 @@ import path from 'node:path'
 import { mkdirp } from 'mkdirp'
 import convertToFlatFormat from './convertToFlatFormat.js'
 import * as formats from './formats.js'
-import xcstrings2locize from 'locize-xcstrings/xcstrings2locize'
+import xcstrings from 'locize-xcstrings'
 const fileExtensionsMap = formats.fileExtensionsMap
 const acceptedFileExtensions = formats.acceptedFileExtensions
 
@@ -142,7 +142,7 @@ const parseLocalLanguage = async (opt, lng) => {
     }
     if (opt.format === 'xcstrings') {
       try {
-        const content = xcstrings2locize(data)
+        const content = xcstrings.xcstrings2locize(data)
         const stat = await fs.promises.stat(fPath)
         return Object.keys(content.resources).map((l) => ({
           namespace,
