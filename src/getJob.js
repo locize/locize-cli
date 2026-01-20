@@ -28,7 +28,7 @@ const getJob = async (opt, jobId) => {
     console.error(colors.red(res.statusText + ' (' + res.status + ')'))
     throw new Error(res.statusText + ' (' + res.status + ')')
   }
-  console.log(colors.green('getting job successful'))
+  // console.log(colors.green('getting job successful'))
   return obj
 }
 

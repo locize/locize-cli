@@ -53,12 +53,12 @@
   "devDependencies": {
     "@rollup/plugin-replace": "6.0.3",
     "@rollup/plugin-terser": "0.4.4",
-    "@yao-pkg/pkg": "6.11.0",
+    "@yao-pkg/pkg": "6.12.0",
     "eslint": "9.39.2",
     "eslint-plugin-import": "2.32.0",
     "gh-release": "7.0.2",
     "neostandard": "0.12.2",
-    "rollup": "4.55.1",
+    "rollup": "4.55.2",
     "vitest": "4.0.17"
   },
   "scripts": {
