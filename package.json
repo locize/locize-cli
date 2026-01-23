@@ -35,7 +35,7 @@
     "fast-csv": "5.0.5",
     "flat": "5.0.2",
     "fluent_conv": "3.3.0",
-    "gettext-converter": "1.3.0",
+    "gettext-converter": "1.3.1",
     "https-proxy-agent": "7.0.6",
     "ini": "6.0.0",
     "laravelphp": "2.0.4",
@@ -46,7 +46,7 @@
     "rimraf": "6.1.2",
     "strings-file": "0.0.5",
     "tmexchange": "2.0.6",
-    "xliff": "6.2.2",
+    "xliff": "6.3.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "yaml": "2.8.2"
   },
@@ -58,8 +58,8 @@
     "eslint-plugin-import": "2.32.0",
     "gh-release": "7.0.2",
     "neostandard": "0.12.2",
-    "rollup": "4.55.2",
-    "vitest": "4.0.17"
+    "rollup": "4.56.0",
+    "vitest": "4.0.18"
   },
   "scripts": {
     "lint": "eslint .",
