@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.0.5](https://github.com/locize/locize-cli/compare/v12.0.4...v12.0.5) - 2026-02-23
+
+- improve download of namespaces with strange content-type
+
 ## [12.0.4](https://github.com/locize/locize-cli/compare/v12.0.3...v12.0.4) - 2026-01-23
 
 - update dependencies

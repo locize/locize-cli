@@ -115,7 +115,7 @@ const getRemoteNamespace = async (opt, lng, ns) => {
     throw new Error(res.statusText + ' (' + res.status + ')')
   }
   return {
-    result: sortFlatResources(flatten(obj)),
+    result: sortFlatResources(flatten(obj || {})),
     lastModified: res.headers.get('last-modified') ? new Date(res.headers.get('last-modified')) : undefined
   }
 }

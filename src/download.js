@@ -278,7 +278,7 @@ async function continueToDownload (opt) {
   console.log(colors.yellow(`downloading ${url} to ${opt.path}...`))
   await getRemoteLanguages(opt)
   if (!opt.unpublished) {
-    const { res, obj, err } = await request(url, {
+    let { res, obj, err } = await request(url, {
       method: 'get',
       headers: opt.apiKey
         ? {
@@ -289,10 +289,12 @@ async function continueToDownload (opt) {
     let downloadsObj = obj
     if (res && res.status === 401) {
       opt.apiKey = null
-      const { obj: obj2 } = await request(url, {
+      const { res: res2, obj: obj2, err: err2 } = await request(url, {
         method: 'get',
       })
       downloadsObj = obj2
+      res = res2
+      err = err2
     }
     downloadsObj = filterDownloads(opt, downloadsObj || [])
     if (downloadsObj.length > 0) {

@@ -19,9 +19,10 @@ const isRetriableError = (err) => {
 }
 
 const isJSONResponse = (res) => res.headers.get('content-type') && res.headers.get('content-type').indexOf('json') > 0
+const isOctetStream = (res) => res.headers.get('content-type') && res.headers.get('content-type').indexOf('octet-stream') > 0
 
 const handleResponse = (res) => {
-  if (isJSONResponse(res)) {
+  if (isJSONResponse(res) || isOctetStream(res)) {
     return new Promise((resolve, reject) => res.json().then((obj) => resolve({ res, obj })).catch(reject))
   } else {
     return { res }
