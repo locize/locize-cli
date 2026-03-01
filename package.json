@@ -58,7 +58,7 @@
     "eslint-plugin-import": "2.32.0",
     "gh-release": "7.0.2",
     "neostandard": "0.12.2",
-    "rollup": "4.56.0",
+    "rollup": "4.59.0",
     "vitest": "4.0.18"
   },
   "scripts": {
