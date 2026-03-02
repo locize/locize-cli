@@ -65,6 +65,7 @@ program
   .option('-L, --parse-language <true|false>', 'Parse folders as language (default: true)', 'true')
   .option('-f, --format <json>', 'File format of namespaces (default: json)', 'json')
   .option('-r, --replace <true|false>', 'This will empty the optionally existing namespace before saving the new translations. (default: false)', 'false')
+  .option('-d, --download <true|false>', 'Download all translations after migration. (default: false)', 'false')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
@@ -108,7 +109,8 @@ program
       version,
       parseLanguage: options.parseLanguage === 'true',
       format: options.format,
-      replace: options.replace === 'true'
+      replace: options.replace === 'true',
+      download: options.download === 'true'
     })
   })
   .on('--help', () => {

@@ -6,6 +6,7 @@ import request from './request.js'
 import getRemoteLanguages from './getRemoteLanguages.js'
 import os from 'node:os'
 import mapLimit from './mapLimit.js'
+import download from './download.js'
 
 const getDirectories = (srcpath) => {
   return fs.readdirSync(srcpath).filter(function (file) {
@@ -163,6 +164,20 @@ const addLanguage = async (opt, l) => {
   }
 }
 
+const downloadAfterMigrate = async (opt) => {
+  console.log(colors.yellow('downloading translations after migration...'))
+  await new Promise((resolve) => setTimeout(resolve, 10000))
+  await download({
+    apiKey: opt.apiKey,
+    projectId: opt.projectId,
+    apiEndpoint: opt.apiEndpoint,
+    version: opt.version,
+    path: opt.path,
+    format: opt.format,
+    cdnType: opt.cdnType
+  })
+}
+
 const migrate = async (opt) => {
   if (opt.format !== 'json') {
     throw new Error(`Format ${opt.format} is not accepted!`)
@@ -186,6 +201,7 @@ const migrate = async (opt) => {
     }
     try {
       await upload(opt, nss)
+      if (opt.download) await downloadAfterMigrate(opt)
       console.log(colors.green('FINISHED'))
     } catch (err) {
       console.error(colors.red(err.stack))
@@ -217,6 +233,7 @@ const migrate = async (opt) => {
     if (notExistingLanguages.length === 0) {
       try {
         await upload(opt, nss)
+        if (opt.download) await downloadAfterMigrate(opt)
         console.log(colors.green('FINISHED'))
       } catch (err) {
         console.error(colors.red(err.stack))
@@ -230,6 +247,7 @@ const migrate = async (opt) => {
       }
       await new Promise(resolve => setTimeout(resolve, 5000))
       await upload(opt, nss)
+      if (opt.download) await downloadAfterMigrate(opt)
       console.log(colors.green('FINISHED'))
     } catch (err) {
       console.error(colors.red(err.stack))
