@@ -24,6 +24,10 @@ const load = async (namespaces) => {
     try {
       const data = await fs.promises.readFile(ns.path, 'utf8')
       ns.value = flatten(JSON.parse(data))
+      // remove all empty strings for migrate (i.e. used via i18next-cli)
+      Object.keys(ns.value).forEach((k) => {
+        if (ns.value[k] === '') delete ns.value[k]
+      })
     } catch (err) {
       console.error(colors.red(err.stack))
       ns.value = {}

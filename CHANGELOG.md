@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.0.7](https://github.com/locize/locize-cli/compare/v12.0.6...v12.0.7) - 2026-03-02
+
+- improve migrate command
+
 ## [12.0.6](https://github.com/locize/locize-cli/compare/v12.0.5...v12.0.6) - 2026-03-02
 
 - improve error message when detecting wrong cdnType usage
