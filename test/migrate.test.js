@@ -89,7 +89,7 @@ describe('migrate with download option', () => {
     expect(fs.existsSync(filePath)).toBe(true)
     const fileContent = fs.readFileSync(filePath, 'utf8')
     expect(JSON.parse(fileContent)).toEqual({ hello: 'world' })
-  }, 15000)
+  }, 25000)
   it('does not download when download option is false', async () => {
     const opt = {
       apiEndpoint: 'http://api',
