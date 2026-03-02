@@ -166,7 +166,7 @@ const addLanguage = async (opt, l) => {
 
 const downloadAfterMigrate = async (opt) => {
   console.log(colors.yellow('downloading translations after migration...'))
-  await new Promise((resolve) => setTimeout(resolve, 10000))
+  await new Promise((resolve) => setTimeout(resolve, 15000))
   await download({
     apiKey: opt.apiKey,
     projectId: opt.projectId,
