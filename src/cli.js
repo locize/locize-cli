@@ -67,7 +67,7 @@ program
   .option('-r, --replace <true|false>', 'This will empty the optionally existing namespace before saving the new translations. (default: false)', 'false')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -130,7 +130,7 @@ program
   .option('-v, --ver <version>', 'The version that should be targeted (default: latest)')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((namespace, key, value, options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -195,7 +195,7 @@ program
   .option('-v, --ver <version>', 'The version that should be targeted (default: latest)')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((namespace, key, options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -270,7 +270,7 @@ program
   .option('-b, --branch <branch>', 'The branch name (or id) that should be targeted')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -353,7 +353,7 @@ program
   .option('-v, --ver <version>', 'The version that should be targeted (default: latest)')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((namespace, key, options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -430,7 +430,7 @@ program
   .option('-b, --branch <branch>', 'The branch name (or id) that should be targeted')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -540,7 +540,7 @@ program
   .option('-n, --namespace <ns>', 'The namespace that should be targeted (you can also pass a comma separated list)')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -619,7 +619,7 @@ program
   .option('--iv, --ignore-if-version-exists <true|false>', 'The project-id that should be used (default: false)', 'false')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((fromVersion, options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -675,7 +675,7 @@ program
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((version, options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -726,7 +726,7 @@ program
   .option('-t, --tenants <true|false>', 'Publish also tenants (if using multi-tenant setup) (default: false)', 'false')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -782,7 +782,7 @@ program
   .option('-v, --ver <version>', 'The version that should be targeted (default: latest)')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((namespace, options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -872,7 +872,7 @@ program
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((branch, options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -926,7 +926,7 @@ program
   .option('-d, --delete <true|false>', 'This will delete the branch after merging. (default: false)', 'false')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((branch, options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
@@ -978,7 +978,7 @@ program
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
-  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your locize project) (default: ${defaultCdnType})`)
+  .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((branch, options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
