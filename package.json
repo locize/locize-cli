@@ -48,7 +48,7 @@
     "tmexchange": "2.0.6",
     "xliff": "6.3.0",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
-    "yaml": "2.8.2"
+    "yaml": "2.8.3"
   },
   "devDependencies": {
     "@rollup/plugin-replace": "6.0.3",
