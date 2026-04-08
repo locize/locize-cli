@@ -424,9 +424,11 @@ async function update (opt, lng, ns, shouldOmit = false) {
 
   async function send (d, so) {
     const queryParams = new URLSearchParams()
-    if (opt.autoTranslate && lng === opt.referenceLanguage) {
-      /** @See https://www.locize.com/docs/api#optional-autotranslate */
+    if (opt.autoTranslate === true && lng === opt.referenceLanguage) {
+      /** @See https://www.locize.com/docs/integration/api/#update-or-remove-translations (Optional autotranslate) */
       queryParams.append('autotranslate', 'true')
+    } else if (opt.autoTranslate === false && lng === opt.referenceLanguage) {
+      queryParams.append('autotranslate', 'false')
     }
     if (so) {
       queryParams.append('omitstatsgeneration', 'true')

@@ -472,7 +472,7 @@ program
     const cleanLocalFiles = options.cleanLocalFiles === 'true'
     const dry = options.dry === 'true'
     const updateValues = options.updateValues === 'true'
-    const autoTranslate = options.autoTranslate === 'true'
+    const autoTranslate = options.autoTranslate === 'true' ? true : options.autoTranslate === 'false' ? false : undefined
     const skipDelete = options.skipDelete === 'true'
     const deleteRemoteNamespace = options.deleteRemoteNamespace === 'true'
     const languageFolderPrefix = options.languageFolderPrefix || ''
