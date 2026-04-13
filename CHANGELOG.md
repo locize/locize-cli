@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.1.0](https://github.com/locize/locize-cli/compare/v12.0.10...v12.1.0) - 2026-04-13
+
+- sync: introduce `--auto-translate-review true` option
+
 ## [12.0.10](https://github.com/locize/locize-cli/compare/v12.0.9...v12.0.10) - 2026-04-08
 
 - sync: handle optional autotranslate=false

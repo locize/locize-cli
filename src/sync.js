@@ -430,6 +430,9 @@ async function update (opt, lng, ns, shouldOmit = false) {
     } else if (opt.autoTranslate === false && lng === opt.referenceLanguage) {
       queryParams.append('autotranslate', 'false')
     }
+    if (opt.autoTranslateReview && lng === opt.referenceLanguage) {
+      queryParams.append('autotranslatereview', 'true')
+    }
     if (so) {
       queryParams.append('omitstatsgeneration', 'true')
     }

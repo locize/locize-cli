@@ -417,6 +417,7 @@ program
   .option('--cf, --clean-local-files <true|false>', 'Removes all local files without removing any folder (default: false)', 'false')
   .option('-u, --update-values <true|false>', 'This will update values of existing translations. (default: false)', 'false')
   .option('--auto-translate <true|false>', 'This will trigger auto-translation of updated translations. (default: false)', 'false')
+  .option('--auto-translate-review <true|false>', 'When auto-translating, route results through the review workflow for languages that have review enabled. (default: false)', 'false')
   .option('-S, --skip-delete <true|false>', 'This will skip the removal of keys on locize. (default: false)', 'false')
   .option('-D, --delete-remote-namespace <true|false>', 'This will delete a complete namespace on locize, if a local file in reference language was deleted. (default: false)', 'false')
   .option('-m, --path-mask <mask>', 'This will define the folder and file structure; do not add a file extension (default: {{language}}/{{namespace}})', `{{language}}${path.sep}{{namespace}}`)
@@ -473,6 +474,7 @@ program
     const dry = options.dry === 'true'
     const updateValues = options.updateValues === 'true'
     const autoTranslate = options.autoTranslate === 'true' ? true : options.autoTranslate === 'false' ? false : undefined
+    const autoTranslateReview = options.autoTranslateReview === 'true'
     const skipDelete = options.skipDelete === 'true'
     const deleteRemoteNamespace = options.deleteRemoteNamespace === 'true'
     const languageFolderPrefix = options.languageFolderPrefix || ''
@@ -496,6 +498,7 @@ program
       format: options.format,
       updateValues,
       autoTranslate,
+      autoTranslateReview,
       skipDelete,
       deleteRemoteNamespace,
       languageFolderPrefix,
