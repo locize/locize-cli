@@ -183,4 +183,127 @@ describe('sync (fetch-only mock, temp dir)', () => {
       global.setTimeout = originalSetTimeout
     }
   )
+
+  it(
+    'appends autotranslate + autotranslatelanguages query params only on the reference language update',
+    async () => {
+      const TEST_PROJECT_ID = 'pid'
+      const TEST_VERSION = 'v1'
+      const TEST_API_KEY = 'api-key'
+      const languages = ['en', 'de', 'fr']
+      const namespaces = ['common']
+
+      const initialData = {
+        en: { common: { hello: 'world' } },
+        de: { common: { hallo: 'welt' } },
+        fr: { common: { bonjour: 'monde' } }
+      }
+
+      const updateUrls = []
+
+      function customFetch (url) {
+        if (url.includes('/languages/')) {
+          return Promise.resolve({
+            status: 200,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ en: { isReferenceLanguage: true }, de: {}, fr: {} })
+          })
+        }
+
+        if (url.includes('/download/')) {
+          return Promise.resolve({
+            status: 200,
+            headers: { get: () => 'application/json' },
+            json: async () =>
+              languages.flatMap(lng =>
+                namespaces.map(ns => ({
+                  key: `${TEST_PROJECT_ID}/${TEST_VERSION}/${lng}/${ns}`,
+                  url: `http://api/${TEST_PROJECT_ID}/${TEST_VERSION}/${lng}/${ns}`,
+                  size: 10,
+                  isPrivate: false
+                }))
+              )
+          })
+        }
+
+        if (url.includes('/update/')) {
+          updateUrls.push(url)
+          return Promise.resolve({
+            status: 200,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ success: true })
+          })
+        }
+
+        for (const lng of languages) {
+          for (const ns of namespaces) {
+            if (url.includes(`/${TEST_PROJECT_ID}/${TEST_VERSION}/${lng}/${ns}`)) {
+              return Promise.resolve({
+                status: 200,
+                headers: { get: () => 'application/json' },
+                json: async () => initialData[lng][ns]
+              })
+            }
+          }
+        }
+
+        throw new Error('Unexpected fetch: ' + url)
+      }
+
+      global.fetch = customFetch
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'locize-sync-test-atl-'))
+
+      const mod = await import('../src/sync.js')
+      sync = mod.default
+
+      const baseOpt = {
+        apiEndpoint: 'http://api',
+        projectId: TEST_PROJECT_ID,
+        apiKey: TEST_API_KEY,
+        version: TEST_VERSION,
+        languages,
+        namespace: namespaces.join(','),
+        path: tempDir,
+        format: 'json',
+        pathMask: '{{language}}/{{namespace}}',
+        pathMaskInterpolationPrefix: '{{',
+        pathMaskInterpolationSuffix: '}}',
+        skipEmpty: false
+      }
+
+      // First sync to populate local files
+      await sync(baseOpt)
+
+      // Modify the reference language locally so it gets pushed
+      const enCommonPath = path.join(tempDir, 'en', 'common.json')
+      const enCommon = JSON.parse(fs.readFileSync(enCommonPath, 'utf-8'))
+      enCommon.newkey = 'newvalue'
+      fs.writeFileSync(enCommonPath, JSON.stringify(enCommon, null, 2))
+
+      const originalSetTimeout = global.setTimeout
+      vi.spyOn(global, 'setTimeout').mockImplementation((fn) => {
+        fn()
+        return 0
+      })
+
+      await sync({
+        ...baseOpt,
+        autoTranslate: true,
+        autoTranslateLanguages: ['de', 'fr']
+      })
+
+      global.setTimeout = originalSetTimeout
+
+      const enUpdate = updateUrls.find(url => url.includes(`/${TEST_VERSION}/en/common`))
+      expect(enUpdate).toBeDefined()
+      const decoded = decodeURIComponent(enUpdate)
+      expect(decoded).toContain('autotranslate=true')
+      expect(decoded).toContain('autotranslatelanguages=de,fr')
+
+      // non-reference language updates (if any) must never carry the param
+      updateUrls
+        .filter(url => !url.includes(`/${TEST_VERSION}/en/common`))
+        .forEach(url => expect(decodeURIComponent(url)).not.toContain('autotranslatelanguages'))
+    }
+  )
 })

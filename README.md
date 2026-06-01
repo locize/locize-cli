@@ -178,6 +178,7 @@ locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-pro
 - all non reference languages will always be just locally replaced by what is published on locize, unless the *--skip-delete true* argument is used
 - if you change the values of existing keys in the reference language, it will not change them in locize (to change the existing values you have to change it directly in locize or use the *--update-values true* argument)
 - if you update existing keys (with *--update-values true*) the automatic translation is not triggered, unless the *--auto-translate true* argument us used
+- if you want to restrict the automatic translation to specific target languages only, you can use the *--auto-translate-languages de,fr* argument (together with *--auto-translate true*); if omitted, all languages are auto-translated
 - **if you want to take into account all languages instead of the reference language only while comparing the namespace content between local and remote, you can use the command argument *--reference-language-only false***
 - **if you want to take into account the modification time while comparing the namespace content between local and remote, you can use the command argument *--compare-modification-time true***
 

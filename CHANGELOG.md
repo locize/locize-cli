@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.2.0](https://github.com/locize/locize-cli/compare/v12.1.1...v12.2.0) - 2026-06-01
+
+- sync: introduce `--auto-translate-languages <lng1,lng2>` option to restrict auto-translation to specific target languages
+
 ## [12.1.1](https://github.com/locize/locize-cli/compare/v12.1.0...v12.1.1) - 2026-04-21
 
 - sync: fix default for `--auto-translate` option
