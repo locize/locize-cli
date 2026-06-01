@@ -265,7 +265,8 @@ describe('sync (fetch-only mock, temp dir)', () => {
         namespace: namespaces.join(','),
         path: tempDir,
         format: 'json',
-        pathMask: '{{language}}/{{namespace}}',
+        // use path.sep (like the CLI default) so local file discovery works on Windows too
+        pathMask: `{{language}}${path.sep}{{namespace}}`,
         pathMaskInterpolationPrefix: '{{',
         pathMaskInterpolationSuffix: '}}',
         skipEmpty: false
