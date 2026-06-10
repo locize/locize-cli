@@ -41,11 +41,66 @@ describe('getRemoteLanguages (fetch-only mock)', () => {
     await expect(getRemoteLanguages(opt)).rejects.toThrow('Bad Request (400)')
   })
 
-  it('throws if no languages found', async () => {
+  it('throws a coded EMPTY_LANGUAGES error if no languages found', async () => {
     global.fetch = createFetchSimulator([
       jsonHandler('/languages/pid', {})
     ])
-    await expect(getRemoteLanguages(opt)).rejects.toThrow('Project with id "pid" not found!')
+    let thrown
+    try {
+      await getRemoteLanguages(opt)
+    } catch (err) {
+      thrown = err
+    }
+    expect(thrown.message).toContain('Project with id "pid" not found — or it has no languages yet!')
+    expect(thrown.code).toBe('EMPTY_LANGUAGES')
+  })
+
+  it('appends the cdnType hint (coded WRONG_CDN_TYPE) when the other endpoint has the project', async () => {
+    const locizeOpt = { ...opt, apiEndpoint: 'https://api.locize.app', cdnType: 'standard' }
+    global.fetch = createFetchSimulator([
+      {
+        match: (url) => url.includes('api.lite.locize.app'),
+        response: async () => ({
+          status: 200,
+          headers: { get: (n) => (n.toLowerCase() === 'content-type' ? 'application/json' : undefined) },
+          json: async () => ({ en: { isReferenceLanguage: true } }),
+          statusText: 'OK'
+        })
+      },
+      jsonHandler('/languages/pid', {})
+    ])
+    let thrown
+    try {
+      await getRemoteLanguages(locizeOpt)
+    } catch (err) {
+      thrown = err
+    }
+    expect(thrown.message).toContain('wrong cdnType')
+    expect(thrown.code).toBe('WRONG_CDN_TYPE')
+  })
+
+  it('does not crash (and adds no hint) when the other endpoint answers with non-JSON', async () => {
+    const locizeOpt = { ...opt, apiEndpoint: 'https://api.locize.app', cdnType: 'standard' }
+    global.fetch = createFetchSimulator([
+      {
+        match: (url) => url.includes('api.lite.locize.app'),
+        response: async () => ({
+          status: 200,
+          headers: { get: (n) => (n.toLowerCase() === 'content-type' ? 'text/html' : undefined) },
+          json: async () => { throw new Error('not json') },
+          statusText: 'OK'
+        })
+      },
+      jsonHandler('/languages/pid', {})
+    ])
+    let thrown
+    try {
+      await getRemoteLanguages(locizeOpt)
+    } catch (err) {
+      thrown = err
+    }
+    expect(thrown.code).toBe('EMPTY_LANGUAGES')
+    expect(thrown.message).not.toContain('wrong cdnType')
   })
 
   it('throws if no reference language', async () => {

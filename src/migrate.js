@@ -4,6 +4,7 @@ import flatten from 'flat'
 import colors from 'colors'
 import request from './request.js'
 import getRemoteLanguages from './getRemoteLanguages.js'
+import addLanguage from './addLanguage.js'
 import os from 'node:os'
 import mapLimit from './mapLimit.js'
 import download from './download.js'
@@ -147,23 +148,6 @@ const upload = async (opt, nss) => {
   await mapLimit(nssNonRefLng, concurrency, async (ns) => transfer(opt, ns))
 }
 
-const addLanguage = async (opt, l) => {
-  const url = opt.apiEndpoint + '/language/' + opt.projectId + '/' + l
-  try {
-    const { res } = await request(url, {
-      method: 'post',
-      headers: {
-        Authorization: opt.apiKey
-      }
-    })
-    if (res.status >= 300 && res.status !== 412) throw new Error(res.statusText + ' (' + res.status + ')')
-    console.log(colors.green(`added language ${l}...`))
-  } catch (err) {
-    console.log(colors.red(`failed to add language ${l}...`))
-    throw err
-  }
-}
-
 const downloadAfterMigrate = async (opt) => {
   console.log(colors.yellow('downloading translations after migration...'))
   await new Promise((resolve) => setTimeout(resolve, 15000))
@@ -222,8 +206,14 @@ const migrate = async (opt) => {
     try {
       remoteLanguages = await getRemoteLanguages(opt)
     } catch (err) {
-      console.error(colors.red(err.stack))
-      process.exit(1)
+      // A project without any languages yet is fine for migrate — every local
+      // language is created below via addLanguage before the upload.
+      if (err.code === 'EMPTY_LANGUAGES' && opt.apiKey) {
+        remoteLanguages = []
+      } else {
+        console.error(colors.red(err.stack))
+        process.exit(1)
+      }
     }
     const localLanguages = []
     nss.forEach((n) => {

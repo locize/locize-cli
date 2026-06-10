@@ -17,6 +17,7 @@ import getProjectStats from './getProjectStats.js'
 import xcstrings from 'locize-xcstrings'
 import getBranches from './getBranches.js'
 import isValidUuid from './isValidUuid.js'
+import addLanguage from './addLanguage.js'
 import os from 'node:os'
 import lngCodes from './lngs.js'
 
@@ -668,9 +669,101 @@ const checkForMissingLocalNamespaces = (downloads, localNamespaces, opt) => {
   return localMissingNamespaces
 }
 
+/**
+ * Discovers which languages the local files intend, independent of the remote
+ * state: explicit --language/--languages win; otherwise the language folders
+ * under opt.path (only when the path mask starts with the language segment —
+ * the default `{{language}}/{{namespace}}` layout).
+ */
+const discoverLocalLanguages = (opt) => {
+  if (opt.languages && opt.languages.length > 0) return [...opt.languages]
+  if (opt.language) return [opt.language]
+  const languageToken = `${opt.pathMaskInterpolationPrefix || '{{'}language${opt.pathMaskInterpolationSuffix || '}}'}`
+  const pathMask = opt.pathMask || `${languageToken}${path.sep}{{namespace}}`
+  if (!pathMask.startsWith(`${opt.languageFolderPrefix || ''}${languageToken}`)) return []
+  try {
+    return fs.readdirSync(opt.path)
+      .filter((file) => fs.statSync(path.join(opt.path, file)).isDirectory())
+      .map((dir) => (opt.languageFolderPrefix ? dir.replace(opt.languageFolderPrefix, '') : dir))
+  } catch (err) {
+    return []
+  }
+}
+
+/**
+ * Bootstraps the remote languages of a project that has none yet by creating
+ * the locally intended languages (the server authorizes: admin keys always;
+ * any write-capable key while the project is still empty), then waits for the
+ * asynchronously regenerated languages file.
+ */
+const bootstrapRemoteLanguages = async (opt) => {
+  const noLanguagesHelp = `Project with id "${opt.projectId}" has no languages yet`
+  const localLanguages = discoverLocalLanguages(opt)
+  if (localLanguages.length === 0) {
+    throw new Error(`${noLanguagesHelp} and no local languages were found to create — add languages in the project settings (or push initial content via "locize migrate"), then retry.`)
+  }
+
+  console.log(colors.yellow(`project has no languages yet — creating ${localLanguages.join(', ')}...`))
+  try {
+    for (const l of localLanguages) {
+      await addLanguage(opt, l)
+    }
+  } catch (err) {
+    if (err.status === 401) {
+      throw new Error(`${noLanguagesHelp} and this api-key may not create them — use an admin-scoped api-key (or any write-capable key while the project is still empty), or add the languages in the project settings, then retry.`)
+    }
+    throw err
+  }
+
+  // the languages file is regenerated asynchronously — retry a few times
+  let lastError
+  for (let i = 0; i < 3; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 5000))
+    try {
+      return await getRemoteLanguages(opt)
+    } catch (err) {
+      lastError = err
+      if (err.code !== 'EMPTY_LANGUAGES') throw err
+    }
+  }
+  throw lastError
+}
+
 async function continueToSync (opt) {
   console.log(colors.grey('checking remote (locize)...'))
-  const remoteLanguages = await getRemoteLanguages(opt)
+  let remoteLanguages
+  try {
+    remoteLanguages = await getRemoteLanguages(opt)
+  } catch (err) {
+    // A project without languages is bootstrapped on the fly (unless this is
+    // a dry run or we have no key to create them with).
+    if (err.code !== 'EMPTY_LANGUAGES' || !opt.apiKey || opt.dry) throw err
+    remoteLanguages = await bootstrapRemoteLanguages(opt)
+  }
+
+  // Languages that exist locally but not remotely are created too — the
+  // server decides whether the key may (admin always; write-capable keys
+  // while the project is empty). On rejection we warn instead of silently
+  // ignoring the local files (the pre-existing behavior).
+  const missingRemotely = discoverLocalLanguages(opt).filter((l) => remoteLanguages.indexOf(l) < 0)
+  if (missingRemotely.length > 0) {
+    if (opt.apiKey && !opt.dry) {
+      const created = []
+      for (const l of missingRemotely) {
+        try {
+          await addLanguage(opt, l)
+          created.push(l)
+        } catch (err) {
+          console.log(colors.yellow(`language "${l}" exists locally but not in your locize project and this api-key may not create it (${err.message}) — add it in the project settings or use an admin api-key.`))
+        }
+      }
+      // the regenerated languages file lags behind — continue with the
+      // created languages included so this run already syncs them
+      created.forEach((l) => remoteLanguages.push(l))
+    } else {
+      missingRemotely.forEach((l) => console.log(colors.yellow(`language "${l}" exists locally but not in your locize project${opt.dry ? ' (dry run: not creating it)' : ' (no api-key: cannot create it)'}.`)))
+    }
+  }
 
   if (opt.referenceLanguageOnly && opt.language && opt.referenceLanguage !== opt.language) {
     opt.referenceLanguage = opt.language

@@ -108,3 +108,51 @@ describe('migrate with download option', () => {
     expect(calledUrls.some(url => url.includes('/download/'))).toBe(false)
   })
 })
+
+describe('migrate on a project without languages yet (bootstrap)', () => {
+  let migrate, tempDir, origFetch, fetchSim
+  const added = []
+  beforeEach(async () => {
+    origFetch = global.fetch
+    added.length = 0
+    fetchSim = createFetchSimulator([
+      {
+        match: (url, options) => url.includes('/language/') && (options.method || '').toLowerCase() === 'post',
+        response: async (url) => {
+          added.push(url.split('/').pop())
+          return { status: 200, headers: { get: () => 'application/json' }, json: async () => ({}), statusText: 'OK' }
+        }
+      },
+      jsonHandler('/languages/', {}, 200), // empty project
+      jsonHandler('/missing/', {}, 200),
+      jsonHandler('/update/', {}, 200)
+    ])
+    global.fetch = fetchSim
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'locize-migrate-empty-test-'))
+    for (const lng of ['en', 'de']) {
+      const lngDir = path.join(tempDir, lng)
+      fs.mkdirSync(lngDir)
+      fs.writeFileSync(path.join(lngDir, 'common.json'), JSON.stringify({ hello: 'world' }))
+    }
+    const mod = await import('../src/migrate.js')
+    migrate = mod.default
+  })
+  afterEach(() => {
+    global.fetch = origFetch
+    fs.rmSync(tempDir, { recursive: true, force: true })
+  })
+  it('creates all local languages and uploads', { timeout: 20000 }, async () => {
+    const opt = {
+      apiEndpoint: 'http://api',
+      apiKey: 'key',
+      projectId: 'pid',
+      version: 'v1',
+      parseLanguage: true,
+      path: tempDir,
+      format: 'json'
+    }
+    await expect(migrate(opt)).resolves.toBeUndefined()
+    expect(added.sort()).toEqual(['de', 'en'])
+    expect(fetchSim.mock.calls.some(call => call[0].includes('/missing/'))).toBe(true)
+  })
+})

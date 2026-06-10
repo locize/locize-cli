@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.3.0](https://github.com/locize/locize-cli/compare/v12.2.0...v12.3.0) - 2026-06-10
+
+- sync: creates missing remote languages on the fly. A project without any
+  languages yet is bootstrapped automatically from the local language folders
+  (or `--language`/`--languages`), and a language that exists locally but not
+  in the project is created too instead of being silently ignored — the server
+  decides whether the api-key may (admin keys always; any write-capable key
+  while the project still has no content). On rejection sync warns and
+  continues; `--dry` never creates languages.
+- migrate: also works on a project without any languages yet (previously both
+  sync and migrate failed with a misleading "Project not found" error when the
+  project's languages file was empty).
+- fix: the "wrong cdnType" hint no longer crashes (or fires) when the other
+  endpoint answers with a non-JSON response; the empty-project error now reads
+  "Project … not found — or it has no languages yet!" and carries an
+  `EMPTY_LANGUAGES` / `WRONG_CDN_TYPE` error code for programmatic consumers.
+
 ## [12.2.0](https://github.com/locize/locize-cli/compare/v12.1.1...v12.2.0) - 2026-06-01
 
 - sync: introduce `--auto-translate-languages <lng1,lng2>` option to restrict auto-translation to specific target languages
