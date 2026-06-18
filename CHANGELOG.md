@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.3.1](https://github.com/locize/locize-cli/compare/v12.3.0...v12.3.1) - 2026-06-18
+
+- request: retry transient network failures with exponential backoff and jitter
+  instead of a fixed 5s delay. This spreads retries so that bursts of
+  concurrent CLI runs (e.g. in CI) no longer retry in lockstep and hit the API
+  at the same instant.
+
 ## [12.3.0](https://github.com/locize/locize-cli/compare/v12.2.0...v12.3.0) - 2026-06-10
 
 - sync: creates missing remote languages on the fly. A project without any

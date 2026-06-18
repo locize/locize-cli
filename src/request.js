@@ -5,6 +5,10 @@ import CacheableLookup from 'cacheable-lookup'
 const cacheable = new CacheableLookup()
 cacheable.install(https.globalAgent)
 
+const RETRY_MAX_ATTEMPTS = 3
+const RETRY_BASE_DELAY_MS = 2000
+const RETRY_MAX_DELAY_MS = 30000
+
 const httpProxy = process.env.http_proxy || process.env.HTTP_PROXY || process.env.https_proxy || process.env.HTTPS_PROXY
 const isRetriableError = (err) => {
   return err && err.message && (
@@ -47,18 +51,23 @@ async function request (url, options) {
   }
   if (options.headers['Authorization'] === undefined) delete options.headers['Authorization']
 
-  async function retriableFetch (maxRetries) {
+  async function retriableFetch (retriesLeft, attempt = 0) {
     try {
       const response = await fetch(url, options)
       const result = await handleResponse(response)
       return result
     } catch (err) {
-      if (maxRetries < 1) throw err
+      if (retriesLeft < 1) throw err
       if (!isRetriableError(err)) throw err
-      await new Promise(resolve => setTimeout(resolve, 5000))
-      return retriableFetch(--maxRetries)
+      // Exponential backoff with equal jitter: spreads retries so a burst of
+      // concurrent CLI runs (e.g. CI) doesn't all retry in lockstep and
+      // hammer the API at the same instant.
+      const expDelay = Math.min(RETRY_MAX_DELAY_MS, RETRY_BASE_DELAY_MS * (2 ** attempt))
+      const delay = Math.round(expDelay / 2 + Math.random() * (expDelay / 2))
+      await new Promise(resolve => setTimeout(resolve, delay))
+      return retriableFetch(retriesLeft - 1, attempt + 1)
     }
   }
-  return retriableFetch(3)
+  return retriableFetch(RETRY_MAX_ATTEMPTS)
 }
 export default request
