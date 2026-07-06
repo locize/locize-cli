@@ -114,17 +114,13 @@ const convertToFlatFormat = async (opt, data, lng) => {
     // CRLF => LF
     return stringsFile.parse(data.toString().replace(/\r\n/g, '\n'), false)
   }
-  if (
-    opt.format === 'xliff2' ||
-    opt.format === 'xliff12' ||
-    opt.format === 'xlf2' ||
-    opt.format === 'xlf12'
-  ) {
+  if (['xliff2', 'xliff21', 'xliff22', 'xliff12', 'xlf2', 'xlf21', 'xlf22', 'xlf12'].indexOf(opt.format) > -1) {
+    // xliff2js parses 2.0, 2.1 and 2.2
     const fn =
       opt.format === 'xliff12' || opt.format === 'xlf12'
         ? xliff.xliff12ToJs
         : xliff.xliff2js
-    const res = await fn(data.toString())
+    const res = await fn(data.toString(), { inlineAsString: true })
     res.resources = res.resources || {}
     const ns = Object.keys(res.resources)[0]
     const orgRes = res.resources[ns] || res.resources

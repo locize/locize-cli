@@ -141,19 +141,17 @@ const convertToDesiredFormat = async (
     })
     return stringsFile.compile(data)
   }
-  if (
-    opt.format === 'xliff2' ||
-    opt.format === 'xliff12' ||
-    opt.format === 'xlf2' ||
-    opt.format === 'xlf12'
-  ) {
-    const fn =
-      opt.format === 'xliff12' || opt.format === 'xlf12'
-        ? xliff.createxliff12
-        : xliff.createxliff
+  if (['xliff2', 'xliff21', 'xliff22', 'xliff12', 'xlf2', 'xlf21', 'xlf22', 'xlf12'].indexOf(opt.format) > -1) {
     const refNs = await opt.getNamespace(opt, opt.referenceLanguage, namespace)
     const prepared = prepareCombinedExport(refNs, flatten(data))
-    return await fn(opt.referenceLanguage, lng, prepared.ref, prepared.trg, namespace)
+    const js = await xliff.createjs(opt.referenceLanguage, lng, prepared.ref, prepared.trg, namespace)
+    if (opt.format === 'xliff12' || opt.format === 'xlf12') {
+      return await xliff.jsToXliff12(js, { inlineAsString: true })
+    }
+    let targetXliffVersion // default 2.0
+    if (opt.format === 'xliff21' || opt.format === 'xlf21') targetXliffVersion = '2.1'
+    if (opt.format === 'xliff22' || opt.format === 'xlf22') targetXliffVersion = '2.2'
+    return await xliff.js2xliff(js, { targetXliffVersion, inlineAsString: true })
   }
   if (opt.format === 'resx') {
     return await resx.js2resx(flatten(data))

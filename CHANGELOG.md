@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.4.0](https://github.com/locize/locize-cli/compare/v12.3.1...v12.4.0) - 2026-07-06
+
+- xliff: proper support for inline elements (e.g. Angular's
+  `<x id="INTERPOLATION" equiv-text="{{ count }}"/>` placeholders, or
+  `<ph>`/`<pc>`/`<g>`/`<bpt>` tags from other TMS exports). On import they are
+  flattened into stable placeholder tokens inside the translation value
+  (previously such values were silently corrupted into arrays); on export the
+  tokens are restored as real XLIFF inline elements, so Angular `.xlf` files
+  round-trip cleanly. Requires `xliff` >= 6.4.0 (the encoding is implemented
+  in the library and shared with the locize CAT editor).
+- xliff: new formats `xliff21`, `xliff22`, `xlf21`, `xlf22` for XLIFF 2.1 and
+  2.2 (import of 2.1/2.2 files already worked via `xliff2`; exports now emit
+  the matching `version` attribute). XLIFF 2.1 exports carry the
+  OASIS-correct `urn:oasis:names:tc:xliff:document:2.0` core namespace.
+
 ## [12.3.1](https://github.com/locize/locize-cli/compare/v12.3.0...v12.3.1) - 2026-06-18
 
 - request: retry transient network failures with exponential backoff and jitter
