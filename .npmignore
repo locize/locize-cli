@@ -11,4 +11,5 @@ install.sh
 install.ps1
 eslint.config.js
 src
-vitest.config.jsCLAUDE.md
+vitest.config.js
+CLAUDE.md
