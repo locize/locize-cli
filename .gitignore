@@ -11,3 +11,4 @@ dist
 !.env.example
 *.pem
 *.key
+CLAUDE.md
