@@ -188,9 +188,9 @@ program
   })
 
 program
-  .command('remove <namespace> <key>')
+  .command('remove <namespace> <key...>')
   .alias('rm')
-  .description('remove a key')
+  .description('remove one or more keys')
   .option('-k, --api-key <apiKey>', 'The api-key that should be used')
   .option('-i, --project-id <projectId>', 'The project-id that should be used')
   .option('-l, --language <lng>', 'The language that should be targeted (omitting this attribute will result in removing the key from all languages)')
@@ -198,7 +198,7 @@ program
   .option('-a, --api-endpoint <url>', `Specify the api-endpoint url that should be used (default: ${defaultApiEndpoint})`)
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
-  .action((namespace, key, options) => {
+  .action((namespace, keys, options) => {
     try {
       config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
     } catch (e) {}
@@ -239,13 +239,16 @@ program
       language,
       version,
       namespace,
-      key
+      key: keys.length === 1 ? keys[0] : undefined,
+      // multiple keys are batched into one update request per language
+      data: keys.length > 1 ? keys.reduce((m, k) => { m[k] = null; return m }, {}) : undefined
     })
   })
   .on('--help', () => {
     console.log('  Examples:')
     console.log()
     console.log('    $ locize remove common title')
+    console.log('    $ locize remove common title subtitle description')
     console.log('    $ locize remove common title --language en')
     console.log('    $ locize remove common title --api-key <apiKey> --project-id <projectId> --language en')
     console.log()

@@ -12,6 +12,11 @@
 npm install -g locize-cli
 ```
 
+> ℹ️ **pnpm >= 11:** locize-cli depends on `xlsx` pinned to the official SheetJS CDN tarball, because the npm registry version is outdated and has known vulnerabilities. pnpm 11 blocks such non-registry transitive dependencies by default (`ERR_PNPM_EXOTIC_SUBDEP`). Install with npm, or opt out in your `pnpm-workspace.yaml`:
+> ```yaml
+> blockExoticSubdeps: false
+> ```
+
 ### with Shell: (downloads [released](https://github.com/locize/locize-cli/releases) (linux or macos) binaries)
 
 ```sh
@@ -67,6 +72,12 @@ or
 locize remove common title
 ```
 
+or remove multiple keys at once (batched into one request per language):
+
+```sh
+locize remove common title subtitle description
+```
+
 
 ## Get keys
 ### Step 1: execute
@@ -110,6 +121,7 @@ or add a format like (json, nested, flat, xliff2, xliff21, xliff22, xliff12, xlf
 *Special formats:*
 - use yaml-rails to have the language code in the resulting yaml as root object
 - use yaml-rails-ns to have the namespace in the resulting yaml as first key scope
+- xcstrings (Apple String Catalog): conversion happens at the file level, not at the in-string syntax level — i18next-style plural suffixes (`key_one`/`key_other`) stay separate entries (they are not merged into `variations.plural`) and interpolation placeholders like `{{name}}` are not rewritten to `%@`/`%lld` format specifiers. For a clean String Catalog export, the content should already use xcstrings-native plural variations and format specifiers.
 
 ```sh
 locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver latest --language en --namespace namespace1 --path ./backup --format android
@@ -165,6 +177,7 @@ or add a format like (json, nested, flat, xliff2, xliff21, xliff22, xliff12, xlf
 *Special formats:*
 - use yaml-rails to have the language code in the resulting yaml as root object
 - use yaml-rails-ns to have the namespace in the resulting yaml as first key scope
+- xcstrings (Apple String Catalog): conversion happens at the file level, not at the in-string syntax level — i18next-style plural suffixes (`key_one`/`key_other`) stay separate entries (they are not merged into `variations.plural`) and interpolation placeholders like `{{name}}` are not rewritten to `%@`/`%lld` format specifiers. For a clean String Catalog export, the content should already use xcstrings-native plural variations and format specifiers.
 
 ```sh
 locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-project-id-93e1-442a-ab35-24331fa294ba --format android

@@ -55,4 +55,13 @@ describe('add (fetch-only mock, temp dir)', () => {
       placeholderUserAgent
     ]).toContain(headers['X-User-Agent'])
   })
+
+  it('removes multiple keys with a single update request per language', async () => {
+    const opt = { apiEndpoint: 'http://api', apiKey: 'key', projectId: 'pid', version: 'v1', namespace: 'common', language: 'en', data: { title: null, subtitle: null }, path: tempDir }
+    await expect(add(opt)).resolves.toBeUndefined()
+    // language given: exactly one /update/ call carrying all keys as null
+    const updateCalls = fetchSim.mock.calls.filter(c => c[0].includes('/update/'))
+    expect(updateCalls).toHaveLength(1)
+    expect(updateCalls[0][1].body).toBe(JSON.stringify({ title: null, subtitle: null }))
+  })
 })

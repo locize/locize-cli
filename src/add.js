@@ -3,6 +3,18 @@ import flatten from 'flat'
 import getRemoteLanguages from './getRemoteLanguages.js'
 import request from './request.js'
 
+const payloadOf = (opt) => {
+  const data = flatten(opt.data || {})
+  if (!opt.data) {
+    data[opt.key] = opt.value || null // null will remove the key
+  }
+  return data
+}
+
+const isRemoval = (data) => Object.keys(data).length > 0 && Object.values(data).every((v) => v === undefined || v === null)
+
+const keyLabel = (opt, data) => opt.key || Object.keys(data).join(', ')
+
 const _add = async (opt) => {
   const url = `${opt.apiEndpoint}/update/{{projectId}}/{{version}}/{{lng}}/{{ns}}`
     .replace('{{projectId}}', opt.projectId)
@@ -13,15 +25,14 @@ const _add = async (opt) => {
     .replace('{{ns}}', opt.namespace)
     .replace('{{namespace}}', opt.namespace)
 
-  if (!opt.data && (opt.value === undefined || opt.value === null)) {
-    console.log(colors.yellow(`removing ${opt.key} from ${opt.version}/${opt.language}/${opt.namespace}...`))
-  } else {
-    console.log(colors.yellow(`adding ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`))
-  }
+  const data = payloadOf(opt)
+  const removing = isRemoval(data)
+  const label = keyLabel(opt, data)
 
-  const data = flatten(opt.data || {})
-  if (!opt.data) {
-    data[opt.key] = opt.value || null // null will remove the key
+  if (removing) {
+    console.log(colors.yellow(`removing ${label} from ${opt.version}/${opt.language}/${opt.namespace}...`))
+  } else {
+    console.log(colors.yellow(`adding ${label} to ${opt.version}/${opt.language}/${opt.namespace}...`))
   }
 
   try {
@@ -33,10 +44,10 @@ const _add = async (opt) => {
       body: data
     })
     if (res.status >= 300 && res.status !== 412) {
-      if (!opt.data && (opt.value === undefined || opt.value === null)) {
-        console.log(colors.red(`remove failed for ${opt.key} from ${opt.version}/${opt.language}/${opt.namespace}...`))
+      if (removing) {
+        console.log(colors.red(`remove failed for ${label} from ${opt.version}/${opt.language}/${opt.namespace}...`))
       } else {
-        console.log(colors.red(`add failed for ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`))
+        console.log(colors.red(`add failed for ${label} to ${opt.version}/${opt.language}/${opt.namespace}...`))
       }
       if (obj && (obj.errorMessage || obj.message)) {
         console.error(colors.red((obj.errorMessage || obj.message)))
@@ -47,16 +58,16 @@ const _add = async (opt) => {
       }
       return
     }
-    if (!opt.data && (opt.value === undefined || opt.value === null)) {
-      console.log(colors.green(`removed ${opt.key} from ${opt.version}/${opt.language}/${opt.namespace}...`))
+    if (removing) {
+      console.log(colors.green(`removed ${label} from ${opt.version}/${opt.language}/${opt.namespace}...`))
     } else {
-      console.log(colors.green(`added ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`))
+      console.log(colors.green(`added ${label} to ${opt.version}/${opt.language}/${opt.namespace}...`))
     }
   } catch (err) {
-    if (!opt.data && (opt.value === undefined || opt.value === null)) {
-      console.log(colors.red(`remove failed for ${opt.key} from ${opt.version}/${opt.language}/${opt.namespace}...`))
+    if (removing) {
+      console.log(colors.red(`remove failed for ${label} from ${opt.version}/${opt.language}/${opt.namespace}...`))
     } else {
-      console.log(colors.red(`add failed for ${opt.key} to ${opt.version}/${opt.language}/${opt.namespace}...`))
+      console.log(colors.red(`add failed for ${label} to ${opt.version}/${opt.language}/${opt.namespace}...`))
     }
     console.error(colors.red(err.message))
     process.exit(1)
@@ -78,10 +89,11 @@ const add = async (opt) => {
     opt.language = lng
     await _add(opt)
   }
-  if (!opt.data && (opt.value === undefined || opt.value === null)) {
-    console.log(colors.green(`removed ${opt.namespace}/${opt.key} (${opt.version}) from all languages...`))
+  const data = payloadOf(opt)
+  if (isRemoval(data)) {
+    console.log(colors.green(`removed ${opt.namespace}/${keyLabel(opt, data)} (${opt.version}) from all languages...`))
   } else {
-    console.log(colors.green(`added ${opt.namespace}/${opt.key} (${opt.version}) in all languages...`))
+    console.log(colors.green(`added ${opt.namespace}/${keyLabel(opt, data)} (${opt.version}) in all languages...`))
   }
 }
 
