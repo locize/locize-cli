@@ -193,6 +193,8 @@ const cleanupLanguages = (opt, remoteLanguages) => {
   })
 }
 
+const listRemovedKeys = (keys) => keys.length <= 50 ? keys.join(', ') : `${keys.slice(0, 50).join(', ')} ... and ${keys.length - 50} more`
+
 const backupDeleted = (opt, ns, now) => {
   if (opt.dry || ns.diff.toRemove.length === 0) return
   let m = now.getMonth() + 1
@@ -527,6 +529,7 @@ async function handleSync (opt, remoteLanguages, localNamespaces) {
   const shouldOmit = lngsInReqs.length > 5 || nsInReqs.length > 5
 
   let wasThereSomethingToUpdate = opt.autoTranslate || false
+  let suggestBackupTip = false
 
   async function updateComparedNamespaces () {
     const now = new Date()
@@ -537,14 +540,13 @@ async function handleSync (opt, remoteLanguages, localNamespaces) {
           console.log(colors.bgRed(`skipping the removal of ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`))
           if (opt.dry) console.log(colors.bgRed(`skipped to remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`))
         } else {
-          console.log(colors.red(`removing ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}...`))
-          if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemove.join(', ')} in ${ns.language}/${ns.namespace}...`))
+          console.log(colors.red(`${opt.dry ? 'would remove' : 'removing'} ${ns.diff.toRemove.length} keys in ${ns.language}/${ns.namespace}: ${listRemovedKeys(ns.diff.toRemove)}`))
           if (!opt.dry && opt.backupDeletedPath) backupDeleted(opt, ns, now)
+          if (!opt.dry && !opt.backupDeletedPath) suggestBackupTip = true
         }
       }
       if (ns.diff.toRemoveLocally.length > 0) {
-        console.log(colors.red(`removing ${ns.diff.toRemoveLocally.length} keys in ${ns.language}/${ns.namespace} locally...`))
-        if (opt.dry) console.log(colors.red(`would remove ${ns.diff.toRemoveLocally.join(', ')} in ${ns.language}/${ns.namespace} locally...`))
+        console.log(colors.red(`${opt.dry ? 'would remove' : 'removing'} ${ns.diff.toRemoveLocally.length} keys in ${ns.language}/${ns.namespace} locally: ${listRemovedKeys(ns.diff.toRemoveLocally)}`))
       }
       if (ns.diff.toAdd.length > 0) {
         console.log(colors.green(`adding ${ns.diff.toAdd.length} keys in ${ns.language}/${ns.namespace}...`))
@@ -582,6 +584,8 @@ async function handleSync (opt, remoteLanguages, localNamespaces) {
         await update(opt, lng, nsOnlyRemove, shouldOmit)
       })
     })
+
+    if (suggestBackupTip) console.log(colors.yellow('tip: use -B <path> (--backup-deleted-path) to keep a local backup of removed segments'))
 
     console.log(colors.grey('syncing...'))
 

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.4.1](https://github.com/locize/locize-cli/compare/v12.4.0...v12.4.1) - 2026-07-15
+
+- sync: removed keys are now listed by name in real runs too (previously the
+  names were only shown with `--dry`), capped at 50 keys per namespace, so a
+  sync always shows exactly what it deleted. When keys are removed without
+  `--backup-deleted-path`, a one-line tip now points to `-B` to keep a local
+  backup of the removed segments ([98](https://github.com/locize/locize-cli/issues/98)).
+
 ## [12.4.0](https://github.com/locize/locize-cli/compare/v12.3.1...v12.4.0) - 2026-07-06
 
 - xliff: proper support for inline elements (e.g. Angular's
