@@ -1,3 +1,4 @@
+// NOTE: the same heuristic lives inline in the locize backend (clean.js there), port fixes both ways
 const shouldUnflatten = (json) => {
   const keys = Object.keys(json)
   let shouldUnflatten = true

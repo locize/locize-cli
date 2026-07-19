@@ -1,3 +1,4 @@
+// NOTE: kept in sync with sister copies in the internal locize repos, port fixes both ways
 const unflatten = (data, testNatural) => {
   const result = {}
   const shouldConvertArray = {}
