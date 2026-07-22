@@ -47,7 +47,6 @@
     "strings-file": "0.0.5",
     "tmexchange": "2.0.6",
     "xliff": "6.4.0",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "yaml": "2.9.0"
   },
   "devDependencies": {

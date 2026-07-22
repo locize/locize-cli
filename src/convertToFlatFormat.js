@@ -1,6 +1,6 @@
 import gettextConv from 'gettext-converter'
 import csv from 'fast-csv'
-import xlsx from 'xlsx'
+import xlsx from './vendor/xlsx/xlsx.mjs'
 import yaml from 'yaml'
 import asr from 'android-string-resource'
 import stringsFile from 'strings-file'

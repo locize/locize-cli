@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.5.1](https://github.com/locize/locize-cli/compare/v12.5.0...v12.5.1) - 2026-07-22
+
+- install: the SheetJS `xlsx` dependency is no longer fetched from cdn.sheetjs.com
+  at install time; the same 0.20.3 build (integrity-verified, Apache-2.0 license
+  included) is now vendored and compiled into the package. npm 12 blocks remote
+  tarball dependencies by default (`allow-remote=none`), which made installing
+  locize-cli fail; pnpm needed a similar workaround before
+  ([117](https://github.com/locize/locize-cli/issues/117),
+  [116](https://github.com/locize/locize-cli/issues/116)).
+
 ## [12.5.0](https://github.com/locize/locize-cli/compare/v12.4.0...v12.5.0) - 2026-07-15
 
 - sync: removed keys are now listed by name in real runs too (previously the

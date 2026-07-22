@@ -2,6 +2,9 @@ import neostandard from 'neostandard'
 import importPlugin from 'eslint-plugin-import'
 
 export default [
+  // vendored third-party code, not ours to lint
+  { ignores: ['src/vendor/**'] },
+
   // — your neostandard base —
   ...neostandard({
     // ts: true,

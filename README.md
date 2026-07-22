@@ -12,10 +12,7 @@
 npm install -g locize-cli
 ```
 
-> ℹ️ **pnpm >= 11:** locize-cli depends on `xlsx` pinned to the official SheetJS CDN tarball, because the npm registry version is outdated and has known vulnerabilities. pnpm 11 blocks such non-registry transitive dependencies by default (`ERR_PNPM_EXOTIC_SUBDEP`). Install with npm, or opt out in your `pnpm-workspace.yaml`:
-> ```yaml
-> blockExoticSubdeps: false
-> ```
+> ℹ️ Since v12.5.1 the SheetJS `xlsx` library is bundled into the package (Apache-2.0, license included), so installing works with every package manager. Older releases pinned `xlsx` to the official SheetJS CDN tarball (the npm registry version is outdated and has known vulnerabilities), which pnpm 11 (`ERR_PNPM_EXOTIC_SUBDEP`) and npm 12 (`EALLOWREMOTE`) block by default — for locize-cli <= 12.5.0 on pnpm, set `blockExoticSubdeps: false` in your `pnpm-workspace.yaml`.
 
 ### with Shell: (downloads [released](https://github.com/locize/locize-cli/releases) (linux or macos) binaries)
 

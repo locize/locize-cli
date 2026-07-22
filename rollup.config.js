@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, chmodSync } from 'node:fs'
+import { readFileSync, writeFileSync, chmodSync, copyFileSync } from 'node:fs'
 import replace from '@rollup/plugin-replace'
 // import terser from '@rollup/plugin-terser'
 
@@ -52,6 +52,9 @@ export default {
           type: 'commonjs'
         }
         writeFileSync('dist/cjs/package.json', JSON.stringify(cjsPkg, null, 2) + '\n')
+        // Apache-2.0: ship the vendored SheetJS license next to the compiled bundle (loud failure on layout changes)
+        copyFileSync('src/vendor/xlsx/LICENSE', 'dist/cjs/vendor/xlsx/LICENSE')
+        copyFileSync('src/vendor/xlsx/LICENSE', 'dist/esm/vendor/xlsx/LICENSE')
       }
     }
   ]
