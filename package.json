@@ -1,6 +1,6 @@
 {
   "name": "locize-cli",
-  "version": "12.5.2",
+  "version": "12.5.3",
   "description": "locize cli to import locales",
   "type": "module",
   "main": "./dist/cjs/index.js",
