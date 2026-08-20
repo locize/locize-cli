@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.5.3](https://github.com/locize/locize-cli/compare/v12.5.2...v12.5.3) - 2026-08-20
+
+- format: `locize format --format xlsx` works again. Local files were read with
+  `data.toString()`, which UTF-8 decoded the binary workbook and corrupted it,
+  and the colored line diff was then handed the resulting `Buffer` and crashed
+  with `value.split is not a function`. xlsx files are now kept as a `Buffer`
+  end to end and the line diff is skipped for binary formats, so a reformat
+  round-trip preserves the workbook content.
+- deps: updated `diff` (9.0.0), `@yao-pkg/pkg`, `eslint`, `rollup` and `vitest`.
+  A fresh install now resolves patched `js-yaml`, `undici`, `postcss`,
+  `brace-expansion`, `tar` and `flatted` transitives, clearing all open
+  Dependabot alerts.
+- ci: the test matrix now also covers node 26.
+
 ## [12.5.2](https://github.com/locize/locize-cli/compare/v12.5.1...v12.5.2) - 2026-08-20
 
 - download/sync with `--unpublished`: the pagination cursor is now url-encoded

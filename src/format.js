@@ -33,7 +33,8 @@ async function readLocalFile (opt, fPath) {
     namespace,
     path: fPath,
     extension: fExt,
-    original: data.toString(),
+    // xlsx is binary: decoding the workbook to a string corrupts it
+    original: fExt === '.xlsx' ? data : data.toString(),
     language: lng,
     mtime: stat.mtime
   }
@@ -80,11 +81,13 @@ async function writeLocalFile (opt, file) {
     console.log(colors.grey(`${file.path} unchanged`))
     return false
   }
-  const d = diffLines(file.original, file.converted)
-  d.forEach((part) => {
-    const color = part.added ? 'green' : part.removed ? 'red' : 'grey'
-    console.log(part.value[color])
-  })
+  // binary formats (xlsx) convert to a Buffer, which diffLines cannot tokenize
+  if (typeof file.converted === 'string') {
+    diffLines(file.original, file.converted).forEach((part) => {
+      const color = part.added ? 'green' : part.removed ? 'red' : 'grey'
+      console.log(part.value[color])
+    })
+  }
   console.log(colors.yellow(`reformatting ${file.path}...`))
   if (opt.dry) {
     console.log(colors.yellow(`would have reformatted ${file.path}...`))

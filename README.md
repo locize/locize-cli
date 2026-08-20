@@ -129,8 +129,8 @@ locize download --project-id my-project-id-93e1-442a-ab35-24331fa294ba --ver lat
 There's also a [GitHub Action](https://github.com/marketplace/actions/locize-download) that handles the download in your CI/CD workflow.
 
 
-## Synchronize locize with your repository (or any other local directory)
-By using the sync command, you can keep your existing code setup and synchronize the translations with locize.
+## Synchronize Locize with your repository (or any other local directory)
+By using the sync command, you can keep your existing code setup and synchronize the translations with Locize.
 An example on how this could look like can be seen in [this tutorial](https://github.com/locize/react-tutorial#step-1---keep-existing-code-setup-but-synchronize-with-locize).
 
 **⚠️ Since the remote source are the published translations, make sure the desired version is set to auto publish mode. Alternatively use the `--unpublished true` argument (this will generate [private downloads costs](https://www.locize.com/docs/api#fetch-filter-the-unpublished-namespace-resources)). ⚠️**
@@ -182,11 +182,11 @@ locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-pro
 
 **‼️ By default: The reference language in your local repository is the master ‼️**
 
-- if you have new keys in your local namespace it will add the missing one to locize
-- if you have new namespaces in your local language directory it will add the missing one to locize
-- if you have less keys (you have deleted some keys) in your local namespace it will remove them in locize too
-- all non reference languages will always be just locally replaced by what is published on locize, unless the *--skip-delete true* argument is used
-- if you change the values of existing keys in the reference language, it will not change them in locize (to change the existing values you have to change it directly in locize or use the *--update-values true* argument)
+- if you have new keys in your local namespace it will add the missing one to Locize
+- if you have new namespaces in your local language directory it will add the missing one to Locize
+- if you have less keys (you have deleted some keys) in your local namespace it will remove them in Locize too
+- all non reference languages will always be just locally replaced by what is published on Locize, unless the *--skip-delete true* argument is used
+- if you change the values of existing keys in the reference language, it will not change them in Locize (to change the existing values you have to change it directly in Locize or use the *--update-values true* argument)
 - if you update existing keys (with *--update-values true*) the automatic translation is not triggered, unless the *--auto-translate true* argument us used
 - if you want to restrict the automatic translation to specific target languages only, you can use the *--auto-translate-languages de,fr* argument (together with *--auto-translate true*); if omitted, all languages are auto-translated
 - **if you want to take into account all languages instead of the reference language only while comparing the namespace content between local and remote, you can use the command argument *--reference-language-only false***
@@ -198,11 +198,11 @@ locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-pro
 Navigate to your Locize project and check the results => [www.locize.app](https://www.locize.app)
 
 
-## Push missing keys to locize from your repository (or any other local directory)
+## Push missing keys to Locize from your repository (or any other local directory)
 This is useful, when i.e. using [i18next-scanner](https://github.com/i18next/i18next-scanner), like described [here](https://github.com/locize/i18next-locize-backend/issues/315#issuecomment-586967039).
 The save-missing command uses the [missing API](https://www.locize.com/docs/api#missing-translations) and the sync command uses the [update API](https://www.locize.com/docs/api#update-remove-translations).
-So, if you want to save new keys (that does not exist in locize), the save-missing command is the better choice.
-Doing so, you can then for example make use of the “created by missing API" filter in the locize UI.
+So, if you want to save new keys (that does not exist in Locize), the save-missing command is the better choice.
+Doing so, you can then for example make use of the “created by missing API" filter in the Locize UI.
 Also, using this save-missing command does not generate extra modification costs.
 
 But if you need to update existing keys, the sync command is the correct choice.
