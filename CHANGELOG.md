@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.5.2](https://github.com/locize/locize-cli/compare/v12.5.1...v12.5.2) - 2026-08-20
+
+- download/sync with `--unpublished`: the pagination cursor is now url-encoded
+  when requesting the next page. A `+` inside the base64 cursor was decoded as
+  a space by the server, which could abort pulling a very large namespace
+  mid-pagination with an "Illegal next value" error. The API now also emits
+  url-safe cursors, so older CLI versions are covered as well.
+
 ## [12.5.1](https://github.com/locize/locize-cli/compare/v12.5.0...v12.5.1) - 2026-07-22
 
 - install: the SheetJS `xlsx` dependency is no longer fetched from cdn.sheetjs.com
