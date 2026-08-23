@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.5.4](https://github.com/locize/locize-cli/compare/v12.5.3...v12.5.4) - 2026-08-23
+
+- security: bumped `gettext-converter` to 1.3.4, which fixes a prototype
+  pollution in its PO parser ([GHSA-3qx4-pp8q-43c4](https://github.com/locize/gettext-converter/security/advisories/GHSA-3qx4-pp8q-43c4)).
+  A `.po`/`.pot` file carrying a crafted `msgctxt "__proto__"` polluted
+  `Object.prototype` while being converted, so anyone converting or uploading
+  untrusted gettext files was affected. The dependency was pinned exactly, so
+  this bump is required to pick the fix up.
+
 ## [12.5.3](https://github.com/locize/locize-cli/compare/v12.5.2...v12.5.3) - 2026-08-20
 
 - format: `locize format --format xlsx` works again. Local files were read with
