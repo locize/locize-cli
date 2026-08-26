@@ -190,6 +190,7 @@ locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-pro
 - if you update existing keys (with *--update-values true*) the automatic translation is not triggered, unless the *--auto-translate true* argument us used
 - if you want to restrict the automatic translation to specific target languages only, you can use the *--auto-translate-languages de,fr* argument (together with *--auto-translate true*); if omitted, all languages are auto-translated
 - **if you want to take into account all languages instead of the reference language only while comparing the namespace content between local and remote, you can use the command argument *--reference-language-only false***
+- **if you want your target languages to arrive as review proposals instead of being written directly, you can use the command argument *--review true* (together with *--reference-language-only false*); the values only go live once someone accepts them in the editor, and it applies to target languages only, never to your reference language. The [review workflow](https://www.locize.com/docs/review-workflow) has to be enabled for those languages in your project settings**
 - **if you want to take into account the modification time while comparing the namespace content between local and remote, you can use the command argument *--compare-modification-time true***
 
 

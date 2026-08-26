@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.6.0](https://github.com/locize/locize-cli/compare/v12.5.4...v12.6.0) - 2026-08-26
+
+- sync: new `--review true` option. Target languages are then sent as review
+  proposals instead of being written directly, so translations you produce
+  outside Locize (your own LLM, edits in the repository) only go live once
+  someone accepts them in the editor. It applies to target languages only,
+  never to the reference language, and needs `--reference-language-only false`
+  plus the [review workflow](https://www.locize.com/docs/review-workflow)
+  enabled for those languages. Maps to the `review=true` parameter the update
+  API already offered; `--auto-translate-review` stays what it was, the same
+  routing for the automatic translations Locize produces itself.
+
 ## [12.5.4](https://github.com/locize/locize-cli/compare/v12.5.3...v12.5.4) - 2026-08-23
 
 - security: bumped `gettext-converter` to 1.3.4, which fixes a prototype

@@ -436,6 +436,17 @@ async function update (opt, lng, ns, shouldOmit = false) {
     if (opt.autoTranslateReview && lng === opt.referenceLanguage) {
       queryParams.append('autotranslatereview', 'true')
     }
+    /**
+     * Push target languages as review proposals instead of writing them:
+     * the values only go live once someone accepts them in the editor.
+     * @See https://www.locize.com/docs/integration/api/#update-or-remove-translations (Optional review)
+     *
+     * Never for the reference language: that is where new keys come from, and
+     * the api refuses review for a language that has no review workflow anyway.
+     */
+    if (opt.review && lng !== opt.referenceLanguage) {
+      queryParams.append('review', 'true')
+    }
     if (opt.autoTranslateLanguages && opt.autoTranslateLanguages.length > 0 && lng === opt.referenceLanguage) {
       queryParams.append('autotranslatelanguages', opt.autoTranslateLanguages.join(','))
     }
@@ -808,6 +819,13 @@ async function syncInternal (opt) {
 
   if (opt.autoTranslate && !opt.referenceLanguageOnly) {
     console.log(colors.yellow('Using the "--auto-translate true" option together with the "--reference-language-only false" option might result in inconsistent target language translations (automatic translation vs. what is sent direcly to locize).'))
+  }
+
+  // --review only ever applies to target languages, and by default sync looks
+  // at the reference language alone: without this the option would silently do
+  // nothing on the very command someone reaches for first.
+  if (opt.review && opt.referenceLanguageOnly) {
+    console.log(colors.yellow('The "--review true" option only applies to target languages. Add "--reference-language-only false" to actually send them, otherwise only your reference language is synced and nothing goes to review.'))
   }
 
   opt.version = opt.version || 'latest'

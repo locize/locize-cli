@@ -307,4 +307,123 @@ describe('sync (fetch-only mock, temp dir)', () => {
         .forEach(url => expect(decodeURIComponent(url)).not.toContain('autotranslatelanguages'))
     }
   )
+
+  it(
+    'appends review only on target languages, never on the reference language',
+    async () => {
+      const TEST_PROJECT_ID = 'pid'
+      const TEST_VERSION = 'v1'
+      const TEST_API_KEY = 'api-key'
+      const languages = ['en', 'de']
+      const namespaces = ['common']
+
+      const initialData = {
+        en: { common: { hello: 'world' } },
+        de: { common: { hello: 'welt' } }
+      }
+
+      const updateUrls = []
+
+      function customFetch (url) {
+        if (url.includes('/languages/')) {
+          return Promise.resolve({
+            status: 200,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ en: { isReferenceLanguage: true }, de: {} })
+          })
+        }
+
+        if (url.includes('/download/')) {
+          return Promise.resolve({
+            status: 200,
+            headers: { get: () => 'application/json' },
+            json: async () =>
+              languages.flatMap(lng =>
+                namespaces.map(ns => ({
+                  key: `${TEST_PROJECT_ID}/${TEST_VERSION}/${lng}/${ns}`,
+                  url: `http://api/${TEST_PROJECT_ID}/${TEST_VERSION}/${lng}/${ns}`,
+                  size: 10,
+                  isPrivate: false
+                }))
+              )
+          })
+        }
+
+        if (url.includes('/update/')) {
+          updateUrls.push(url)
+          return Promise.resolve({
+            status: 200,
+            headers: { get: () => 'application/json' },
+            json: async () => ({ success: true })
+          })
+        }
+
+        for (const lng of languages) {
+          for (const ns of namespaces) {
+            if (url.includes(`/${TEST_PROJECT_ID}/${TEST_VERSION}/${lng}/${ns}`)) {
+              return Promise.resolve({
+                status: 200,
+                headers: { get: () => 'application/json' },
+                json: async () => initialData[lng][ns]
+              })
+            }
+          }
+        }
+
+        throw new Error('Unexpected fetch: ' + url)
+      }
+
+      global.fetch = customFetch
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'locize-sync-test-review-'))
+
+      const mod = await import('../src/sync.js')
+      sync = mod.default
+
+      const baseOpt = {
+        apiEndpoint: 'http://api',
+        projectId: TEST_PROJECT_ID,
+        apiKey: TEST_API_KEY,
+        version: TEST_VERSION,
+        languages,
+        namespace: namespaces.join(','),
+        path: tempDir,
+        format: 'json',
+        pathMask: `{{language}}${path.sep}{{namespace}}`,
+        pathMaskInterpolationPrefix: '{{',
+        pathMaskInterpolationSuffix: '}}',
+        skipEmpty: false,
+        referenceLanguageOnly: false
+      }
+
+      // First sync to populate local files
+      await sync(baseOpt)
+
+      // a new key in BOTH languages: the reference one must be written, the
+      // German one must arrive as a review proposal
+      for (const lng of languages) {
+        const file = path.join(tempDir, lng, 'common.json')
+        const content = JSON.parse(fs.readFileSync(file, 'utf-8'))
+        content.newkey = `new ${lng} value`
+        fs.writeFileSync(file, JSON.stringify(content, null, 2))
+      }
+
+      const originalSetTimeout = global.setTimeout
+      vi.spyOn(global, 'setTimeout').mockImplementation((fn) => {
+        fn()
+        return 0
+      })
+
+      await sync({ ...baseOpt, review: true })
+
+      global.setTimeout = originalSetTimeout
+
+      const deUpdate = updateUrls.find(url => url.includes(`/${TEST_VERSION}/de/common`))
+      expect(deUpdate).toBeDefined()
+      expect(decodeURIComponent(deUpdate)).toContain('review=true')
+
+      const enUpdate = updateUrls.find(url => url.includes(`/${TEST_VERSION}/en/common`))
+      expect(enUpdate).toBeDefined()
+      expect(decodeURIComponent(enUpdate)).not.toContain('review=true')
+    }
+  )
 })
