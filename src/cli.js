@@ -429,6 +429,8 @@ program
   .option('-P, --language-folder-prefix <prefix>', 'This will be added as a local folder name prefix in front of the language.', '')
   .option('-d, --dry <true|false>', 'Dry run (default: false)', 'false')
   .option('-R, --reference-language-only <true|false>', 'Check for changes in reference language only. (default: true)', 'true')
+  .option('--changed-only <true|false>', 'Only sync keys that changed on the current git branch compared to the base branch (git diff of the local reference-language files); restricts additions, updates and auto-translation to those keys and skips deletions. (default: false)', 'false')
+  .option('--base <ref>', 'The git base branch/ref to compare against for --changed-only (default: auto-detect origin/HEAD, then main, then master)')
   .option('-t, --compare-modification-time <true|false>', 'while comparing the namespace content between local and remote, take the modification time of the local file and the last modified time of the remote namespace into account. (default: false)', 'false')
   .option('-l, --language <lng>', 'The language that should be targeted')
   .option('--ls, --languages <lng1,lng2>', 'The languages that should be targeted')
@@ -487,6 +489,7 @@ program
     const languageFolderPrefix = options.languageFolderPrefix || ''
     const skipEmpty = options.skipEmpty === 'true'
     const referenceLanguageOnly = options.referenceLanguageOnly !== 'false'
+    const changedOnly = options.changedOnly === 'true'
     const compareModificationTime = options.compareModificationTime === 'true'
     const pathMask = options.pathMask
     const unpublished = options.unpublished === 'true'
@@ -515,6 +518,8 @@ program
       cleanLocalFiles,
       skipEmpty,
       referenceLanguageOnly,
+      changedOnly,
+      base: options.base,
       compareModificationTime,
       language,
       languages: languages && languages.split(','),

@@ -18,6 +18,7 @@ import xcstrings from 'locize-xcstrings'
 import getBranches from './getBranches.js'
 import isValidUuid from './isValidUuid.js'
 import addLanguage from './addLanguage.js'
+import { resolveGitCompareRef, getChangedKeysByNamespace, filterComparedToChangedKeys } from './gitChangedKeys.js'
 import os from 'node:os'
 import lngCodes from './lngs.js'
 
@@ -525,6 +526,16 @@ async function handleSync (opt, remoteLanguages, localNamespaces) {
 
   const compared = await compareNamespaces(opt, localNamespaces)
 
+  if (opt.changedOnly) {
+    // changed keys are computed from the reference-language (source) files only
+    const referenceNamespaces = localNamespaces.filter((n) => n.language === opt.referenceLanguage)
+    const changedKeysByNamespace = await getChangedKeysByNamespace(opt, referenceNamespaces)
+    let totalChanged = 0
+    changedKeysByNamespace.forEach((keys) => { totalChanged += keys.size })
+    console.log(colors.grey(`restricting to ${totalChanged} key(s) changed compared to ${opt.gitBaseName}...`))
+    filterComparedToChangedKeys(compared, changedKeysByNamespace)
+  }
+
   const onlyToUpdate = compared.filter((ns) => ns.diff.toAdd.concat(opt.skipDelete ? [] : ns.diff.toRemove).concat(ns.diff.toUpdate).length > 0)
 
   const lngsInReqs = []
@@ -830,6 +841,21 @@ async function syncInternal (opt) {
 
   opt.version = opt.version || 'latest'
   opt.apiEndpoint = opt.apiEndpoint || 'https://api.locize.app'
+
+  if (opt.changedOnly) {
+    // fail fast (before any remote request) when git/base ref is unusable
+    const { base, compareRef } = resolveGitCompareRef(opt)
+    opt.gitBaseName = base
+    opt.gitCompareRef = compareRef
+    console.log(colors.grey(`--changed-only: comparing against ${base}${compareRef !== base ? ` (merge-base ${compareRef.substring(0, 7)})` : ''}...`))
+    if (!opt.skipDelete) {
+      // deletions are out of scope for changed-only syncs: local files on a
+      // branch don't see keys added remotely (or by sibling branches) in the
+      // meantime, so removals here would delete other people's keys
+      opt.skipDelete = true
+      console.log(colors.yellow('--changed-only: skipping deletions (only changed keys are created/updated)'))
+    }
+  }
 
   if (!opt.dry && opt.clean) rimraf.sync(path.join(opt.path, '*'))
 

@@ -192,6 +192,12 @@ locize sync --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --project-id my-pro
 - **if you want to take into account all languages instead of the reference language only while comparing the namespace content between local and remote, you can use the command argument *--reference-language-only false***
 - **if you want your target languages to arrive as review proposals instead of being written directly, you can use the command argument *--review true* (together with *--reference-language-only false*); the values only go live once someone accepts them in the editor, and it applies to target languages only, never to your reference language. The [review workflow](https://www.locize.com/docs/review-workflow) has to be enabled for those languages in your project settings**
 - **if you want to take into account the modification time while comparing the namespace content between local and remote, you can use the command argument *--compare-modification-time true***
+- **if you only want to sync the keys that changed on your current git branch (for example to auto-translate just a pull request's diff), use *--changed-only true*: it diffs your local reference-language files against the merge-base with the base branch (auto-detected via origin/HEAD, main, master, or set explicitly with *--base &lt;ref&gt;*) and restricts additions, value updates and auto-translation to those keys (deletions are skipped). Keys are scoped per namespace file, and if any plural variant of a key changed, all its plural forms are included (target languages often need more CLDR plural forms than the source). Requires git and a non-shallow checkout; on GitHub Actions use `actions/checkout` with `fetch-depth: 0`**
+
+```sh
+locize sync --changed-only true --auto-translate true
+locize sync --changed-only true --base develop
+```
 
 
 ### Step 4: verify

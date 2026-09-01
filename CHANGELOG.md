@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.7.0](https://github.com/locize/locize-cli/compare/v12.6.0...v12.7.0) - 2026-09-01
+
+- sync: new `--changed-only true` option to sync (and AI-auto-translate) only
+  the keys that changed on the current git branch — ideal for translating just
+  a pull request's diff instead of the whole project. The local
+  reference-language files are diffed against the merge-base with the base
+  branch (auto-detected via `origin/HEAD`, `main`, `master`, or set explicitly
+  with `--base <ref>`), and key additions, value updates and auto-translation
+  are restricted to those keys; deletions are skipped, since a branch's local
+  files cannot see keys added remotely or by sibling branches in the meantime.
+  Changed keys are scoped per namespace file (the same bare key name in two
+  namespaces does not cross-match), and when any plural variant of a key
+  changed, all its plural forms are included (target languages often need more
+  CLDR plural forms than the source). Requires git; on shallow CI clones make
+  sure the base branch is fetched (e.g. `actions/checkout` with
+  `fetch-depth: 0`) — the error messages say exactly what is missing.
+
 ## [12.6.0](https://github.com/locize/locize-cli/compare/v12.5.4...v12.6.0) - 2026-08-26
 
 - sync: new `--review true` option. Target languages are then sent as review
