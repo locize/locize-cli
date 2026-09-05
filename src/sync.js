@@ -695,6 +695,21 @@ const checkForMissingLocalNamespaces = (downloads, localNamespaces, opt) => {
   return localMissingNamespaces
 }
 
+// A folder name shaped like a language tag: 1-3 letters plus optional subtags
+// (en, pt_br, zh-Hant-HK, x-pseudo). `node_modules`, `dist` or `.git` never match.
+const LANGUAGE_TAG = /^[a-z]{1,3}(?:[_-][a-z0-9]{2,8})*$/i
+const isKnownLanguage = (lng) => {
+  const l = lng.toLowerCase()
+  return !!lngCodes.find((c) => l === c || l.indexOf(c + '-') === 0 || l.indexOf(c + '_') === 0)
+}
+const listEntries = (dir) => {
+  try {
+    return fs.readdirSync(dir)
+  } catch (err) {
+    return []
+  }
+}
+
 /**
  * Discovers which languages the local files intend, independent of the remote
  * state: explicit --language/--languages win; otherwise the language folders
@@ -707,13 +722,32 @@ const discoverLocalLanguages = (opt) => {
   const languageToken = `${opt.pathMaskInterpolationPrefix || '{{'}language${opt.pathMaskInterpolationSuffix || '}}'}`
   const pathMask = opt.pathMask || `${languageToken}${path.sep}{{namespace}}`
   if (!pathMask.startsWith(`${opt.languageFolderPrefix || ''}${languageToken}`)) return []
+  let dirs
   try {
-    return fs.readdirSync(opt.path)
+    dirs = fs.readdirSync(opt.path)
       .filter((file) => fs.statSync(path.join(opt.path, file)).isDirectory())
-      .map((dir) => (opt.languageFolderPrefix ? dir.replace(opt.languageFolderPrefix, '') : dir))
+      .map((dir) => ({ dir, lng: opt.languageFolderPrefix ? dir.replace(opt.languageFolderPrefix, '') : dir }))
   } catch (err) {
     return []
   }
+  // Only folders that are languages become languages (this gates the creation
+  // of languages missing remotely, existing remote languages are synced as
+  // before): a known code always qualifies, a custom code (kh, x-pseudo)
+  // qualifies when it holds an entry that a known language folder also has
+  // (kh/translation.json next to en/translation.json). Everything else (src,
+  // public, .git, node_modules when the sync runs from a repository root) is
+  // skipped with a warning; --languages still forces any folder through.
+  const known = dirs.filter(({ lng }) => LANGUAGE_TAG.test(lng) && isKnownLanguage(lng))
+  const knownEntries = new Set(known.flatMap(({ dir }) => listEntries(path.join(opt.path, dir))))
+  const custom = dirs.filter(({ dir, lng }) => LANGUAGE_TAG.test(lng) && !isKnownLanguage(lng) &&
+    listEntries(path.join(opt.path, dir)).some((f) => knownEntries.has(f)))
+  const accepted = dirs.filter((d) => known.includes(d) || custom.includes(d))
+  const skipped = dirs.filter((d) => !accepted.includes(d)).map(({ dir }) => dir)
+  if (skipped.length > 0 && !opt.skippedFoldersWarned) {
+    opt.skippedFoldersWarned = true
+    console.log(colors.yellow(`skipping folder(s) that do not look like a language: ${skipped.join(', ')} (use --languages to force)`))
+  }
+  return accepted.map(({ lng }) => lng)
 }
 
 /**

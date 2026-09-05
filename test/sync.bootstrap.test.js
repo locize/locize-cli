@@ -94,6 +94,69 @@ describe('sync language bootstrap (fetch-only mock, temp dir)', () => {
     expect(exitSpy).not.toHaveBeenCalled()
   })
 
+  it('creates only folders that are languages when the sync runs from a repository root', async () => {
+    // en (known code) and kh (custom code, same file as en) are languages;
+    // src, public, node_modules and .git are not, even though they are folders
+    writeLocalFiles(['en', 'kh'])
+    fs.mkdirSync(path.join(tempDir, 'src'), { recursive: true })
+    fs.writeFileSync(path.join(tempDir, 'src', 'index.js'), '')
+    fs.mkdirSync(path.join(tempDir, 'public'), { recursive: true })
+    fs.mkdirSync(path.join(tempDir, 'node_modules', 'x'), { recursive: true })
+    fs.writeFileSync(path.join(tempDir, 'node_modules', 'x', 'package.json'), '{}')
+    fs.mkdirSync(path.join(tempDir, '.git'), { recursive: true })
+    fs.writeFileSync(path.join(tempDir, '.git', 'HEAD'), 'ref: refs/heads/main')
+    const added = []
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    global.fetch = createFetchSimulator([
+      {
+        match: (url, options) => url.includes('/language/') && (options.method || '').toLowerCase() === 'post',
+        response: async (url) => {
+          added.push(url.split('/').pop())
+          return jsonResponse({})
+        }
+      },
+      {
+        match: (url) => url.includes('/languages/'),
+        response: async () => jsonResponse(added.length >= 2 ? { en: { isReferenceLanguage: true }, kh: {} } : {})
+      },
+      { match: (url) => url.includes('/stats/project/'), response: async () => jsonResponse({ v1: { en: { common: { segmentsTranslated: 1, segmentsTotal: 1 } }, kh: { common: { segmentsTranslated: 0, segmentsTotal: 1 } } } }) },
+      { match: (url) => url.includes('/download/'), response: async () => jsonResponse([]) },
+      { match: (url) => url.includes('/missing/') || url.includes('/update/'), response: async () => jsonResponse({}) },
+      { match: (url) => url.includes('/pid/v1/'), response: async () => jsonResponse({}) }
+    ])
+
+    await expect(sync(baseOpt())).resolves.toBeUndefined()
+    expect(added.sort()).toEqual(['en', 'kh'])
+    const warning = logSpy.mock.calls.map((c) => String(c[0])).find((l) => l.includes('do not look like a language'))
+    expect(warning).toBeDefined()
+    for (const folder of ['.git', 'node_modules', 'public', 'src']) expect(warning).toContain(folder)
+    expect(exitSpy).not.toHaveBeenCalled()
+  })
+
+  it('does not discover languages from folders with a namespace-first path mask (unchanged)', async () => {
+    // {{namespace}}/{{language}}: folders are namespaces, so nothing is auto-created and
+    // the empty-project guidance appears, exactly as before the folder filter
+    fs.mkdirSync(path.join(tempDir, 'common'), { recursive: true })
+    fs.writeFileSync(path.join(tempDir, 'common', 'en.json'), JSON.stringify({ hello: 'world' }))
+    const added = []
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    global.fetch = createFetchSimulator([
+      {
+        match: (url, options) => url.includes('/language/') && (options.method || '').toLowerCase() === 'post',
+        response: async (url) => {
+          added.push(url.split('/').pop())
+          return jsonResponse({})
+        }
+      },
+      { match: (url) => url.includes('/languages/'), response: async () => jsonResponse({}) }
+    ])
+
+    await sync({ ...baseOpt(), pathMask: '{{namespace}}/{{language}}' })
+    expect(added).toHaveLength(0)
+    expect(exitSpy).toHaveBeenCalledWith(1)
+    expect(errorSpy.mock.calls.join('\n')).toContain('no languages yet')
+  })
+
   it('fails with guidance instead of creating languages when no api-key is set', async () => {
     writeLocalFiles(['en'])
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})

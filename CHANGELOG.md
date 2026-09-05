@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.7.1](https://github.com/locize/locize-cli/compare/v12.7.0...v12.7.1) - 2026-09-05
+
+- sync: folders that are not languages are no longer created as languages. When
+  the language folders are discovered from the path (the default
+  `{{language}}/{{namespace}}` layout without `--language`/`--languages`), a
+  folder now counts as a language only if its name looks like a language tag
+  and either its base subtag is a known language code or it holds a file with
+  the same name as a known language folder, so custom codes next to the usual
+  `en/translation.json` keep working. Running `locize sync` from a repository
+  root used to create `.git`, `src` or `node_modules` as languages in the
+  project; such folders are now skipped with a warning naming them, and
+  `--languages` still forces any folder through.
+
 ## [12.7.0](https://github.com/locize/locize-cli/compare/v12.6.0...v12.7.0) - 2026-09-01
 
 - sync: new `--changed-only true` option to sync (and AI-auto-translate) only
