@@ -374,6 +374,8 @@ async function downloadAll (opt, remoteLanguages, omitRef = false, manipulate) {
     })
   } else { // 1 file per namespace/lng
     const concurrency = opt.unpublished ? 5 : 20
+    // marked values leave a gettext file as "#, fuzzy": the unpublished rows are pulled raw for it
+    if (opt.unpublished && formats.GETTEXT_FORMATS.indexOf(opt.format) > -1) opt.raw = true
     await pEachLimit(downloads, concurrency, async (download) => {
       const { language, namespace } = getInfosInUrl(download)
       opt.isPrivate = download.isPrivate
@@ -419,6 +421,25 @@ async function update (opt, lng, ns, shouldOmit = false) {
     ns.diff.toUpdate.forEach((k) => { data[k] = ns.content[k] })
   }
 
+  /**
+   * --needs-review: the values go live as usual, marked so the editor lists
+   * them in the review queue until a reviewer confirms them. Target languages
+   * only (like --review), and pointless on proposals (the api strips the mark).
+   * @See https://www.locize.com/docs/review-workflow (Marking values as needing review)
+   */
+  if (opt.needsReview && !opt.review && lng !== opt.referenceLanguage) {
+    Object.keys(data).forEach((k) => {
+      if (typeof data[k] === 'string') data[k] = { value: data[k], needsReview: true }
+    })
+  }
+  // "#, fuzzy" entries of a .po file arrive marked as needing review the same
+  // way (target languages only; a proposal push carries no mark)
+  if (ns.needsReviewKeys && ns.needsReviewKeys.size > 0 && !opt.review && lng !== opt.referenceLanguage) {
+    ns.needsReviewKeys.forEach((k) => {
+      if (typeof data[k] === 'string') data[k] = { value: data[k], needsReview: true }
+    })
+  }
+
   const keysToSend = Object.keys(data).length
   if (keysToSend === 0) return
 
@@ -443,7 +464,7 @@ async function update (opt, lng, ns, shouldOmit = false) {
      * @See https://www.locize.com/docs/integration/api/#update-or-remove-translations (Optional review)
      *
      * Never for the reference language: that is where new keys come from, and
-     * the api refuses review for a language that has no review workflow anyway.
+     * the api refuses review for a language that has no review proposals anyway.
      */
     if (opt.review && lng !== opt.referenceLanguage) {
       queryParams.append('review', 'true')
@@ -871,6 +892,9 @@ async function syncInternal (opt) {
   // nothing on the very command someone reaches for first.
   if (opt.review && opt.referenceLanguageOnly) {
     console.log(colors.yellow('The "--review true" option only applies to target languages. Add "--reference-language-only false" to actually send them, otherwise only your reference language is synced and nothing goes to review.'))
+  }
+  if (opt.needsReview && opt.referenceLanguageOnly) {
+    console.log(colors.yellow('The "--needs-review true" option only applies to target languages. Add "--reference-language-only false" to actually send them, otherwise only your reference language is synced and nothing gets marked.'))
   }
 
   opt.version = opt.version || 'latest'

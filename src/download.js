@@ -354,6 +354,8 @@ async function download (opt) {
   if (opt.unpublished && !opt.apiKey) {
     throw new Error('Please provide also an api-key!')
   }
+  // marked values leave a gettext file as "#, fuzzy": the unpublished rows are pulled raw for it
+  if (opt.unpublished && formats.GETTEXT_FORMATS.indexOf(opt.format) > -1) opt.raw = true
   if (opt.branch === '') {
     throw new Error('The branch name seems invalid!')
   }

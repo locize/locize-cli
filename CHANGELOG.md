@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.8.0](https://github.com/locize/locize-cli/compare/v12.7.1...v12.8.0) - 2026-09-07
+
+- sync: new `--needs-review <true|false>` option. The target-language values go
+  live as usual but marked as needing review, so the editor lists them in the
+  review queue until someone confirms them. Target languages only (like
+  `--review`), and ignored together with `--review true`, because proposals
+  carry no mark. Needs `--reference-language-only false` to send target
+  languages at all.
+- gettext: the mark round-trips as `#, fuzzy`. Fuzzy entries in `.po` files
+  arrive marked as needing review (target languages), and a download with
+  `--unpublished true` writes marked values back out as fuzzy; published files
+  carry no marks. Needs gettext-converter 1.4.0.
+
 ## [12.7.1](https://github.com/locize/locize-cli/compare/v12.7.0...v12.7.1) - 2026-09-05
 
 - sync: folders that are not languages are no longer created as languages. When

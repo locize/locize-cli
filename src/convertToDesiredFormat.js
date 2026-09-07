@@ -17,6 +17,26 @@ import removeUndefinedFromArrays from './removeUndefinedFromArrays.js'
 import shouldUnflatten from './shouldUnflatten.js'
 import { prepareExport as prepareCombinedExport } from './combineSubkeyPreprocessor.js'
 
+// a raw (unpublished) pull hands over { value, needsReview, ... } objects (see
+// GETTEXT_FORMATS in download.js / sync.js): for the gettext formats reduce them
+// to their text and turn the marks into "#, fuzzy"; a row without a text (context
+// only) is left out like a plain pull leaves it out
+const splitMarks = (data) => {
+  const fuzzy = []
+  const values = {}
+  Object.keys(data || {}).forEach((k) => {
+    const v = data[k]
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      if (typeof v.value !== 'string') return
+      values[k] = v.value
+      if (v.needsReview === true) fuzzy.push(k)
+    } else {
+      values[k] = v
+    }
+  })
+  return { values, fuzzy }
+}
+
 const convertToDesiredFormat = async (
   opt,
   namespace,
@@ -42,26 +62,30 @@ const convertToDesiredFormat = async (
     return JSON.stringify(flatten(data), null, 2)
   }
   if (opt.format === 'po' || opt.format === 'gettext') {
-    const flatData = flatten(data)
+    const { values, fuzzy } = splitMarks(data)
+    const flatData = flatten(values)
     const gettextOpt = {
       project: 'locize',
       language: lng,
       potCreationDate: lastModified,
       poRevisionDate: lastModified,
       ctxSeparator: '_ is default but we set it to something that is never found!!!',
-      persistMsgIdPlural: true
+      persistMsgIdPlural: true,
+      fuzzy
     }
     return gettextConv.i18next2po(lng, flatData, gettextOpt)
   }
   if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
-    const flatData = flatten(data)
+    const { values, fuzzy } = splitMarks(data)
+    const flatData = flatten(values)
     const compatibilityJSON = !!Object.keys(flatData).find((k) => /_(zero|one|two|few|many|other)/.test(k)) && 'v4'
     const gettextOpt = {
       project: 'locize',
       language: lng,
       potCreationDate: lastModified,
       poRevisionDate: lastModified,
-      compatibilityJSON
+      compatibilityJSON,
+      fuzzy
     }
     return gettextConv.i18next2po(lng, flatData, gettextOpt)
   }

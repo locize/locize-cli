@@ -14,6 +14,15 @@ import xcstrings from 'locize-xcstrings'
 import flatten from 'flat'
 import { prepareImport as prepareCombinedImport } from './combineSubkeyPreprocessor.js'
 
+// keys of "#, fuzzy" entries in a .po file, carried on the flat content as a
+// non-enumerable Set so the flat object itself stays a plain key/value map
+export const NEEDS_REVIEW_KEYS = Symbol('needsReviewKeys')
+const withNeedsReviewKeys = ({ resources, fuzzy }) => {
+  const flat = flatten(resources)
+  if (fuzzy.length > 0) Object.defineProperty(flat, NEEDS_REVIEW_KEYS, { value: new Set(fuzzy), enumerable: false })
+  return flat
+}
+
 const convertToFlatFormat = async (opt, data, lng) => {
   if (lng && typeof lng !== 'string') lng = undefined
   if (opt.format === 'json' || opt.format === 'nested' || opt.format === 'flat') {
@@ -25,17 +34,16 @@ const convertToFlatFormat = async (opt, data, lng) => {
     return flatten(jsonParsed)
   }
   if (opt.format === 'po' || opt.format === 'gettext') {
-    const ret = gettextConv.po2i18next(data.toString(), {
+    return withNeedsReviewKeys(gettextConv.po2i18next(data.toString(), {
       persistMsgIdPlural: true,
-      ignoreCtx: true
-    })
-    return flatten(ret)
+      ignoreCtx: true,
+      fuzzy: true
+    }))
   }
   if (opt.format === 'po_i18next' || opt.format === 'gettext_i18next') {
     const potxt = data.toString()
     const compatibilityJSON = /msgctxt "(zero|one|two|few|many|other)"/.test(potxt) && 'v4'
-    const ret = gettextConv.po2i18next(potxt, { compatibilityJSON })
-    return flatten(ret)
+    return withNeedsReviewKeys(gettextConv.po2i18next(potxt, { compatibilityJSON, fuzzy: true }))
   }
   if (opt.format === 'csv') {
     // CRLF => LF

@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { mkdirp } from 'mkdirp'
-import convertToFlatFormat from './convertToFlatFormat.js'
+import convertToFlatFormat, { NEEDS_REVIEW_KEYS } from './convertToFlatFormat.js'
 import * as formats from './formats.js'
 import xcstrings from 'locize-xcstrings'
 const fileExtensionsMap = formats.fileExtensionsMap
@@ -172,6 +172,7 @@ const parseLocalLanguage = async (opt, lng) => {
         path: fPath,
         extension: fExt,
         content,
+        needsReviewKeys: content[NEEDS_REVIEW_KEYS], // "#, fuzzy" entries of a .po file
         language: lng,
         mtime: stat.mtime
       }

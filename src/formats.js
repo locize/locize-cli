@@ -31,3 +31,7 @@ export {
   acceptedFileExtensions,
   reversedFileExtensionsMap
 }
+
+// the gettext formats carry the needs-review mark as "#, fuzzy": an unpublished
+// download pulls their rows raw so the marks can be written out
+export const GETTEXT_FORMATS = ['po', 'gettext', 'po_i18next', 'gettext_i18next']

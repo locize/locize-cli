@@ -420,8 +420,9 @@ program
   .option('--cf, --clean-local-files <true|false>', 'Removes all local files without removing any folder (default: false)', 'false')
   .option('-u, --update-values <true|false>', 'This will update values of existing translations. (default: false)', 'false')
   .option('--auto-translate <true|false>', 'This will trigger auto-translation of updated translations.')
-  .option('--auto-translate-review <true|false>', 'When auto-translating, route results through the review workflow for languages that have review enabled. (default: false)', 'false')
-  .option('--review <true|false>', 'Send target languages as review proposals instead of writing them directly; needs --reference-language-only false and the review workflow enabled for those languages. (default: false)', 'false')
+  .option('--auto-translate-review <true|false>', 'When auto-translating, send the results as review proposals for languages that have review proposals enabled. (default: false)', 'false')
+  .option('--review <true|false>', 'Send target languages as review proposals instead of writing them directly; needs --reference-language-only false and review proposals enabled for those languages. (default: false)', 'false')
+  .option('--needs-review <true|false>', 'Write target languages directly but mark every sent value as needing review (the editor lists them in the review queue until someone confirms them); needs --reference-language-only false. Ignored together with --review true. (default: false)', 'false')
   .option('--auto-translate-languages <lng1,lng2>', 'Restrict auto-translation to these target languages only (comma separated). Only effective together with --auto-translate and when updating the reference language. If omitted, all languages are auto-translated.')
   .option('-S, --skip-delete <true|false>', 'This will skip the removal of keys on locize. (default: false)', 'false')
   .option('-D, --delete-remote-namespace <true|false>', 'This will delete a complete namespace on locize, if a local file in reference language was deleted. (default: false)', 'false')
@@ -483,6 +484,7 @@ program
     const autoTranslate = options.autoTranslate === 'true' ? true : options.autoTranslate === 'false' ? false : undefined
     const autoTranslateReview = options.autoTranslateReview === 'true'
     const review = options.review === 'true'
+    const needsReview = options.needsReview === 'true'
     const autoTranslateLanguages = options.autoTranslateLanguages
     const skipDelete = options.skipDelete === 'true'
     const deleteRemoteNamespace = options.deleteRemoteNamespace === 'true'
@@ -510,6 +512,7 @@ program
       autoTranslate,
       autoTranslateReview,
       review,
+      needsReview,
       autoTranslateLanguages: autoTranslateLanguages && autoTranslateLanguages.split(',').map((l) => l.trim()).filter(Boolean),
       skipDelete,
       deleteRemoteNamespace,
