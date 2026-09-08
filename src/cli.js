@@ -36,6 +36,13 @@ const fixApiPath = (p, cdnType) => {
 }
 const defaultApiEndpoint = fixApiPath('https://api.locize.app', defaultCdnType)
 
+// an explicitly given endpoint decides the cdnType when none was configured
+const cdnTypeOfEndpoint = (p) => {
+  if (p.indexOf('.lite.locize.app') > 0) return 'standard'
+  if (p.indexOf('.locize.app') > 0) return 'pro'
+  return defaultCdnType
+}
+
 let config = {}
 try {
   config = ini.parse(fs.readFileSync(configInWorkingDirectory, 'utf-8'))
@@ -100,7 +107,7 @@ program
     }
 
     migrate({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiKey,
       projectId,
       apiEndpoint,
@@ -167,7 +174,7 @@ program
     const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
     add({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiKey,
       projectId,
       apiEndpoint,
@@ -232,7 +239,7 @@ program
     const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
     add({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiKey,
       projectId,
       apiEndpoint,
@@ -320,7 +327,7 @@ program
     const branch = options.branch
 
     download({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiKey,
       projectId,
       apiEndpoint,
@@ -386,7 +393,7 @@ program
     const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
     get({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiEndpoint,
       projectId,
       language,
@@ -501,7 +508,7 @@ program
     const branch = options.branch
 
     sync({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiEndpoint,
       apiKey,
       projectId,
@@ -605,7 +612,7 @@ program
     const pathMask = options.pathMask
 
     missing({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiEndpoint,
       apiKey,
       projectId,
@@ -671,7 +678,7 @@ program
     const ignoreIfVersionExists = options.ignoreIfVersionExists === 'true'
 
     copyVersion({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiKey,
       projectId,
       apiEndpoint,
@@ -723,7 +730,7 @@ program
     }
 
     removeVersion({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiKey,
       projectId,
       apiEndpoint,
@@ -778,7 +785,7 @@ program
     const tenants = options.tenants === 'true'
 
     publishVersion({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiKey,
       projectId,
       apiEndpoint,
@@ -832,7 +839,7 @@ program
     const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
     deleteNamespace({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiKey,
       projectId,
       apiEndpoint,
@@ -922,7 +929,7 @@ program
     const version = options.ver || config.ver || config.version || process.env.LOCIZE_VERSION || process.env.LOCIZE_VER || 'latest'
 
     createBranch({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiKey,
       projectId,
       apiEndpoint,
@@ -974,7 +981,7 @@ program
     }
 
     mergeBranch({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiKey,
       projectId,
       apiEndpoint,
@@ -1026,7 +1033,7 @@ program
     }
 
     deleteBranch({
-      cdnType: cdnType || defaultCdnType,
+      cdnType: cdnType || cdnTypeOfEndpoint(apiEndpoint),
       apiKey,
       projectId,
       apiEndpoint,

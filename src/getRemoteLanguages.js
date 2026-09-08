@@ -29,7 +29,10 @@ const getRemoteLanguages = async (opt) => {
       // obj2 is undefined for non-JSON responses (e.g. an HTML 404 page) —
       // only a real, non-empty JSON object indicates the other cdnType.
       if (res2.status === 200 && obj2 && typeof obj2 === 'object' && Object.keys(obj2).length > 0) {
-        errMsg += ` It seems you're using the wrong cdnType. Your Locize project is configured to use "${opt.cdnType === 'standard' ? 'pro' : 'standard'}" but here you've configured "${opt.cdnType}".`
+        // the endpoint that answered tells the project's real cdnType; opt.cdnType can be the
+        // default while the endpoint was set explicitly, so do not infer the hint from it
+        const projectCdnType = otherEndpoint.indexOf('.lite.locize.') > 0 ? 'standard' : 'pro'
+        errMsg += ` It seems you're using the wrong cdnType. Your Locize project is configured to use "${projectCdnType}" but here you've configured "${projectCdnType === 'standard' ? 'pro' : 'standard'}" (pass --cdn-type ${projectCdnType}).`
         const cdnErr = new Error(errMsg)
         cdnErr.code = 'WRONG_CDN_TYPE'
         throw cdnErr

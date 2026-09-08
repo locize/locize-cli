@@ -76,6 +76,9 @@ describe('getRemoteLanguages (fetch-only mock)', () => {
       thrown = err
     }
     expect(thrown.message).toContain('wrong cdnType')
+    // the hint names the type the answering endpoint stands for, not the caller's option
+    expect(thrown.message).toContain('configured to use "standard"')
+    expect(thrown.message).toContain('--cdn-type standard')
     expect(thrown.code).toBe('WRONG_CDN_TYPE')
   })
 
