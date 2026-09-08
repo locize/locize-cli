@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.8.1](https://github.com/locize/locize-cli/compare/v12.8.0...v12.8.1) - 2026-09-08
+
+- the "wrong cdnType" hint shown when a project is found on the other CDN
+  endpoint now names the project's real cdn type and the `--cdn-type` value to
+  pass. Before, the hint was derived from the caller's option, which every
+  command filled with the default when `--cdn-type` was absent even if
+  `--api-endpoint` was set explicitly, so the two types could appear the wrong
+  way round. The effective cdn type now follows the endpoint.
+
 ## [12.8.0](https://github.com/locize/locize-cli/compare/v12.7.1...v12.8.0) - 2026-09-07
 
 - sync: new `--needs-review <true|false>` option. The target-language values go
