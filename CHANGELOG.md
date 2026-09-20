@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.8.2](https://github.com/locize/locize-cli/compare/v12.8.1...v12.8.2) - 2026-09-20
+
+- format: rendering the preview of rewritten text files is substantially faster,
+  especially for large reindentations and key reorders. Changed lines now print
+  as adjacent removed/added pairs, rather than grouped hunks separated by blank
+  lines. For a very large reorder, the visual old/new pairing can be approximate
+  to keep the command responsive; this affects the preview only, not the written
+  file, `--dry` behavior, or the unchanged-file skip.
+
 ## [12.8.1](https://github.com/locize/locize-cli/compare/v12.8.0...v12.8.1) - 2026-09-08
 
 - the "wrong cdnType" hint shown when a project is found on the other CDN
