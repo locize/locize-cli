@@ -1,7 +1,7 @@
 import colors from 'colors'
 import fs from 'node:fs'
 import path from 'node:path'
-import { diffLines } from 'diff'
+import { getCodeDiff } from '@donedeal0/superdiff'
 import convertToFlatFormat from './convertToFlatFormat.js'
 import convertToDesiredFormat from './convertToDesiredFormat.js'
 import sortFlatResources from './sortFlatResources.js'
@@ -81,10 +81,15 @@ async function writeLocalFile (opt, file) {
     console.log(colors.grey(`${file.path} unchanged`))
     return false
   }
-  // binary formats (xlsx) convert to a Buffer, which diffLines cannot tokenize
+  // binary formats (xlsx) convert to a Buffer, which getCodeDiff cannot tokenize
   if (typeof file.converted === 'string') {
-    diffLines(file.original, file.converted).forEach((part) => {
-      const color = part.added ? 'green' : part.removed ? 'red' : 'grey'
+    getCodeDiff(file.original, file.converted).diff.forEach((part) => {
+      if (part.status === 'updated') {
+        console.log(part.previousValue.red)
+        console.log(part.value.green)
+        return
+      }
+      const color = part.status === 'added' ? 'green' : part.status === 'deleted' ? 'red' : 'grey'
       console.log(part.value[color])
     })
   }
