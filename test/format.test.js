@@ -1,8 +1,20 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
+import colors from 'colors'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import format from '../src/format.js'
+
+const esc = String.fromCharCode(27)
+const markers = { 31: '-', 32: '+', 90: ' ' }
+const asDiffLine = (line) => {
+  const reset = `${esc}[39m`
+  if (!line.startsWith(`${esc}[`) || !line.endsWith(reset)) return line
+  const open = line.indexOf('m')
+  const marker = markers[line.slice(2, open)]
+  if (!marker) return line
+  return marker + line.slice(open + 1, -reset.length)
+}
 
 const writeFixture = (contents) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'locize-format-'))
@@ -29,6 +41,34 @@ describe('format', () => {
       .toBe('{\n  "a": {\n    "key": "Ay"\n  }\n}\n')
 
     fs.rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('renders the diff one line per change, red before green', async () => {
+    const logs = []
+    vi.spyOn(console, 'log').mockImplementation((...args) => logs.push(args.join(' ')))
+    const wasEnabled = colors.enabled
+    colors.enable()
+    const dir = writeFixture('{\n    "a.key": "Ay",\n    "b.key": "Bee"\n}\n')
+    try {
+      await format({ format: 'json', referenceLanguage: 'en', fileOrDirectory: dir })
+    } finally {
+      if (!wasEnabled) colors.disable()
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+    const rendered = logs.slice(0, logs.findIndex((l) => l.includes('reformatting')))
+    expect(rendered.map(asDiffLine)).toEqual([
+      ' {',
+      '+  "a": {',
+      '-    "a.key": "Ay",',
+      '+    "key": "Ay"',
+      '+  },',
+      '+  "b": {',
+      '-    "b.key": "Bee"',
+      '+    "key": "Bee"',
+      '+  }',
+      ' }',
+      ' '
+    ])
   })
 
   it('skips the diff for an already formatted file', async () => {

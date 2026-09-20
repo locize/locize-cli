@@ -85,7 +85,7 @@ async function writeLocalFile (opt, file) {
   if (typeof file.converted === 'string') {
     getCodeDiff(file.original, file.converted).diff.forEach((part) => {
       if (part.status === 'updated') {
-        console.log(part.previousValue.red)
+        if (part.previousValue !== undefined) console.log(part.previousValue.red)
         console.log(part.value.green)
         return
       }
