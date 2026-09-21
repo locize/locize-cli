@@ -33,7 +33,9 @@ const pullNamespacePaged = async (opt, lng, ns, next = '', retry = 0) => {
   })
   if (err) throw err
   if (res.status >= 300) {
-    if (retry < 3 && res.status !== 401) {
+    // retry only what a retry can fix: a 4xx (401 bad key, 403 plan without private
+    // downloads, 404) comes back identical three times and only delays the message
+    if (retry < 3 && (res.status >= 500 || res.status === 408 || res.status === 429)) {
       await sleep(getRandomDelay(3000, 10000))
       return await pullNamespacePaged(opt, lng, ns, next, retry + 1)
     }

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.8.3](https://github.com/locize/locize-cli/compare/v12.8.2...v12.8.3) - 2026-09-21
+
+- sync, download: `--unpublished` and `--overridden-only` fetch the current
+  translations through the API's `/pull` route, which counts as private
+  downloads. Private downloads are included from the Growth plan on; on plans
+  without them (Free, Starter, Starter-Plus) the API now refuses these requests
+  with a 403 instead of billing them as an overage. The option help texts and
+  the README say so.
+- a refused request (401, 403, 404) is no longer retried three times with a
+  3-10 second pause in between: it came back identical every time and only
+  delayed the message. Retries stay for 5xx, 408 and 429.
+
 ## [12.8.2](https://github.com/locize/locize-cli/compare/v12.8.1...v12.8.2) - 2026-09-20
 
 - format: rendering the preview of rewritten text files is substantially faster,

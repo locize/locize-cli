@@ -133,7 +133,7 @@ There's also a [GitHub Action](https://github.com/marketplace/actions/locize-dow
 By using the sync command, you can keep your existing code setup and synchronize the translations with Locize.
 An example on how this could look like can be seen in [this tutorial](https://github.com/locize/react-tutorial#step-1---keep-existing-code-setup-but-synchronize-with-locize).
 
-**⚠️ Since the remote source are the published translations, make sure the desired version is set to auto publish mode. Alternatively use the `--unpublished true` argument (this will generate [private downloads costs](https://www.locize.com/docs/api#fetch-filter-the-unpublished-namespace-resources)). ⚠️**
+**⚠️ Since the remote source are the published translations, make sure the desired version is set to auto publish mode. Alternatively use the `--unpublished true` argument (these requests count as [private downloads](https://www.locize.com/docs/api#fetch-filter-the-unpublished-namespace-resources): included from the Growth plan on, refused with a 403 on Free, Starter and Starter-Plus). ⚠️**
 
 *The CLI will use the normal [API](https://www.locize.com/docs/api) endpoints, so normal modification and download charges etc. will occur.*
 
