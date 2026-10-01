@@ -2,8 +2,8 @@ import neostandard from 'neostandard'
 import importPlugin from 'eslint-plugin-import'
 
 export default [
-  // vendored third-party code, not ours to lint
-  { ignores: ['src/vendor/**'] },
+  // vendored third-party code and agent worktrees (full repo copies), not ours to lint
+  { ignores: ['src/vendor/**', '.claude/**'] },
 
   // — your neostandard base —
   ...neostandard({

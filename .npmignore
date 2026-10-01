@@ -13,3 +13,4 @@ eslint.config.js
 src
 vitest.config.js
 CLAUDE.md
+.claude
