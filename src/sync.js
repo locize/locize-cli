@@ -1,7 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { mkdirp } from 'mkdirp'
-import { rimraf } from 'rimraf'
 import colors from 'colors'
 import request from './request.js'
 import flatten from 'flat'
@@ -21,6 +20,7 @@ import addLanguage from './addLanguage.js'
 import { resolveGitCompareRef, getChangedKeysByNamespace, filterComparedToChangedKeys } from './gitChangedKeys.js'
 import os from 'node:os'
 import lngCodes from './lngs.js'
+import cleanPath from './cleanPath.js'
 
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap
 
@@ -179,7 +179,7 @@ const cleanupLanguages = (opt, remoteLanguages) => {
           lngPath = filledLngMask.substring(0, filledLngMask.lastIndexOf(path.sep))
         }
         if (doesDirectoryExist(path.join(opt.path, lngPath, 'CVS'))) return // special hack for CVS
-        rimraf.sync(path.join(opt.path, lngPath))
+        fs.rmSync(path.join(opt.path, lngPath), { recursive: true, force: true })
       })
   }
   remoteLanguages.forEach((lng) => {
@@ -915,8 +915,6 @@ async function syncInternal (opt) {
     }
   }
 
-  if (!opt.dry && opt.clean) rimraf.sync(path.join(opt.path, '*'))
-
   if (opt.autoCreatePath === false) {
     if (!doesDirectoryExist(opt.path)) {
       throw new Error(`${opt.path} does not exist!`)
@@ -934,6 +932,7 @@ async function syncInternal (opt) {
   opt.pathMask = opt.pathMask || `${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}${path.sep}${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`
   opt.languageFolderPrefix = opt.languageFolderPrefix || ''
   opt.pathMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, `${opt.languageFolderPrefix}${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`)
+  if (!opt.dry && opt.clean) cleanPath(opt)
   if (opt.overriddenOnly) {
     opt.unpublished = true
   }

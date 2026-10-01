@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.8.5](https://github.com/locize/locize-cli/compare/v12.8.4...v12.8.5) - 2026-10-01
+
+- download, sync: `--clean true` deletes again. Since we moved to rimraf 4 in
+  11/2024, rimraf no longer expanded the `*` it got, so it looked for a file
+  literally named `*` and removed nothing. Stale files stayed in place,
+  for example a language or namespace that was removed in locize.
+- `--clean` now removes only what the path mask writes. With the default
+  `{{language}}/{{namespace}}` that is every folder named after a language
+  code. With a flat mask like `{{language}}-{{namespace}}` it is the matching
+  files in the current format. If the mask starts with a fixed folder
+  (`locales/{{language}}/{{namespace}}`), the clean happens inside that folder.
+  Other files (an `index.js` next to your translations) and dot entries such
+  as `.git` and `.locize` always stay.
+- `--clean true` now refuses to run when `--path` is the working directory (the
+  default), contains it, or is the root of a git repository, unless the path
+  mask starts with a fixed folder. Under rimraf 3 this combination emptied the
+  whole project apart from dotfiles. Point `--path` at your translations folder
+  (`--path ./locales`) or start the mask with that folder.
+- rimraf is no longer a dependency: the CLI deletes with Node's own
+  `fs.rmSync`.
+
 ## [12.8.4](https://github.com/locize/locize-cli/compare/v12.8.3...v12.8.4) - 2026-10-01
 
 - migrate: `--replace true` on a namespace with more than 1000 keys in one

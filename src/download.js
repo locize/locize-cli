@@ -1,6 +1,5 @@
 import colors from 'colors'
 import { mkdirp } from 'mkdirp'
-import { rimraf } from 'rimraf'
 import request from './request.js'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -14,6 +13,7 @@ import xcstrings from 'locize-xcstrings'
 import getBranches from './getBranches.js'
 import isValidUuid from './isValidUuid.js'
 import mapLimit from './mapLimit.js'
+import cleanPath from './cleanPath.js'
 
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap
 
@@ -273,7 +273,7 @@ async function continueToDownload (opt) {
     }
   }
 
-  if (opt.clean) rimraf.sync(path.join(opt.path, '*'))
+  if (opt.clean) cleanPath(opt)
   mkdirp.sync(opt.path)
   console.log(colors.yellow(`downloading ${url} to ${opt.path}...`))
   await getRemoteLanguages(opt)

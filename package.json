@@ -43,7 +43,6 @@
     "lodash.clonedeep": "4.5.0",
     "mkdirp": "3.0.1",
     "resx": "2.0.4",
-    "rimraf": "6.1.3",
     "strings-file": "0.0.5",
     "tmexchange": "2.0.6",
     "xliff": "6.4.0",

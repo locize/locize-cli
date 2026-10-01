@@ -68,6 +68,24 @@ describe('sync (fetch-only mock, temp dir)', () => {
     expect(JSON.parse(fs.readFileSync(filePath, 'utf8'))).toEqual({ hello: 'world' })
   })
 
+  it('--clean removes stale local files and deletes nothing remotely', async () => {
+    fs.mkdirSync(path.join(tempDir, 'en'))
+    fs.writeFileSync(path.join(tempDir, 'en', 'common.json'), '{"hello":"world"}')
+    fs.writeFileSync(path.join(tempDir, 'en', 'stale.json'), '{}')
+    await sync({
+      apiEndpoint: 'http://api',
+      apiKey: 'key',
+      projectId: 'pid',
+      version: 'v1',
+      path: tempDir,
+      format: 'json',
+      clean: true,
+      deleteRemoteNamespace: true
+    })
+    expect(fetchSim.mock.calls.some(([url]) => url.includes('/delete/'))).toBe(false)
+    expect(fs.readdirSync(path.join(tempDir, 'en'))).toEqual(['common.json'])
+  })
+
   it(
     'syncs multiple languages/namespaces and updates remote on local change',
     async () => {

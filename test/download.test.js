@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
@@ -51,6 +51,45 @@ describe('download (fetch-only mock, temp dir)', () => {
     expect(fs.existsSync(filePath)).toBe(true)
     const fileContent = fs.readFileSync(filePath, 'utf8')
     expect(JSON.parse(fileContent)).toEqual({ hello: 'world' })
+  })
+
+  const cleanOpt = (p) => ({
+    apiEndpoint: 'http://api',
+    projectId: 'pid',
+    version: 'v1',
+    path: p,
+    format: 'json',
+    skipEmpty: false,
+    clean: true
+  })
+  const touch = (...p) => {
+    fs.mkdirSync(path.join(tempDir, ...p.slice(0, -1)), { recursive: true })
+    fs.writeFileSync(path.join(tempDir, ...p), '{}')
+  }
+
+  it('--clean removes the language folders the mask wrote, keeps everything else', async () => {
+    touch('en', 'stale.json')
+    touch('fr', 'old.json')
+    touch('index.js')
+    touch('.locize')
+    await download(cleanOpt(tempDir))
+    expect(fs.existsSync(path.join(tempDir, 'en', 'stale.json'))).toBe(false)
+    expect(fs.existsSync(path.join(tempDir, 'fr'))).toBe(false)
+    expect(fs.existsSync(path.join(tempDir, 'en', 'common.json'))).toBe(true)
+    expect(fs.readdirSync(tempDir).sort()).toEqual(['.locize', 'en', 'index.js'])
+  })
+
+  it('--clean refuses to empty the working directory', async () => {
+    touch('en', 'common.json')
+    touch('src', 'app.js')
+    const cwd = vi.spyOn(process, 'cwd').mockReturnValue(tempDir)
+    try {
+      await expect(download(cleanOpt(tempDir))).rejects.toThrow(/working directory/)
+    } finally {
+      cwd.mockRestore()
+    }
+    expect(fs.existsSync(path.join(tempDir, 'en', 'common.json'))).toBe(true)
+    expect(fs.existsSync(path.join(tempDir, 'src', 'app.js'))).toBe(true)
   })
 })
 
