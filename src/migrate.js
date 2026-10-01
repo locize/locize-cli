@@ -8,6 +8,7 @@ import addLanguage from './addLanguage.js'
 import os from 'node:os'
 import mapLimit from './mapLimit.js'
 import download from './download.js'
+import getRemoteNamespace from './getRemoteNamespace.js'
 
 const getDirectories = (srcpath) => {
   return fs.readdirSync(srcpath).filter(function (file) {
@@ -69,18 +70,38 @@ const transfer = async (opt, ns) => {
 
   if (!opt.replace) url = url.replace('/update/', '/missing/')
 
-  const data = ns.value
-  const keysToSend = Object.keys(data).length
+  let data = ns.value
+  let keysToSend = Object.keys(data).length
   if (keysToSend === 0) return
 
   const payloadKeysLimit = 1000
+
+  // The api's replace deletes every key missing from the current request, so
+  // with replace on page 1 of n, pages 2..n would be deleted and re-created as
+  // new keys (history, marks, proposals lost). Above one page, delete like sync
+  // does instead: read the current (unpublished) keys and send the removed ones
+  // as null after the local pages, without replace.
+  let replace = opt.replace
+  if (replace && keysToSend > payloadKeysLimit) {
+    try {
+      const { result: remote } = await getRemoteNamespace({ ...opt, unpublished: true }, ns.language, ns.namespace)
+      data = { ...data }
+      Object.keys(remote).forEach((k) => { if (!Object.hasOwn(data, k)) data[k] = null })
+      keysToSend = Object.keys(data).length
+      replace = false
+    } catch (err) {
+      // the current state comes over /pull, a private download a plan below Growth is refused (403)
+      if (!/\(403\)/.test(err.message)) throw err
+      console.log(colors.yellow(`could not read the current ${ns.language}/${ns.namespace} (${err.message}), replacing with the first page: keys beyond the first ${payloadKeysLimit} lose their history, marks and review proposals`))
+    }
+  }
 
   async function send (d, so, isFirst, isRetrying = false) {
     const queryParams = new URLSearchParams()
     if (so) {
       queryParams.append('omitstatsgeneration', 'true')
     }
-    if (isFirst && opt.replace) {
+    if (isFirst && replace) {
       queryParams.append('replace', 'true')
     }
     const queryString = queryParams.size > 0 ? '?' + queryParams.toString() : ''

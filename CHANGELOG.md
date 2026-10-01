@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.8.4](https://github.com/locize/locize-cli/compare/v12.8.3...v12.8.4) - 2026-10-01
+
+- migrate: `--replace true` on a namespace with more than 1000 keys in one
+  language no longer deletes and re-creates the existing keys beyond the first
+  1000. The upload is paged by 1000 keys and the replace went with the first
+  page only, so the API removed every key of the later pages and those pages
+  added them again as new keys: the end state matched the file, but their
+  history, needs-review marks, review proposals and created dates were lost,
+  auto-publish versions briefly served only the first page, and auto-translation
+  ran again for the re-created reference keys. migrate now reads the current
+  keys first, sends all pages without replace and removes only the keys that
+  are no longer in the file, the way sync deletes. Namespaces up to 1000 keys
+  are unchanged.
+- reading the current keys goes through the `/pull` route, a private download
+  included from the Growth plan on. On plans without private downloads the read
+  is refused and migrate falls back to the previous behaviour with a warning.
+
 ## [12.8.3](https://github.com/locize/locize-cli/compare/v12.8.2...v12.8.3) - 2026-09-21
 
 - sync, download: `--unpublished` and `--overridden-only` fetch the current

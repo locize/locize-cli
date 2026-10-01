@@ -156,3 +156,37 @@ describe('migrate on a project without languages yet (bootstrap)', () => {
     expect(fetchSim.mock.calls.some(call => call[0].includes('/missing/'))).toBe(true)
   })
 })
+
+describe('migrate --replace with more than 1000 keys', () => {
+  let migrate, tempDir, origFetch, fetchSim
+  const local = {}
+  for (let i = 0; i < 1500; i++) local[`k${i}`] = `v${i}`
+  // remote: 1200 existing keys of the file plus one key the file no longer has
+  const remote = { gone: 'old' }
+  for (let i = 0; i < 1200; i++) remote[`k${i}`] = `old${i}`
+  beforeEach(async () => {
+    origFetch = global.fetch
+    fetchSim = createFetchSimulator([
+      jsonHandler('/pull/', remote, 200),
+      jsonHandler('/update/', {}, 200)
+    ])
+    global.fetch = fetchSim
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'locize-migrate-replace-test-'))
+    fs.writeFileSync(path.join(tempDir, 'common.json'), JSON.stringify(local))
+    migrate = (await import('../src/migrate.js')).default
+  })
+  afterEach(() => {
+    global.fetch = origFetch
+    fs.rmSync(tempDir, { recursive: true, force: true })
+  })
+  it('deletes only the removed keys, never with replace on a partial page', async () => {
+    await migrate({ apiEndpoint: 'http://api', apiKey: 'key', projectId: 'pid', version: 'v1', language: 'en', path: tempDir, format: 'json', replace: true })
+    const updates = fetchSim.mock.calls.filter(([url]) => url.includes('/update/'))
+    // replace=true on page 1 of 2 would delete k1000..k1199 and re-create them as new keys
+    expect(updates.some(([url]) => url.includes('replace=true'))).toBe(false)
+    const sent = Object.assign({}, ...updates.map(([, o]) => JSON.parse(o.body)))
+    expect(Object.keys(sent)).toHaveLength(1501)
+    expect(sent.gone).toBe(null)
+    expect(sent.k1499).toBe('v1499')
+  })
+})
