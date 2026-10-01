@@ -22,6 +22,13 @@ import mergeBranch from './mergeBranch.js'
 import deleteBranch from './deleteBranch.js'
 import 'dotenv/config'
 
+// the commands are async and not awaited: show a failure as one red line
+// instead of Node's unhandled-rejection crash with code frame and stack
+process.on('unhandledRejection', (err) => {
+  console.error(colors.red(`  error: ${(err && err.message) || err}`))
+  process.exit(1)
+})
+
 const configInHome = path.join(os.homedir(), '.locize')
 const configInWorkingDirectory = path.join(process.cwd(), '.locize')
 const defaultCdnType = 'standard'

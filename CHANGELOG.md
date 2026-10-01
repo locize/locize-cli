@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.8.6](https://github.com/locize/locize-cli/compare/v12.8.5...v12.8.6) - 2026-10-01
+
+- a failing command now ends with one red `error: ...` line and exit code 1.
+  Before, the error escaped as an unhandled promise rejection and Node printed
+  its crash output with a code frame and stack trace.
+
 ## [12.8.5](https://github.com/locize/locize-cli/compare/v12.8.4...v12.8.5) - 2026-10-01
 
 - download, sync: `--clean true` deletes again. Since we moved to rimraf 4 in
