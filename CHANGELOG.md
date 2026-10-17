@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.8.7](https://github.com/locize/locize-cli/compare/v12.8.6...v12.8.7) - 2026-10-17
+
+- update android-string-resource dependency: an android export no longer fails
+  when a value is `null`
+
 ## [12.8.6](https://github.com/locize/locize-cli/compare/v12.8.5...v12.8.6) - 2026-10-01
 
 - a failing command now ends with one red `error: ...` line and exit code 1.
