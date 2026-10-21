@@ -182,7 +182,10 @@ const convertToDesiredFormat = async (
   }
   if (opt.format === 'fluent') {
     Object.keys(data).forEach((k) => {
-      if (!data[k] || data[k] === '') delete data[k]
+      if (!data[k] || data[k] === '') {
+        delete data[k]
+        return
+      }
       data[k] = data[k].replace(
         new RegExp(String.fromCharCode(160), 'g'),
         String.fromCharCode(32)

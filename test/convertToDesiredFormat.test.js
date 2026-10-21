@@ -45,4 +45,10 @@ describe('convertToDesiredFormat', () => {
     const res20 = await convertToDesiredFormat({ ...opt, format: 'xliff2' }, 'ns', 'de', data)
     expect(res20).toContain('version="2.0"')
   })
+
+  it('leaves empty values out of a fluent export', async () => {
+    const data = { title: 'Title', empty: '', missing: null }
+    const result = await convertToDesiredFormat({ format: 'fluent' }, 'common', 'en', data)
+    expect(result).toBe('title = Title\n\n')
+  })
 })
