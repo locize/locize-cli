@@ -9,6 +9,14 @@ Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
 - fluent: an export no longer fails when a value is empty. Empty values are
   left out of the file, as intended.
+- update fluent_conv dependency to 3.3.2 (fluent import and export):
+  - a message with attributes but no value no longer fails the import, and
+    exports as `key =` with its attributes instead of `key = undefined`
+  - `{ login-input.placeholder }` keeps its attribute (was `{ login-input }`)
+  - `{ -brand(case: "accusative") }` keeps its arguments (was `{ -brand }`)
+  - `minimumFractionDigits: 2` stays a number (was `"2"`)
+  - a function call with a literal argument, like `{ NUMBER(42) }`, no longer
+    fails the import
 
 ## [12.8.7](https://github.com/locize/locize-cli/compare/v12.8.6...v12.8.7) - 2026-10-17
 

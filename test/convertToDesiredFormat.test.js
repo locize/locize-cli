@@ -51,4 +51,10 @@ describe('convertToDesiredFormat', () => {
     const result = await convertToDesiredFormat({ format: 'fluent' }, 'common', 'en', data)
     expect(result).toBe('title = Title\n\n')
   })
+
+  it('exports a fluent message with attributes only', async () => {
+    const data = { 'login-input.val': '', 'login-input.placeholder': 'email@example.com' }
+    const result = await convertToDesiredFormat({ format: 'fluent' }, 'common', 'en', data)
+    expect(result).toBe('login-input =\n  .placeholder = email@example.com\n\n')
+  })
 })

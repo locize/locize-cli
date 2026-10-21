@@ -34,7 +34,7 @@
     "dotenv": "17.4.2",
     "fast-csv": "5.0.7",
     "flat": "5.0.2",
-    "fluent_conv": "3.3.0",
+    "fluent_conv": "3.3.2",
     "gettext-converter": "1.4.0",
     "https-proxy-agent": "7.0.6",
     "ini": "6.0.0",

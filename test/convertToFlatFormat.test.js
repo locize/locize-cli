@@ -44,4 +44,20 @@ describe('convertToFlatFormat', () => {
     const result = await convertToFlatFormat({ format: 'xliff22', referenceLanguage: 'en' }, Buffer.from(xlf), 'de')
     expect(result).toEqual({ welcome: 'Willkommen <ph id="INTERPOLATION" equiv-text="{{ count }}"/>' })
   })
+
+  it('should parse fluent messages with attributes only and term arguments', async () => {
+    const ftl = [
+      'login-input =',
+      '    .placeholder = email@example.com',
+      'hint = Type { login-input.placeholder } into { -brand(case: "accusative") }',
+      'answer = { NUMBER(42, minimumFractionDigits: 2) }',
+      ''
+    ].join('\n')
+    const result = await convertToFlatFormat({ format: 'fluent' }, Buffer.from(ftl), 'en')
+    expect(result).toEqual({
+      'login-input.placeholder': 'email@example.com',
+      hint: 'Type { login-input.placeholder } into { -brand(case: "accusative") }',
+      answer: '{ NUMBER(42, minimumFractionDigits: 2) }'
+    })
+  })
 })
