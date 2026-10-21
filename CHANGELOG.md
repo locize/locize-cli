@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.8.9](https://github.com/locize/locize-cli/compare/v12.8.8...v12.8.9) - 2026-10-21
+
+- 12.8.8 was published from the 12.8.7 build, only its fluent_conv dependency
+  was new: `locize --version` printed 12.8.7, the fluent export still failed
+  on empty values, and its binaries were the 12.8.7 ones. 12.8.9 is built from
+  the same code and contains everything listed under 12.8.8.
+
 ## [12.8.8](https://github.com/locize/locize-cli/compare/v12.8.7...v12.8.8) - 2026-10-21
 
 - fluent: an export no longer fails when a value is empty. Empty values are
