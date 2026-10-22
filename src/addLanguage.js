@@ -5,7 +5,7 @@ import request from './request.js'
  * Adds a language to the project via POST /language/{projectId}/{language}.
  *
  * Idempotent for bootstrap flows: an "already exists" answer counts as
- * success — the API responds 400 (ValidationError "Language already exists!"),
+ * success — the API responds 400 with type validationError.language.alreadyExists,
  * and 412 is kept for backwards compatibility with older deployments.
  *
  * Other failures throw an Error carrying `status` (e.g. 401 when the key
@@ -20,7 +20,7 @@ const addLanguage = async (opt, l) => {
         Authorization: opt.apiKey
       }
     })
-    if (res.status === 400 && ((obj && (obj.errorMessage || obj.message)) || '').indexOf('already exists') > -1) {
+    if (res.status === 400 && obj && obj.type === 'validationError.language.alreadyExists') {
       console.log(colors.yellow(`language ${l} already exists...`))
       return
     }
