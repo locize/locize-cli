@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.8.10](https://github.com/locize/locize-cli/compare/v12.8.9...v12.8.10) - 2026-10-22
+
+- `sync` and `migrate`, when they create missing languages, recognize an
+  existing language by the API's error type
+  `validationError.language.alreadyExists` instead of by the message text.
+
 ## [12.8.9](https://github.com/locize/locize-cli/compare/v12.8.8...v12.8.9) - 2026-10-21
 
 - 12.8.8 was published from the 12.8.7 build, only its fluent_conv dependency
