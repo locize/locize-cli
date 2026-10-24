@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.10.3](https://github.com/locize/locize-cli/compare/v12.10.2...v12.10.3) - 2026-10-24
+
+- update xliff to 6.5.2: a namespace or an extra attribute with `&` or `<` no
+  longer makes the XLIFF file invalid.
+- `fluent`: a line of a multiline value that starts with `[`, `*` or `.` no
+  longer cuts off the rest of the value on export (bullet lists, `[note]`
+  lines); selector variants stay as they are (update fluent_conv to 3.3.4).
+- `laravel`: array entries without a key or with an integer key are kept on
+  import, numbered the way PHP does; they were dropped (update laravelphp to
+  2.0.6).
+
 ## [12.10.2](https://github.com/locize/locize-cli/compare/v12.10.1...v12.10.2) - 2026-10-24
 
 - `android`: **a value that holds a typed Android escape such as `\n` or
