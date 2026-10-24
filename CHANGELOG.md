@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.10.1](https://github.com/locize/locize-cli/compare/v12.10.0...v12.10.1) - 2026-10-24
+
+- update xliff to 6.5.1: a value with a literal `&amp;` now survives an XLIFF
+  round trip (it came back as `&`); plain `&` was never affected.
+
 ## [12.10.0](https://github.com/locize/locize-cli/compare/v12.9.2...v12.10.0) - 2026-10-24
 
 - `po` / `gettext`: entries that differ only by their `msgctxt` stay apart. The
