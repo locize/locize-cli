@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.10.2](https://github.com/locize/locize-cli/compare/v12.10.1...v12.10.2) - 2026-10-24
+
+- `android`: **a value that holds a typed Android escape such as `\n` or
+  `\u2605` is now written literally and shows as such in the app; store the
+  real character (a line break, ★) instead.** Values with a backslash (a
+  Windows path, a regex) are escaped and survive a round trip, `\t` and
+  `\uXXXX` in `strings.xml` are decoded on import, non-breaking spaces are
+  kept, plural items decode their escapes, and a value starting with `@` or
+  `?` is escaped (update android-string-resource to 2.3.12).
+- `laravel`: backslashes and quotes in keys and values are escaped, so a
+  trailing backslash or a `'` in a key no longer breaks the PHP file (update
+  laravelphp to 2.0.5).
+- `fluent`: string literal placeables (`{"{"}`, `{"   "}`) keep their source
+  form, so escaped braces and quotes and leading spaces survive a round trip;
+  imported values show them as placeables (update fluent_conv to 3.3.3).
+
 ## [12.10.1](https://github.com/locize/locize-cli/compare/v12.10.0...v12.10.1) - 2026-10-24
 
 - update xliff to 6.5.1: a value with a literal `&amp;` now survives an XLIFF
