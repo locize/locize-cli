@@ -7,7 +7,7 @@ import path from 'node:path'
 import ini from 'ini'
 import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
-import login, { logout, pkce, authorizeUrl, startCallbackServer, exchangeCode, saveToken, removeToken, loginTokenOf, CLIENT_ID, SCOPE } from '../src/login.js'
+import login, { logout, pkce, authorizeUrl, startCallbackServer, exchangeCode, saveToken, removeToken, loginTokenOf, CLIENT_ID, SCOPE, DEFAULT_OAUTH_ENDPOINT } from '../src/login.js'
 
 const cliPath = fileURLToPath(new URL('../src/cli.js', import.meta.url))
 
@@ -98,6 +98,10 @@ describe('login', () => {
     expect(ini.parse(fs.readFileSync(configPath, 'utf-8'))).toEqual({ projectId: 'pid', apiKey: 'a-project-api-key', loginToken: 'lz_pat_new', loginTokenExpiresAt: '2027-01-22T10:00:00.000Z' })
     if (process.platform !== 'win32') expect(fs.statSync(configPath).mode & 0o777).toBe(0o600)
 
+    // the default app is not written down
+    saveToken(configPath, 'lz_pat_new', undefined, DEFAULT_OAUTH_ENDPOINT)
+    expect(ini.parse(fs.readFileSync(configPath, 'utf-8'))).toEqual({ projectId: 'pid', apiKey: 'a-project-api-key', loginToken: 'lz_pat_new' })
+
     // logout takes only the login token, a project's api key stays
     expect(removeToken(configPath)).toBe(true)
     expect(ini.parse(fs.readFileSync(configPath, 'utf-8'))).toEqual({ projectId: 'pid', apiKey: 'a-project-api-key' })
@@ -128,13 +132,14 @@ describe('login', () => {
     const saved = ini.parse(fs.readFileSync(configPath, 'utf-8'))
     expect(saved.loginToken).toBe('lz_pat_e2e')
     expect(Math.abs(Date.parse(saved.loginTokenExpiresAt) - (Date.now() + 7776000 * 1000))).toBeLessThan(60000)
+    expect(saved.loginTokenEndpoint).toBe('https://app.example') // not the default: remembered for logout
     const tokenRequest = JSON.parse(global.fetch.mock.calls[0][1].body)
     expect(tokenRequest.code).toBe('c-e2e')
     expect(crypto.createHash('sha256').update(tokenRequest.code_verifier).digest('base64url')).toBe(url.searchParams.get('code_challenge'))
 
-    // logout revokes at the server, then removes
+    // logout revokes where it signed in (no endpoint given), then removes
     global.fetch = vi.fn(async () => jsonResponse(200, {}))
-    await logout({ oauthEndpoint: 'https://app.example', configPath })
+    await logout({ configPath })
     expect(global.fetch.mock.calls[0][0]).toBe('https://app.example/oauth/revoke')
     expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({ token: 'lz_pat_e2e', client_id: CLIENT_ID })
     expect(ini.parse(fs.readFileSync(configPath, 'utf-8'))).toEqual({})
@@ -193,6 +198,21 @@ describe('cli api key order with a login token', () => {
     fs.writeFileSync(path.join(home, '.locize'), ini.stringify({ loginToken: 'lz_pat_login', apiKey: 'config-key' }))
     await run(args, { LOCIZE_API_KEY: 'env-key' })
     expect(seen).toEqual(['lz_pat_login', 'env-key', 'option-key', 'config-key'])
+  })
+
+  it.skipIf(process.platform === 'win32')('accepts the hidden --oauth-endpoint and keeps it out of the help', async () => {
+    fs.writeFileSync(path.join(home, '.locize'), ini.stringify({ loginToken: 'lz_pat_dev', loginTokenEndpoint: `http://127.0.0.1:${server.address().port}` }))
+    const stderr = await run(['logout', '--oauth-endpoint', `http://127.0.0.1:${server.address().port}`])
+    expect(stderr).not.toContain('unknown option')
+    expect(seen).toEqual([undefined]) // the revoke request reached our server (no Authorization header)
+    const help = await new Promise((resolve) => {
+      const child = spawn(process.execPath, [cliPath, 'login', '--help'], { cwd: home, env: { PATH: process.env.PATH, HOME: home } })
+      let out = ''
+      child.stdout.on('data', (c) => { out += c })
+      child.on('exit', () => resolve(out))
+    })
+    expect(help).toContain('--no-browser')
+    expect(help).not.toContain('--oauth-endpoint')
   })
 
   it.skipIf(process.platform === 'win32')('does not send an expired login token and says when it expired', async () => {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander'
+import { Command, Option } from 'commander'
 import colors from 'colors'
 import path from 'node:path'
 import os from 'node:os'
@@ -48,8 +48,6 @@ const cdnTypeOfEndpoint = (p) => {
   if (p.indexOf('.locize.app') > 0) return 'pro'
   return defaultCdnType
 }
-
-const defaultOAuthEndpoint = 'https://www.locize.app'
 
 let config = readConfig(configInWorkingDirectory) || readConfig(configInHome) || {}
 // `locize login` keeps its token in ~/.locize as loginToken: the last fallback, after --api-key, a config's
@@ -1033,10 +1031,11 @@ program
   .description(`sign in through the browser; the personal access token goes into ${configInHome} and is used whenever no api key is given`)
   .option('--no-browser', 'only print the sign-in URL instead of opening the browser (e.g. over SSH, with the port forwarded)')
   .option('--port <port>', 'the local port the sign-in returns to (default: a free one)')
-  .option('--oauth-endpoint <url>', `Specify the Locize app url that signs you in (default: ${defaultOAuthEndpoint})`)
+  // ours only (dev.locize.app): hidden from the help, like LOCIZE_OAUTH_ENDPOINT
+  .addOption(new Option('--oauth-endpoint <url>', 'the Locize app that signs you in').hideHelp())
   .action((options) => {
     login({
-      oauthEndpoint: options.oauthEndpoint || process.env.LOCIZE_OAUTH_ENDPOINT || defaultOAuthEndpoint,
+      oauthEndpoint: options.oauthEndpoint || process.env.LOCIZE_OAUTH_ENDPOINT,
       browser: options.browser,
       port: options.port ? parseInt(options.port, 10) : 0,
       configPath: configInHome
@@ -1055,10 +1054,10 @@ program
 program
   .command('logout')
   .description(`revoke the token locize login kept in ${configInHome} and remove it`)
-  .option('--oauth-endpoint <url>', `Specify the Locize app url that revokes the token (default: ${defaultOAuthEndpoint})`)
+  .addOption(new Option('--oauth-endpoint <url>', 'the Locize app that revokes the token').hideHelp())
   .action((options) => {
     logout({
-      oauthEndpoint: options.oauthEndpoint || process.env.LOCIZE_OAUTH_ENDPOINT || defaultOAuthEndpoint,
+      oauthEndpoint: options.oauthEndpoint || process.env.LOCIZE_OAUTH_ENDPOINT,
       configPath: configInHome
     })
   })

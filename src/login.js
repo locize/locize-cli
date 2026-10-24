@@ -14,6 +14,8 @@ export const CLIENT_ID = 'locize-cli'
 // and branches; never admin. The user's role caps it anyway.
 export const SCOPE = 'read write manage'
 const TIMEOUT_MS = 5 * 60 * 1000
+// the app that signs in; another one (our dev.locize.app) only through the hidden --oauth-endpoint
+export const DEFAULT_OAUTH_ENDPOINT = 'https://www.locize.app'
 
 export const pkce = () => {
   const verifier = crypto.randomBytes(32).toString('base64url')
@@ -86,12 +88,15 @@ const writeConfig = (configPath, config) => {
 }
 
 // the token goes into ~/.locize as loginToken, beside whatever else is there (an apiKey stays
-// untouched), with its expiry, so the cli can say when a login has run out
-export const saveToken = (configPath, token, expiresAt) => {
+// untouched), with its expiry, so the cli can say when a login has run out, and the app it came
+// from when that is not the default, so logout revokes it there
+export const saveToken = (configPath, token, expiresAt, oauthEndpoint) => {
   const config = readConfig(configPath) || {}
   config.loginToken = token
   if (expiresAt) config.loginTokenExpiresAt = new Date(expiresAt).toISOString()
   else delete config.loginTokenExpiresAt
+  if (oauthEndpoint && oauthEndpoint !== DEFAULT_OAUTH_ENDPOINT) config.loginTokenEndpoint = oauthEndpoint
+  else delete config.loginTokenEndpoint
   writeConfig(configPath, config)
 }
 
@@ -107,6 +112,7 @@ export const removeToken = (configPath) => {
   if (!config || !config.loginToken) return false
   delete config.loginToken
   delete config.loginTokenExpiresAt
+  delete config.loginTokenEndpoint
   writeConfig(configPath, config)
   return true
 }
@@ -125,11 +131,12 @@ const openBrowser = (url) => {
 }
 
 export default async function login (opt) {
+  const oauthEndpoint = opt.oauthEndpoint || DEFAULT_OAUTH_ENDPOINT
   const { verifier, challenge } = pkce()
   const state = crypto.randomBytes(16).toString('base64url')
   const callback = await startCallbackServer(state, opt.port)
   const redirectUri = `http://127.0.0.1:${callback.port}/callback`
-  const url = authorizeUrl({ oauthEndpoint: opt.oauthEndpoint, redirectUri, challenge, state })
+  const url = authorizeUrl({ oauthEndpoint, redirectUri, challenge, state })
 
   console.log(colors.yellow(`  sign in to Locize in the browser (waiting on port ${callback.port}):`))
   console.log(`  ${url}`)
@@ -139,9 +146,9 @@ export default async function login (opt) {
   try {
     const timeout = new Promise((resolve, reject) => { timer = setTimeout(() => reject(new Error('sign-in failed: no answer within 5 minutes')), TIMEOUT_MS) })
     const code = await Promise.race([callback.code, timeout])
-    const { token, expiresIn } = await exchangeCode({ oauthEndpoint: opt.oauthEndpoint, code, verifier, redirectUri })
+    const { token, expiresIn } = await exchangeCode({ oauthEndpoint, code, verifier, redirectUri })
     const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : undefined
-    saveToken(opt.configPath, token, expiresAt)
+    saveToken(opt.configPath, token, expiresAt, oauthEndpoint)
     console.log(colors.green(`  signed in; the token is kept in ${opt.configPath} and used whenever no api key is given${expiresAt ? `, until ${new Date(expiresAt).toISOString().slice(0, 10)}` : ''}`))
   } finally {
     clearTimeout(timer)
@@ -150,14 +157,17 @@ export default async function login (opt) {
 }
 
 export async function logout (opt) {
-  const token = (readConfig(opt.configPath) || {}).loginToken
+  const config = readConfig(opt.configPath) || {}
+  const token = config.loginToken
+  // revoked where it was signed in, unless told otherwise
+  const oauthEndpoint = opt.oauthEndpoint || config.loginTokenEndpoint || DEFAULT_OAUTH_ENDPOINT
   if (!token) {
     console.log(`  no token from locize login in ${opt.configPath}`)
     return
   }
   let failure
   try {
-    await revokeToken({ oauthEndpoint: opt.oauthEndpoint, token })
+    await revokeToken({ oauthEndpoint, token })
   } catch (err) {
     failure = err.message
   }
