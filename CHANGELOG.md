@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.9.1](https://github.com/locize/locize-cli/compare/v12.9.0...v12.9.1) - 2026-10-24
+
+- `locize logout` revokes the token at the app `locize login` got it from.
+
 ## [12.9.0](https://github.com/locize/locize-cli/compare/v12.8.10...v12.9.0) - 2026-10-24
 
 - `locize login` signs in through the browser (OAuth with PKCE on a local
