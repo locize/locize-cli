@@ -3,9 +3,7 @@
 import { Command } from 'commander'
 import colors from 'colors'
 import path from 'node:path'
-import fs from 'node:fs'
 import os from 'node:os'
-import ini from 'ini'
 import migrate from './migrate.js'
 import add from './add.js'
 import download from './download.js'
@@ -20,6 +18,7 @@ import formatFn from './format.js'
 import createBranch from './createBranch.js'
 import mergeBranch from './mergeBranch.js'
 import deleteBranch from './deleteBranch.js'
+import login, { logout, readConfig, loginTokenOf } from './login.js'
 import 'dotenv/config'
 
 // the commands are async and not awaited: show a failure as one red line
@@ -50,14 +49,16 @@ const cdnTypeOfEndpoint = (p) => {
   return defaultCdnType
 }
 
-let config = {}
-try {
-  config = ini.parse(fs.readFileSync(configInWorkingDirectory, 'utf-8'))
-} catch (e) {
-  try {
-    config = ini.parse(fs.readFileSync(configInHome, 'utf-8'))
-  } catch (e) {}
-}
+const defaultOAuthEndpoint = 'https://www.locize.app'
+
+let config = readConfig(configInWorkingDirectory) || readConfig(configInHome) || {}
+// `locize login` keeps its token in ~/.locize as loginToken: the last fallback, after --api-key, a config's
+// apiKey and LOCIZE_API_KEY, like gh's GH_TOKEN before its stored login; an expired one is not used
+const { token: loginToken, expired: loginExpired } = loginTokenOf(readConfig(configInHome))
+
+const missingApiKey = () => console.error(colors.red(loginExpired
+  ? `  error: missing required argument \`apiKey\` (your locize login expired on ${loginExpired}: run \`locize login\` again, or pass --api-key)`
+  : '  error: missing required argument `apiKey` (pass --api-key, or sign in once with `locize login`)'))
 
 const program = new Command()
 
@@ -84,18 +85,16 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
     let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || defaultApiEndpoint
     if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
     if (!apiKey) {
-      console.error(colors.red('  error: missing required argument `apiKey`'))
+      missingApiKey()
       process.exit(1)
       return
     }
@@ -148,18 +147,16 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((namespace, key, value, options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
     let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || defaultApiEndpoint
     if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
     if (!apiKey) {
-      console.error(colors.red('  error: missing required argument `apiKey`'))
+      missingApiKey()
       process.exit(1)
       return
     }
@@ -213,18 +210,16 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((namespace, keys, options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
     let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || defaultApiEndpoint
     if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
     if (!apiKey) {
-      console.error(colors.red('  error: missing required argument `apiKey`'))
+      missingApiKey()
       process.exit(1)
       return
     }
@@ -291,9 +286,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
@@ -308,7 +301,7 @@ program
       return
     }
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
 
     const language = options.language || config.language || config.lng || process.env.LOCIZE_LANGUAGE || process.env.LOCIZE_LANG || process.env.LOCIZE_LNG
     const languages = options.languages || config.languages || config.lngs || process.env.LOCIZE_LANGUAGES || process.env.LOCIZE_LANGS || process.env.LOCIZE_LNGS
@@ -374,9 +367,7 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((namespace, key, options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
@@ -457,18 +448,16 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
     let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || defaultApiEndpoint
     if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
     if (!apiKey) {
-      console.error(colors.red('  error: missing required argument `apiKey`'))
+      missingApiKey()
       process.exit(1)
       return
     }
@@ -578,18 +567,16 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
     let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || defaultApiEndpoint
     if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
     if (!apiKey) {
-      console.error(colors.red('  error: missing required argument `apiKey`'))
+      missingApiKey()
       process.exit(1)
       return
     }
@@ -657,18 +644,16 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((fromVersion, options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
     let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || defaultApiEndpoint
     if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
     if (!apiKey) {
-      console.error(colors.red('  error: missing required argument `apiKey`'))
+      missingApiKey()
       process.exit(1)
       return
     }
@@ -713,18 +698,16 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((version, options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
     let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || defaultApiEndpoint
     if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
     if (!apiKey) {
-      console.error(colors.red('  error: missing required argument `apiKey`'))
+      missingApiKey()
       process.exit(1)
       return
     }
@@ -764,18 +747,16 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
     let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || defaultApiEndpoint
     if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
     if (!apiKey) {
-      console.error(colors.red('  error: missing required argument `apiKey`'))
+      missingApiKey()
       process.exit(1)
       return
     }
@@ -820,18 +801,16 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((namespace, options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
     let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || defaultApiEndpoint
     if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
     if (!apiKey) {
-      console.error(colors.red('  error: missing required argument `apiKey`'))
+      missingApiKey()
       process.exit(1)
       return
     }
@@ -910,18 +889,16 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((branch, options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
     let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || defaultApiEndpoint
     if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
     if (!apiKey) {
-      console.error(colors.red('  error: missing required argument `apiKey`'))
+      missingApiKey()
       process.exit(1)
       return
     }
@@ -964,18 +941,16 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((branch, options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
     let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || defaultApiEndpoint
     if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
     if (!apiKey) {
-      console.error(colors.red('  error: missing required argument `apiKey`'))
+      missingApiKey()
       process.exit(1)
       return
     }
@@ -1016,18 +991,16 @@ program
   .option('-C, --config-path <configPath>', `Specify the path to the optional locize config file (default: ${configInWorkingDirectory} or ${configInHome})`)
   .option('--ct, --cdn-type <standard|pro>', `Specify the cdn endpoint that should be used (depends on which cdn type you've in your Locize project) (default: ${defaultCdnType})`)
   .action((branch, options) => {
-    try {
-      config = ini.parse(fs.readFileSync(options.configPath, 'utf-8')) || config
-    } catch (e) {}
+    if (options.configPath) config = readConfig(options.configPath) || config
 
     const cdnType = options.cdnType || config.cdnType || process.env.LOCIZE_CDN_TYPE
 
     let apiEndpoint = options.apiEndpoint || config.apiEndpoint || process.env.LOCIZE_API_ENDPOINT || defaultApiEndpoint
     if (cdnType) apiEndpoint = fixApiPath(apiEndpoint, cdnType)
 
-    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY
+    const apiKey = options.apiKey || config.apiKey || process.env.LOCIZE_API_KEY || process.env.LOCIZE_KEY || loginToken
     if (!apiKey) {
-      console.error(colors.red('  error: missing required argument `apiKey`'))
+      missingApiKey()
       process.exit(1)
       return
     }
@@ -1053,6 +1026,41 @@ program
     console.log('    $ locize delete-branch featureX')
     console.log('    $ locize delete-branch featureX --api-key <apiKey> --project-id <projectId>')
     console.log()
+  })
+
+program
+  .command('login')
+  .description(`sign in through the browser; the personal access token goes into ${configInHome} and is used whenever no api key is given`)
+  .option('--no-browser', 'only print the sign-in URL instead of opening the browser (e.g. over SSH, with the port forwarded)')
+  .option('--port <port>', 'the local port the sign-in returns to (default: a free one)')
+  .option('--oauth-endpoint <url>', `Specify the Locize app url that signs you in (default: ${defaultOAuthEndpoint})`)
+  .action((options) => {
+    login({
+      oauthEndpoint: options.oauthEndpoint || process.env.LOCIZE_OAUTH_ENDPOINT || defaultOAuthEndpoint,
+      browser: options.browser,
+      port: options.port ? parseInt(options.port, 10) : 0,
+      configPath: configInHome
+    })
+  })
+  .on('--help', () => {
+    console.log('  Examples:')
+    console.log()
+    console.log('    $ locize login')
+    console.log('    $ locize login --no-browser --port 53682')
+    console.log()
+    console.log('  CI keeps using an api key (--api-key or LOCIZE_API_KEY).')
+    console.log()
+  })
+
+program
+  .command('logout')
+  .description(`revoke the token locize login kept in ${configInHome} and remove it`)
+  .option('--oauth-endpoint <url>', `Specify the Locize app url that revokes the token (default: ${defaultOAuthEndpoint})`)
+  .action((options) => {
+    logout({
+      oauthEndpoint: options.oauthEndpoint || process.env.LOCIZE_OAUTH_ENDPOINT || defaultOAuthEndpoint,
+      configPath: configInHome
+    })
   })
 
 program.parse(process.argv)

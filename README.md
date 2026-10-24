@@ -27,6 +27,18 @@ iwr https://raw.githubusercontent.com/locize/locize-cli/master/install.ps1 -useb
 ```
 
 
+## Sign in instead of passing an api-key
+
+```sh
+locize login
+```
+
+Opens the browser; after you sign in and allow access, the cli keeps a personal access token in `~/.locize` and uses it whenever no api-key is given (as `--api-key`, in a project's own `.locize` file, which then only needs the project-id, or as `LOCIZE_API_KEY`). The token can read, write and manage (versions, languages, branches) in all your projects, as far as your role allows, and is valid for 90 days; after that the cli tells you to run `locize login` again.
+
+- `locize logout` revokes it and removes it from `~/.locize`. Every login gets a token of its own (one per machine); each shows as "Locize CLI (OAuth)" under personal access tokens in your profile, where you can also revoke it.
+- Over SSH: `locize login --no-browser --port 53682`, with that port forwarded (`ssh -L 53682:127.0.0.1:53682 ...`).
+- In CI keep using an api-key (`--api-key` or `LOCIZE_API_KEY`).
+
 > ⚠️ **Filename restrictions**  
 > The namespace you choose becomes your on-disk filename, so please avoid these characters:
 > ```
