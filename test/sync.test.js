@@ -476,7 +476,7 @@ describe('sync (fetch-only mock, temp dir)', () => {
       version: 'v1',
       path: tempDir,
       format: 'po',
-      pathMask: '{{language}}/{{namespace}}',
+      pathMask: ['{{language}}', '{{namespace}}'].join(path.sep), // the local files are read by path.sep (Windows)
       pathMaskInterpolationPrefix: '{{',
       pathMaskInterpolationSuffix: '}}',
       skipEmpty: false
