@@ -57,4 +57,11 @@ describe('convertToDesiredFormat', () => {
     const result = await convertToDesiredFormat({ format: 'fluent' }, 'common', 'en', data)
     expect(result).toBe('login-input =\n  .placeholder = email@example.com\n\n')
   })
+
+  it('writes a key with U+0004 back as msgctxt in .po', async () => {
+    const result = await convertToDesiredFormat({ format: 'po' }, 'common', 'de', { Open: 'Öffnen (ohne)', 'Open\u0004menu': 'Öffnen' })
+    expect(result).toContain('msgctxt "menu"\nmsgid "Open"\nmsgstr "Öffnen"')
+    expect(result).toContain('msgid "Open"\nmsgstr "Öffnen (ohne)"')
+    expect(result).not.toContain('\u0004')
+  })
 })

@@ -60,4 +60,18 @@ describe('convertToFlatFormat', () => {
       answer: '{ NUMBER(42, minimumFractionDigits: 2) }'
     })
   })
+
+  // gettext tells entries apart by (msgctxt, msgid): the key joins both with U+0004, so
+  // "Open" in a menu and "Open" for a door no longer merge into one key
+  it('keeps .po entries that differ only by their msgctxt apart, as plain values', async () => {
+    const po = Buffer.from([
+      'msgid ""', 'msgstr ""', '"Content-Type: text/plain; charset=UTF-8\\n"', '',
+      'msgctxt "menu"', 'msgid "Open"', 'msgstr "Öffnen"', '',
+      'msgid "Open"', 'msgstr "Öffnen (ohne)"', '',
+      'msgctxt "door state"', 'msgid "Open"', 'msgstr "Offen"', ''
+    ].join('\n'))
+    const result = await convertToFlatFormat({ format: 'po' }, po)
+    // plain strings: only sync adds the msgctxt as context (to keys it creates), migrate sends none
+    expect(result).toEqual({ Open: 'Öffnen (ohne)', 'Open\u0004menu': 'Öffnen', 'Open\u0004door state': 'Offen' })
+  })
 })

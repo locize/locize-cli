@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.10.0](https://github.com/locize/locize-cli/compare/v12.9.2...v12.10.0) - 2026-10-24
+
+- `po` / `gettext`: entries that differ only by their `msgctxt` stay apart. The
+  key holds `msgid` and `msgctxt` joined by U+0004 (as gettext does in `.mo`
+  files), and `download` writes it back as `msgctxt`. Until now they merged
+  into one key, which kept one variant and dropped the others.
+  `po_i18next` / `gettext_i18next` are unchanged (`_` context, i18next's
+  convention).
+- `sync` with `po` / `gettext` sends an entry's `msgctxt` as the context of the
+  keys it adds, so translators and the AI see it; existing keys keep their
+  context, `migrate` sends none.
+- Upgrading with `po` / `gettext` files that use `msgctxt`: the first `sync`
+  adds those entries as new keys; where a file has no plain entry for that
+  text, the old merged key is removed (unless `--skip-delete true`), together
+  with its translations. `format` and `migrate` produce the new keys as well.
+- update gettext-converter to 1.4.1 (plural entries keep their `msgctxt`).
+
 ## [12.9.2](https://github.com/locize/locize-cli/compare/v12.9.1...v12.9.2) - 2026-10-24
 
 - update xliff to 6.5.0 (no change in the CLI's XLIFF output)

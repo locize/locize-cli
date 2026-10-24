@@ -16,6 +16,7 @@ import getRemoteNamespace from './getRemoteNamespace.js'
 import removeUndefinedFromArrays from './removeUndefinedFromArrays.js'
 import shouldUnflatten from './shouldUnflatten.js'
 import { prepareExport as prepareCombinedExport } from './combineSubkeyPreprocessor.js'
+import { GETTEXT_CTX_SEPARATOR } from './formats.js'
 
 // a raw (unpublished) pull hands over { value, needsReview, ... } objects (see
 // GETTEXT_FORMATS in download.js / sync.js): for the gettext formats reduce them
@@ -69,7 +70,7 @@ const convertToDesiredFormat = async (
       language: lng,
       potCreationDate: lastModified,
       poRevisionDate: lastModified,
-      ctxSeparator: '_ is default but we set it to something that is never found!!!',
+      ctxSeparator: GETTEXT_CTX_SEPARATOR,
       persistMsgIdPlural: true,
       fuzzy
     }

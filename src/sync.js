@@ -439,6 +439,16 @@ async function update (opt, lng, ns, shouldOmit = false) {
       if (typeof data[k] === 'string') data[k] = { value: data[k], needsReview: true }
     })
   }
+  // a .po entry's msgctxt also becomes the key's context, so translators and the AI see it: only on
+  // keys this sync adds, whose context is empty by definition (the comparison above read the remote
+  // through /pull); an existing key keeps its context, and migrate, which reads nothing, sends none
+  if (opt.format === 'po' || opt.format === 'gettext') {
+    ns.diff.toAdd.forEach((k) => {
+      const text = formats.gettextContextOf(k)
+      if (!text || data[k] === undefined || data[k] === null) return
+      data[k] = typeof data[k] === 'string' ? { value: data[k], context: { text } } : { ...data[k], context: { text } }
+    })
+  }
 
   const keysToSend = Object.keys(data).length
   if (keysToSend === 0) return

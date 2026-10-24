@@ -13,6 +13,7 @@ import javaProperties from '@js.properties/properties'
 import xcstrings from 'locize-xcstrings'
 import flatten from 'flat'
 import { prepareImport as prepareCombinedImport } from './combineSubkeyPreprocessor.js'
+import { GETTEXT_CTX_SEPARATOR } from './formats.js'
 
 // keys of "#, fuzzy" entries in a .po file, carried on the flat content as a
 // non-enumerable Set so the flat object itself stays a plain key/value map
@@ -34,9 +35,11 @@ const convertToFlatFormat = async (opt, data, lng) => {
     return flatten(jsonParsed)
   }
   if (opt.format === 'po' || opt.format === 'gettext') {
+    // msgid and msgctxt joined by U+0004 (GETTEXT_CTX_SEPARATOR): entries that differ only by
+    // their context stay apart instead of merging into one key
     return withNeedsReviewKeys(gettextConv.po2i18next(data.toString(), {
       persistMsgIdPlural: true,
-      ignoreCtx: true,
+      ctxSeparator: GETTEXT_CTX_SEPARATOR,
       fuzzy: true
     }))
   }

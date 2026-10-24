@@ -444,4 +444,44 @@ describe('sync (fetch-only mock, temp dir)', () => {
       expect(decodeURIComponent(enUpdate)).not.toContain('review=true')
     }
   )
+
+  it('sends a .po msgctxt as the context of the keys it adds, and of no other key', async () => {
+    const remote = { hello: 'world' }
+    const updates = []
+    global.fetch = createFetchSimulator([
+      jsonHandler('/languages/', { en: { isReferenceLanguage: true } }, 200),
+      jsonHandler('/download/', [{ key: 'pid/v1/en/common', url: 'http://api/pid/v1/en/common', size: 10, isPrivate: false }], 200),
+      {
+        match: (url) => url.includes('/update/'),
+        response: async (url, options) => {
+          updates.push(JSON.parse(options.body))
+          return { status: 200, headers: { get: () => 'application/json' }, json: async () => ({}) }
+        }
+      },
+      jsonHandler('/pid/v1/en/common', remote, 200)
+    ])
+    vi.spyOn(global, 'setTimeout').mockImplementation((fn) => { fn(); return 0 })
+    fs.mkdirSync(path.join(tempDir, 'en'))
+    fs.writeFileSync(path.join(tempDir, 'en', 'common.po'), [
+      'msgid ""', 'msgstr ""', '"Content-Type: text/plain; charset=UTF-8\\n"', '',
+      'msgid "hello"', 'msgstr "world"', '',
+      'msgctxt "menu"', 'msgid "Open"', 'msgstr "Open"', '',
+      'msgid "Save"', 'msgstr "Save"', ''
+    ].join('\n'))
+
+    await sync({
+      apiEndpoint: 'http://api',
+      apiKey: 'key',
+      projectId: 'pid',
+      version: 'v1',
+      path: tempDir,
+      format: 'po',
+      pathMask: '{{language}}/{{namespace}}',
+      pathMaskInterpolationPrefix: '{{',
+      pathMaskInterpolationSuffix: '}}',
+      skipEmpty: false
+    })
+
+    expect(updates).toEqual([{ 'Open\u0004menu': { value: 'Open', context: { text: 'menu' } }, Save: 'Save' }])
+  })
 })
