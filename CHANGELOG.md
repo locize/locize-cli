@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.9.0](https://github.com/locize/locize-cli/compare/v12.8.10...v12.9.0) - 2026-10-24
+
+- `locize login` signs in through the browser (OAuth with PKCE on a local
+  port) and keeps a personal access token, valid for 90 days, in `~/.locize`
+  (an expired login is named in the error); every command uses
+  it when no api key is given (option, a project's `.locize` or
+  `LOCIZE_API_KEY`).
+  `locize logout` revokes it and removes it. CI keeps using api keys.
+- the "missing required argument `apiKey`" error now mentions `locize login`.
+
 ## [12.8.10](https://github.com/locize/locize-cli/compare/v12.8.9...v12.8.10) - 2026-10-22
 
 - `sync` and `migrate`, when they create missing languages, recognize an
