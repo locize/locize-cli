@@ -45,7 +45,7 @@
     "resx": "2.0.4",
     "strings-file": "0.0.5",
     "tmexchange": "2.0.6",
-    "xliff": "6.4.0",
+    "xliff": "6.5.0",
     "yaml": "2.9.0"
   },
   "devDependencies": {

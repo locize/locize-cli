@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.9.2](https://github.com/locize/locize-cli/compare/v12.9.1...v12.9.2) - 2026-10-24
+
+- update xliff to 6.5.0 (no change in the CLI's XLIFF output)
+
 ## [12.9.1](https://github.com/locize/locize-cli/compare/v12.9.0...v12.9.1) - 2026-10-24
 
 - `locize logout` revokes the token at the app `locize login` got it from.
