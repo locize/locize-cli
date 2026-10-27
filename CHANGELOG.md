@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.10.4](https://github.com/locize/locize-cli/compare/v12.10.3...v12.10.4) - 2026-10-27
+
+- `laravel`: a double-quoted string with two or more `\"` no longer keeps a
+  backslash before the last quote on import (`"Say \"hi\""` gave `Say "hi\"`)
+  (update laravelphp to 2.0.7).
+
 ## [12.10.3](https://github.com/locize/locize-cli/compare/v12.10.2...v12.10.3) - 2026-10-24
 
 - update xliff to 6.5.2: a namespace or an extra attribute with `&` or `<` no
