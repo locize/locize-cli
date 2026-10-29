@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.10.5](https://github.com/locize/locize-cli/compare/v12.10.4...v12.10.5) - 2026-10-29
+
+- `android`: a non-breaking space written as `&#160;` is kept on import (it
+  became a normal space), and a `<string>` without a `name` attribute is
+  skipped instead of coming in as the key `undefined` (update
+  android-string-resource to 2.4.0, which reads the file with rdotjson 2.1.0).
+- `android`: a string-array item with attributes (e.g. `tools:ignore`) that
+  holds `\t` or `\uXXXX` no longer comes in with invisible marker characters
+  (since 12.10.2), and comments keep `\t` and `\uXXXX` as written again.
+
 ## [12.10.4](https://github.com/locize/locize-cli/compare/v12.10.3...v12.10.4) - 2026-10-27
 
 - `laravel`: a double-quoted string with two or more `\"` no longer keeps a
