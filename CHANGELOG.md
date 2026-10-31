@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.10.6](https://github.com/locize/locize-cli/compare/v12.10.5...v12.10.6) - 2026-10-31
+
+- update xliff to 6.5.3: an empty XLIFF file or one without an `<xliff>`
+  element now fails with "The document does not contain an xliff element"
+  instead of a `TypeError`.
+
 ## [12.10.5](https://github.com/locize/locize-cli/compare/v12.10.4...v12.10.5) - 2026-10-29
 
 - `android`: a non-breaking space written as `&#160;` is kept on import (it
