@@ -9,6 +9,9 @@ const unflatten = (data, testNatural) => {
     } else {
       keys = i.split('.')
     }
+    // reserved segments (2026-11-05): a `__proto__` segment or a `constructor.prototype` pair would write onto
+    // Object.prototype. Skipped, not thrown; a key kept whole (space, comma, ?) is not split and stays
+    if (keys.some((k, j) => k === '__proto__' || (k === 'prototype' && keys[j - 1] === 'constructor'))) continue
     keys.reduce((r, e, j) => {
       const isNumber = !isNaN(Number(keys[j + 1]))
       const hasLeadingZero = isNumber && keys[j + 1].length > 1 && keys[j + 1][0] === '0'

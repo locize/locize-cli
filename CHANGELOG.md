@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.10.7](https://github.com/locize/locize-cli/compare/v12.10.6...v12.10.7) - 2026-11-05
+
+- nested downloads skip a key with a `__proto__` segment or a `constructor.prototype`
+  pair: such a key would write onto `Object.prototype` of the CLI process.
+- `remove-version` needs an API key with the `admin` role (or a personal access
+  token with the `manage` scope of an admin, or of a manager without restriction);
+  the README says so.
+
 ## [12.10.6](https://github.com/locize/locize-cli/compare/v12.10.5...v12.10.6) - 2026-10-31
 
 - update xliff to 6.5.3: an empty XLIFF file or one without an `<xliff>`

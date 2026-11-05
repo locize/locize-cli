@@ -301,7 +301,7 @@ locize publish-version --api-key my-api-key-d9de-4f55-9855-a9ef0ed44672 --projec
 
 ### Step 1: execute
 
-Add your api-key and your project-id and let's go...
+Add your api-key and your project-id and let's go... Deleting a version needs an API key with the `admin` role, or a personal access token with the `manage` scope of an admin or of a manager without version, language or namespace restriction.
 
 ```sh
 # this will remove version tmp-ver
