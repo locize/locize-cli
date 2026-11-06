@@ -51,22 +51,37 @@ async function request (url, options) {
   }
   if (options.headers['Authorization'] === undefined) delete options.headers['Authorization']
 
+  // Exponential backoff with equal jitter: spreads retries so a burst of
+  // concurrent CLI runs (e.g. CI) doesn't all retry in lockstep and
+  // hammer the API at the same instant.
+  const backoff = (attempt) => {
+    const expDelay = Math.min(RETRY_MAX_DELAY_MS, RETRY_BASE_DELAY_MS * (2 ** attempt))
+    return Math.round(expDelay / 2 + Math.random() * (expDelay / 2))
+  }
+
   async function retriableFetch (retriesLeft, attempt = 0) {
+    let result
     try {
       const response = await fetch(url, options)
-      const result = await handleResponse(response)
-      return result
+      result = await handleResponse(response)
     } catch (err) {
       if (retriesLeft < 1) throw err
       if (!isRetriableError(err)) throw err
-      // Exponential backoff with equal jitter: spreads retries so a burst of
-      // concurrent CLI runs (e.g. CI) doesn't all retry in lockstep and
-      // hammer the API at the same instant.
-      const expDelay = Math.min(RETRY_MAX_DELAY_MS, RETRY_BASE_DELAY_MS * (2 ** attempt))
-      const delay = Math.round(expDelay / 2 + Math.random() * (expDelay / 2))
+      await new Promise(resolve => setTimeout(resolve, backoff(attempt)))
+      return retriableFetch(retriesLeft - 1, attempt + 1)
+    }
+    // Throttled (429): wait as long as the API asks in Retry-After (seconds,
+    // capped, plus up to 1 s jitter so parallel uploads do not return in
+    // lockstep), else the backoff above; the last 429 is returned as is.
+    if (result.res.status === 429 && retriesLeft > 0) {
+      const retryAfter = parseFloat(result.res.headers.get('retry-after'))
+      const delay = retryAfter >= 0
+        ? Math.min(retryAfter * 1000, RETRY_MAX_DELAY_MS) + Math.round(Math.random() * 1000)
+        : backoff(attempt)
       await new Promise(resolve => setTimeout(resolve, delay))
       return retriableFetch(retriesLeft - 1, attempt + 1)
     }
+    return result
   }
   return retriableFetch(RETRY_MAX_ATTEMPTS)
 }

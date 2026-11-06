@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.10.8](https://github.com/locize/locize-cli/compare/v12.10.7...v12.10.8) - 2026-11-06
+
+- a request answered with HTTP 429 is retried after the `Retry-After` the API
+  sends (at most 30 seconds, three retries), instead of failing at once.
+- `delete-branch` and `merge-branch --delete` no longer fail when the job poll is
+  refused after the branch is already gone.
+
 ## [12.10.7](https://github.com/locize/locize-cli/compare/v12.10.6...v12.10.7) - 2026-11-05
 
 - nested downloads skip a key with a `__proto__` segment or a `constructor.prototype`

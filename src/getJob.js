@@ -1,7 +1,9 @@
 import colors from 'colors'
 import request from './request.js'
 
-const getJob = async (opt, jobId) => {
+// quiet: the caller prints a failure itself (getBranchJob.js); a thrown error carries the HTTP status
+const getJob = async (opt, jobId, quiet) => {
+  const out = quiet ? { log () {}, error () {} } : console
   const { res, obj, err } = await request(opt.apiEndpoint + '/jobs/' + opt.projectId + '/' + jobId, {
     method: 'get',
     headers: {
@@ -10,14 +12,14 @@ const getJob = async (opt, jobId) => {
   })
 
   if (err || (obj && (obj.errorMessage || obj.message))) {
-    console.log(colors.red('getting job failed...'))
+    out.log(colors.red('getting job failed...'))
     if (err) {
-      console.error(colors.red(err.message))
+      out.error(colors.red(err.message))
       throw err
     }
     if (obj && (obj.errorMessage || obj.message)) {
-      console.error(colors.red((obj.errorMessage || obj.message)))
-      throw new Error((obj.errorMessage || obj.message))
+      out.error(colors.red((obj.errorMessage || obj.message)))
+      throw Object.assign(new Error((obj.errorMessage || obj.message)), { status: res.status })
     }
   }
   if (res.status === 404) {
@@ -25,8 +27,8 @@ const getJob = async (opt, jobId) => {
     return null
   }
   if (res.status >= 300) {
-    console.error(colors.red(res.statusText + ' (' + res.status + ')'))
-    throw new Error(res.statusText + ' (' + res.status + ')')
+    out.error(colors.red(res.statusText + ' (' + res.status + ')'))
+    throw Object.assign(new Error(res.statusText + ' (' + res.status + ')'), { status: res.status })
   }
   // console.log(colors.green('getting job successful'))
   return obj

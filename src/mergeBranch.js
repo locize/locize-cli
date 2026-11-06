@@ -2,7 +2,7 @@ import colors from 'colors'
 import request from './request.js'
 import getBranches from './getBranches.js'
 import isValidUuid from './isValidUuid.js'
-import getJob from './getJob.js'
+import getBranchJob from './getBranchJob.js'
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -43,11 +43,7 @@ const merge = async (opt) => {
   }
   let job
   while (true) {
-    job = await getJob({
-      apiEndpoint: opt.apiEndpoint,
-      apiKey: opt.apiKey,
-      projectId: opt.branch
-    }, obj.jobId)
+    job = await getBranchJob(opt, obj.jobId)
     if (job && !job.timeouted) {
       await sleep(2000)
       continue

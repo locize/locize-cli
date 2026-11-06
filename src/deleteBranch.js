@@ -1,7 +1,7 @@
 import colors from 'colors'
 import request from './request.js'
 import getBranches from './getBranches.js'
-import getJob from './getJob.js'
+import getBranchJob from './getBranchJob.js'
 import isValidUuid from './isValidUuid.js'
 
 const handleError = (err) => {
@@ -48,11 +48,7 @@ const deleteBranch = async (opt) => {
 
   let job
   while (true) {
-    job = await getJob({
-      apiEndpoint: opt.apiEndpoint,
-      apiKey: opt.apiKey,
-      projectId: opt.branch
-    }, obj.jobId)
+    job = await getBranchJob(opt, obj.jobId)
     if (job && !job.timeouted) {
       await sleep(2000)
       continue

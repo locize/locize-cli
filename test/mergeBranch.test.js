@@ -34,4 +34,28 @@ describe('mergeBranch (fetch-only mock)', () => {
     const opt = { apiEndpoint: 'http://api', apiKey: 'key', branch: 'main' }
     await expect(mergeBranch(opt)).resolves.toBeUndefined()
   })
+
+  // merge-branch --delete: the API refuses a poll on the deleted branch, done when the parent no longer lists it
+  describe('when the job poll is refused', () => {
+    const run = (listedAfterMerge) => {
+      let branchCalls = 0
+      global.fetch = createFetchSimulator([
+        {
+          match: (url) => url.includes('/branches/'),
+          response: () => jsonHandler('/branches/', (++branchCalls === 1 || listedAfterMerge) ? [{ id: 'bid', name: 'main' }] : []).response()
+        },
+        jsonHandler('/branch/merge/bid', { jobId: 'jid' }),
+        jsonHandler('/jobs/bid/jid', { message: 'Unauthorized' }, 401)
+      ])
+      return mergeBranch({ apiEndpoint: 'http://api', apiKey: 'key', projectId: 'p', branch: 'main', delete: true })
+    }
+
+    it('resolves once the branch is gone', async () => {
+      await expect(run(false)).resolves.toBeUndefined()
+    })
+
+    it('rejects while the branch is still listed', async () => {
+      await expect(run(true)).rejects.toThrow('Unauthorized')
+    })
+  })
 })

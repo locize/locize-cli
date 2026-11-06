@@ -56,4 +56,33 @@ describe('deleteBranch (fetch-only mock)', () => {
     global.setTimeout = origSetTimeout
     expect(result).toBeUndefined()
   })
+
+  // the API refuses a poll on a deleted branch: done when the parent no longer lists it
+  describe('when the job poll is refused', () => {
+    const run = (listedAfterDelete, status = 401) => {
+      let branchCalls = 0
+      global.fetch = createFetchSimulator([
+        {
+          match: (url) => url.includes('/branches/'),
+          response: () => jsonHandler('/branches/', (++branchCalls === 1 || listedAfterDelete) ? [{ name: 'feature', id: '1' }] : []).response()
+        },
+        jsonHandler('/branch/1', { jobId: '123' }),
+        jsonHandler('/jobs/1/123', status === 401 ? { message: 'Unauthorized' } : {}, status)
+      ])
+      return deleteBranchModule.default({ apiEndpoint: 'http://api', apiKey: 'key', projectId: 'p', branch: 'feature' })
+    }
+
+    it('resolves once the branch is gone', async () => {
+      await expect(run(false)).resolves.toBeUndefined()
+    })
+
+    it('rejects while the branch is still listed', async () => {
+      await expect(run(true)).rejects.toThrow('Unauthorized')
+    })
+
+    // the parent drops the branch from its list when the deletion starts, so only a refusal means done
+    it('rejects any other poll failure, even once the branch is no longer listed', async () => {
+      await expect(run(false, 500)).rejects.toThrow('(500)')
+    })
+  })
 })
