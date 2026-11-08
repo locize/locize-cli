@@ -15,7 +15,7 @@ const opt = (dir, more) => ({
   version: 'v1',
   path: dir,
   format: 'json',
-  pathMask: '{{language}}/{{namespace}}',
+  pathMask: `{{language}}${path.sep}{{namespace}}`, // the CLI's default: the local reader splits at path.sep (Windows CI)
   pathMaskInterpolationPrefix: '{{',
   pathMaskInterpolationSuffix: '}}',
   ...more
