@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## [12.10.9](https://github.com/locize/locize-cli/compare/v12.10.8...v12.10.9) - 2026-11-08
+
+- `sync --delete-remote-namespace` no longer deletes a namespace whose name has a space, a
+  non-ASCII letter or another character a URL encodes: it compared the encoded name, found no
+  local file and deleted that namespace on every run. A namespace really missing locally is
+  deleted by its encoded name, so `a#b` no longer deletes `a`.
+- `download` and `sync` read a listed file's language and namespace by name: a namespace with
+  `/` in its name (`legacy/ns`) is written to `legacy/ns.json` (its folder created on Windows
+  too) instead of over `legacy.json`, and an unpublished one is pulled as one namespace.
+- a listed file with an empty, `.` or `..` part in its version, language or namespace is
+  skipped instead of written outside the target folder.
+- `download --language` / `--namespace` ask for a name with special characters encoded.
+
 ## [12.10.8](https://github.com/locize/locize-cli/compare/v12.10.7...v12.10.8) - 2026-11-06
 
 - a request answered with HTTP 429 is retried after the `Retry-After` the API

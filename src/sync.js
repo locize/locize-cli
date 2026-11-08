@@ -21,6 +21,7 @@ import { resolveGitCompareRef, getChangedKeysByNamespace, filterComparedToChange
 import os from 'node:os'
 import lngCodes from './lngs.js'
 import cleanPath from './cleanPath.js'
+import parseDownloadKey, { isWritableKey } from './parseDownloadKey.js'
 
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap
 
@@ -62,14 +63,6 @@ const getDirectories = (srcpath) => {
   return fs.readdirSync(srcpath).filter((file) => {
     return fs.statSync(path.join(srcpath, file)).isDirectory()
   })
-}
-
-function getInfosInUrl (download) {
-  const splitted = download.key.split('/')
-  const version = splitted[download.isPrivate ? 2 : 1]
-  const language = splitted[download.isPrivate ? 3 : 2]
-  const namespace = splitted[download.isPrivate ? 4 : 3]
-  return { version, language, namespace }
 }
 
 const compareNamespace = (local, remote, lastModifiedLocal, lastModifiedRemote) => {
@@ -130,11 +123,10 @@ const doesDirectoryExist = (p) => {
 const getNamespaceNamesAvailableInReference = (opt, downloads) => {
   const nsNames = []
   downloads.forEach((d) => {
-    const splitted = d.key.split('/')
-    const lng = splitted[2]
-    const ns = splitted[3]
-    if (lng === opt.referenceLanguage) {
-      nsNames.push(ns)
+    if (d.isPrivate) return // not filled, as before: a placeholder is fetched on the public path
+    const { language, namespace } = parseDownloadKey(d.key)
+    if (language === opt.referenceLanguage) {
+      nsNames.push(namespace)
     }
   })
   return nsNames
@@ -235,6 +227,7 @@ async function getDownloads (opt) {
       }
       throw new Error(res.statusText + ' (' + res.status + ')')
     }
+    obj = obj.filter((d) => isWritableKey(d.key))
     if (obj.length > 0) {
       if (opt.skipEmpty) obj = obj.filter((d) => d.size > 2)
       return obj
@@ -309,17 +302,13 @@ async function downloadAll (opt, remoteLanguages, omitRef = false, manipulate) {
   ensureAllNamespacesInLanguages(opt, remoteLanguages, downloads)
 
   if (omitRef) {
-    downloads = downloads.filter((d) => {
-      const splitted = d.key.split('/')
-      const lng = splitted[d.isPrivate ? 3 : 2]
-      return lng !== opt.referenceLanguage
-    })
+    downloads = downloads.filter((d) => parseDownloadKey(d.key).language !== opt.referenceLanguage)
   }
 
   if (opt.format === 'xcstrings') { // 1 file per namespace including all languages
     const downloadsByNamespace = {}
     downloads.forEach((download) => {
-      const { namespace } = getInfosInUrl(download)
+      const { namespace } = parseDownloadKey(download.key)
       downloadsByNamespace[namespace] = downloadsByNamespace[namespace] || []
       downloadsByNamespace[namespace].push(download)
     })
@@ -335,7 +324,7 @@ async function downloadAll (opt, remoteLanguages, omitRef = false, manipulate) {
 
       const entries = downloadsByNamespace[namespace]
       await pEachLimit(entries, opt.unpublished ? 5 : 20, async (download) => {
-        const { language } = getInfosInUrl(download)
+        const { language } = parseDownloadKey(download.key)
         opt.isPrivate = download.isPrivate
 
         if (opt.language && opt.language !== language && language !== opt.referenceLanguage) return
@@ -377,7 +366,7 @@ async function downloadAll (opt, remoteLanguages, omitRef = false, manipulate) {
     // marked values leave a gettext file as "#, fuzzy": the unpublished rows are pulled raw for it
     if (opt.unpublished && formats.GETTEXT_FORMATS.indexOf(opt.format) > -1) opt.raw = true
     await pEachLimit(downloads, concurrency, async (download) => {
-      const { language, namespace } = getInfosInUrl(download)
+      const { language, namespace } = parseDownloadKey(download.key)
       opt.isPrivate = download.isPrivate
 
       if (opt.language && opt.language !== language && language !== opt.referenceLanguage) return
@@ -710,9 +699,11 @@ async function handleSync (opt, remoteLanguages, localNamespaces) {
 const checkForMissingLocalNamespaces = (downloads, localNamespaces, opt) => {
   const localMissingNamespaces = []
   downloads.forEach((d) => {
-    const splitted = d.url.split('/')
-    const namespace = splitted.pop()
-    const language = splitted.pop()
+    // the key, not the URL: the URL carries the namespace encoded ('my%20ns'), which no local name matches, and
+    // --delete-remote-namespace then deleted 'my ns'
+    const { language, namespace } = parseDownloadKey(d.key)
+    // the local reader lists one folder level, so it never finds a namespace with '/': never report one as missing
+    if (namespace.includes('/')) return
     if (language === opt.referenceLanguage) {
       const foundLocalNamespace = localNamespaces.find((n) => n.namespace === namespace && n.language === language)
       if (!foundLocalNamespace) {

@@ -29,4 +29,12 @@ describe('getRemoteNamespace (fetch-only mock)', () => {
     const opt = { apiEndpoint: 'http://api', apiKey: 'key', projectId: 'pid', version: 'v1' }
     await expect(getRemoteNamespace(opt, 'en', 'common')).rejects.toThrow()
   })
+
+  // the /pull route takes the namespace as one path parameter: a legacy 'legacy/ns' raw missed the route (404)
+  it('pulls an unpublished namespace with \'/\' in its name as one segment', async () => {
+    const fetchSim = createFetchSimulator([jsonHandler(/\/pull\/pid\/v1\/en\/legacy%2Fns$/, { a: 'b' })])
+    global.fetch = fetchSim
+    const opt = { apiEndpoint: 'http://api', apiKey: 'key', projectId: 'pid', version: 'v1', unpublished: true }
+    expect((await getRemoteNamespace(opt, 'en', 'legacy/ns')).result).toEqual({ a: 'b' })
+  })
 })

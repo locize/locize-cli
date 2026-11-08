@@ -2,7 +2,7 @@ import colors from 'colors'
 import request from './request.js'
 
 const deleteNamespace = async (opt) => {
-  const url = opt.apiEndpoint + '/delete/' + opt.projectId + '/' + opt.version + '/' + opt.namespace
+  const url = opt.apiEndpoint + '/delete/' + opt.projectId + '/' + opt.version + '/' + encodeURIComponent(opt.namespace)
 
   console.log(colors.yellow(`deleting ${opt.namespace} from ${opt.version}...`))
 

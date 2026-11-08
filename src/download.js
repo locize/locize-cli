@@ -14,16 +14,9 @@ import getBranches from './getBranches.js'
 import isValidUuid from './isValidUuid.js'
 import mapLimit from './mapLimit.js'
 import cleanPath from './cleanPath.js'
+import parseDownloadKey, { isWritableKey } from './parseDownloadKey.js'
 
 const reversedFileExtensionsMap = formats.reversedFileExtensionsMap
-
-function getInfosInUrl (download) {
-  const splitted = download.key.split('/')
-  const version = splitted[download.isPrivate ? 2 : 1]
-  const language = splitted[download.isPrivate ? 3 : 2]
-  const namespace = splitted[download.isPrivate ? 4 : 3]
-  return { version, language, namespace }
-}
 
 async function handleDownload (opt, url, err, res, downloads) {
   if (err || (downloads && (downloads.errorMessage || downloads.message))) {
@@ -45,7 +38,7 @@ async function handleDownload (opt, url, err, res, downloads) {
   if (opt.format === 'xcstrings') {
     const downloadsByNamespace = {}
     downloads.forEach((download) => {
-      const { version, namespace } = getInfosInUrl(download)
+      const { version, namespace } = parseDownloadKey(download.key)
       opt.isPrivate = download.isPrivate
       downloadsByNamespace[version] = downloadsByNamespace[version] || {}
       downloadsByNamespace[version][namespace] = downloadsByNamespace[version][namespace] || []
@@ -60,7 +53,7 @@ async function handleDownload (opt, url, err, res, downloads) {
           resources: {}
         }
         await mapLimit(downloadsByNamespace[version][ns], 20, async (download) => {
-          const { language } = getInfosInUrl(download)
+          const { language } = parseDownloadKey(download.key)
           const { result: nsData } = await getRemoteNamespace(opt, language, ns)
           if (opt.skipEmpty && Object.keys(flatten(nsData)).length === 0) {
             return
@@ -70,16 +63,13 @@ async function handleDownload (opt, url, err, res, downloads) {
         try {
           const converted = xcstrings.locize2xcstrings(locizeData)
           const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, ns) + reversedFileExtensionsMap[opt.format]
-          let mkdirPath
-          if (filledMask.lastIndexOf(path.sep) > 0) {
-            mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep))
-          }
           const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
+          // each write makes its file's own folder: a namespace with '/' adds one, also where path.sep is '\\'
           if (!opt.version) {
-            if (mkdirPath) mkdirp.sync(path.join(opt.path, version, mkdirPath))
+            mkdirp.sync(path.dirname(path.join(opt.path, version, filledMask)))
             fs.writeFileSync(path.join(opt.path, version, filledMask), fileContent)
           } else {
-            if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath))
+            mkdirp.sync(path.dirname(path.join(opt.path, filledMask)))
             fs.writeFileSync(path.join(opt.path, filledMask), fileContent)
           }
           console.log(colors.green(`downloaded ${version}/${ns} to ${opt.path}...`))
@@ -91,7 +81,7 @@ async function handleDownload (opt, url, err, res, downloads) {
     }
   } else {
     await mapLimit(downloads, 20, async (download) => {
-      const { version, language, namespace } = getInfosInUrl(download)
+      const { version, language, namespace } = parseDownloadKey(download.key)
       opt.isPrivate = download.isPrivate
       if (opt.namespace && opt.namespace !== namespace) return
       if (opt.namespaces && opt.namespaces.length > 0 && opt.namespaces.indexOf(namespace) < 0) return
@@ -107,16 +97,12 @@ async function handleDownload (opt, url, err, res, downloads) {
         throw err
       }
       let filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, language).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
-      let mkdirPath
-      if (filledMask.lastIndexOf(path.sep) > 0) {
-        mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep))
-      }
       const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
       if (!opt.version) {
-        if (mkdirPath) mkdirp.sync(path.join(opt.path, version, mkdirPath))
+        mkdirp.sync(path.dirname(path.join(opt.path, version, filledMask)))
         fs.writeFileSync(path.join(opt.path, version, filledMask), fileContent)
       } else if (!opt.language) {
-        if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath))
+        mkdirp.sync(path.dirname(path.join(opt.path, filledMask)))
         fs.writeFileSync(path.join(opt.path, filledMask), fileContent)
       } else {
         if (opt.languageFolderPrefix && filledMask.indexOf(path.sep) > 0) filledMask = filledMask.replace(opt.languageFolderPrefix + language, '')
@@ -159,12 +145,8 @@ async function handlePull (opt, toDownload) {
         const result = xcstrings.locize2xcstrings(locizeData)
         const converted = JSON.stringify(result, null, 2)
         const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, '').replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
-        let mkdirPath
-        if (filledMask.lastIndexOf(path.sep) > 0) {
-          mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep))
-        }
         const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
-        if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath))
+        mkdirp.sync(path.dirname(path.join(opt.path, filledMask)))
         fs.writeFileSync(path.join(opt.path, filledMask), fileContent)
         console.log(colors.green(`downloaded ${opt.version}/${namespace} to ${opt.path}...`))
       } catch (err) {
@@ -190,12 +172,8 @@ async function handlePull (opt, toDownload) {
         throw err
       }
       const filledMask = opt.pathMask.replace(`${opt.pathMaskInterpolationPrefix}language${opt.pathMaskInterpolationSuffix}`, lng).replace(`${opt.pathMaskInterpolationPrefix}namespace${opt.pathMaskInterpolationSuffix}`, namespace) + reversedFileExtensionsMap[opt.format]
-      let mkdirPath
-      if (filledMask.lastIndexOf(path.sep) > 0) {
-        mkdirPath = filledMask.substring(0, filledMask.lastIndexOf(path.sep))
-      }
       const fileContent = (opt.format !== 'xlsx' && !converted.endsWith('\n')) ? (converted + '\n') : converted
-      if (mkdirPath) mkdirp.sync(path.join(opt.path, mkdirPath))
+      mkdirp.sync(path.dirname(path.join(opt.path, filledMask)))
       fs.writeFileSync(path.join(opt.path, filledMask), fileContent)
     })
     console.log(colors.green(`downloaded ${url} to ${opt.path}...`))
@@ -207,29 +185,22 @@ async function handlePull (opt, toDownload) {
 const filterDownloadsLanguages = (opt, downloads) => {
   if (opt.languages) {
     downloads = downloads.filter((d) => {
-      const splitted = d.key.split('/')
-      // const p = splitted[d.isPrivate ? 1 : 0];
-      // const v = splitted[d.isPrivate ? 2 : 1];
-      const l = splitted[d.isPrivate ? 3 : 2]
-      const n = splitted[d.isPrivate ? 4 : 3]
-      return opt.languages.indexOf(l) > -1 && (!opt.namespace || opt.namespace === n)
+      const { language, namespace } = parseDownloadKey(d.key)
+      return opt.languages.indexOf(language) > -1 && (!opt.namespace || opt.namespace === namespace)
     })
   }
   return downloads
 }
 
 const filterDownloads = (opt, downloads) => {
+  downloads = downloads.filter((d) => isWritableKey(d.key))
   if (opt.skipEmpty) return filterDownloadsLanguages(opt, downloads.filter((d) => d.size > 2))
   if (downloads.length < 1) return downloads
 
   const allNamespaces = []
   const downloadMap = {}
   downloads.forEach((d) => {
-    const splitted = d.key.split('/')
-    const p = splitted[d.isPrivate ? 1 : 0]
-    const v = splitted[d.isPrivate ? 2 : 1]
-    const l = splitted[d.isPrivate ? 3 : 2]
-    const n = splitted[d.isPrivate ? 4 : 3]
+    const { projectId: p, version: v, language: l, namespace: n } = parseDownloadKey(d.key)
     downloadMap[p] = downloadMap[p] || {}
     downloadMap[p][v] = downloadMap[p][v] || {}
     downloadMap[p][v][l] = downloadMap[p][v][l] || {}
@@ -266,9 +237,9 @@ async function continueToDownload (opt) {
   if (opt.version) {
     url += '/' + opt.version
     if (!opt.languages && opt.language) {
-      url += '/' + opt.language
+      url += '/' + encodeURIComponent(opt.language)
       if (opt.namespace) {
-        url += '/' + opt.namespace
+        url += '/' + encodeURIComponent(opt.namespace)
       }
     }
   }

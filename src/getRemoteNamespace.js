@@ -25,7 +25,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 const pullNamespacePaged = async (opt, lng, ns, next = '', retry = 0) => {
   // encodeURIComponent: the cursor is base64 — a raw '+' would arrive as a space
-  const { res, obj, err } = await request(opt.apiEndpoint + '/pull/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + ns + '?' + 'next=' + encodeURIComponent(next) + ((opt.raw || opt.overriddenOnly) ? '&raw=true' : '') + '&ts=' + Date.now(), {
+  const { res, obj, err } = await request(opt.apiEndpoint + '/pull/' + opt.projectId + '/' + opt.version + '/' + lng + '/' + encodeURIComponent(ns) + '?' + 'next=' + encodeURIComponent(next) + ((opt.raw || opt.overriddenOnly) ? '&raw=true' : '') + '&ts=' + Date.now(), {
     method: 'get',
     headers: {
       Authorization: opt.apiKey
