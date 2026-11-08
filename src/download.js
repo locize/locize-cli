@@ -116,6 +116,8 @@ async function handleDownload (opt, url, err, res, downloads) {
 }
 
 async function handlePull (opt, toDownload) {
+  // names from the project's stats: a legacy one with a '..' segment would write outside the target folder
+  toDownload = toDownload.filter((d) => isWritableKey(`${opt.projectId}/${opt.version}/${d.language}/${d.namespace}`))
   const url = opt.apiEndpoint + '/pull/' + opt.projectId + '/' + opt.version
 
   if (opt.format === 'xcstrings') {

@@ -8,8 +8,8 @@ export default function parseDownloadKey (key) {
 }
 
 // A key with an empty, '.' or '..' segment in its version, language or namespace would write outside the target
-// folder (names from before the API refused '..'): such a key is skipped.
+// folder (names from before the API refused '..'; '\\' separates too on Windows): such a key is skipped.
 export const isWritableKey = (key) => {
   const { version, language, namespace } = parseDownloadKey(key)
-  return [version, language, ...namespace.split('/')].every((s) => s && s !== '.' && s !== '..')
+  return [version, language, namespace].join('/').split(/[\\/]/).every((s) => s && s !== '.' && s !== '..')
 }

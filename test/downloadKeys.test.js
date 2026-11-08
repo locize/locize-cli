@@ -40,7 +40,8 @@ describe('keys of the /download listing', () => {
         { key: 'pid/v1/en/legacy', size: 10 },
         { key: 'private/pid/v1/en/legacy/ns', size: 10, isPrivate: true },
         { key: 'pid/v1/de/legacy', size: 10 },
-        { key: 'pid/v1/en/../../escape', size: 10 } // a name from before the API refused '..': skipped, never fetched
+        { key: 'pid/v1/en/../../escape', size: 10 }, // a name from before the API refused '..': skipped, never fetched
+        { key: 'pid/v1/en/..\\..\\escape', size: 10 } // the same with Windows separators
       ]),
       cdn('private/pid/v1/en/legacy/ns', { nested: 'yes' }),
       cdn('pid/v1/en/legacy', { top: 'yes' })
@@ -76,6 +77,33 @@ describe('keys of the /download listing', () => {
     await sync(opt(dir, { deleteRemoteNamespace: true }))
     expect(fetchSim.mock.calls.filter(([url]) => url.includes('/delete/')).map(([url]) => url)).toEqual(['http://api/delete/pid/v1/gone%231'])
   }, 15000) // sync waits 5 s after a remote change
+
+  it('download --unpublished skips a stats name that would write outside the target folder', async () => {
+    const fetchSim = createFetchSimulator([
+      jsonHandler('/languages/', { en: { isReferenceLanguage: true } }),
+      jsonHandler('/stats/project/', { v1: { en: { common: { segmentsTranslated: 1 }, '../../escape': { segmentsTranslated: 1 } } } }),
+      jsonHandler(/\/pull\/pid\/v1\/en\/common$/, { hello: 'world' })
+    ])
+    global.fetch = fetchSim
+    const download = (await import('../src/download.js')).default
+    await download(opt(dir, { unpublished: true }))
+    expect(readJson(dir, 'en', 'common.json')).toEqual({ hello: 'world' })
+    expect(fetchSim.mock.calls.some(([url]) => url.includes('escape'))).toBe(false)
+    expect(fs.existsSync(path.join(dir, '..', 'escape.json'))).toBe(false)
+  })
+
+  it('sync --unpublished skips a stats name that would write outside the target folder', async () => {
+    const fetchSim = createFetchSimulator([
+      jsonHandler('/languages/', { en: { isReferenceLanguage: true } }),
+      jsonHandler('/stats/project/', { v1: { en: { common: { segmentsTranslated: 1 }, '../../escape': { segmentsTranslated: 1 } } } }),
+      jsonHandler(/\/pull\/pid\/v1\/en\/common$/, { hello: 'world' })
+    ])
+    global.fetch = fetchSim
+    const sync = (await import('../src/sync.js')).default
+    await sync(opt(dir, { unpublished: true }))
+    expect(readJson(dir, 'en', 'common.json')).toEqual({ hello: 'world' })
+    expect(fetchSim.mock.calls.some(([url]) => url.includes('escape'))).toBe(false)
+  })
 
   // a placeholder for a language is fetched on the public path, where a private version's files are not
   it('sync of a private version fills no language from the public path', async () => {

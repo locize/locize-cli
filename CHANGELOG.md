@@ -14,8 +14,9 @@ Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 - `download` and `sync` read a listed file's language and namespace by name: a namespace with
   `/` in its name (`legacy/ns`) is written to `legacy/ns.json` (its folder created on Windows
   too) instead of over `legacy.json`, and an unpublished one is pulled as one namespace.
-- a listed file with an empty, `.` or `..` part in its version, language or namespace is
-  skipped instead of written outside the target folder.
+- a listed file, or with `--unpublished` a name from the project's statistics, with an empty,
+  `.` or `..` part (split at `/` and `\`) in its version, language or namespace is skipped
+  instead of written outside the target folder.
 - `download --language` / `--namespace` ask for a name with special characters encoded.
 
 ## [12.10.8](https://github.com/locize/locize-cli/compare/v12.10.7...v12.10.8) - 2026-11-06

@@ -138,7 +138,7 @@ const ensureAllNamespacesInLanguages = (opt, remoteLanguages, downloads) => {
   remoteLanguages.forEach((lng) => {
     namespaces.forEach((n) => {
       const found = downloads.find((d) => d.key === `${opt.projectId}/${opt.version}/${lng}/${n}`)
-      if (!found) {
+      if (!found && isWritableKey(`${opt.projectId}/${opt.version}/${lng}/${n}`)) { // a language name from /languages
         downloads.push({
           key: `${opt.projectId}/${opt.version}/${lng}/${n}`,
           lastModified: '1960-01-01T00:00:00.000Z',
@@ -278,7 +278,7 @@ async function getDownloads (opt) {
         })
       }
     })
-    return toDownload
+    return toDownload.filter((d) => isWritableKey(d.key)) // names from the stats, as the listing's keys above
   }
 }
 
