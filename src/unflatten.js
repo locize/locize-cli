@@ -7,7 +7,10 @@ const unflatten = (data, testNatural) => {
     if (testNatural && /( |,|\?)/.test(i)) {
       keys = [i]
     } else {
-      keys = i.split('.')
+      // trailing dots ("Saved.", "Loading...") stay on the last part: an empty part nested as array index 0 and was lost
+      const trailingDots = i.match(/\.*$/)[0]
+      keys = i.slice(0, i.length - trailingDots.length).split('.')
+      keys[keys.length - 1] += trailingDots
     }
     // reserved segments (2026-11-05): a `__proto__` segment or a `constructor.prototype` pair would write onto
     // Object.prototype. Skipped, not thrown; a key kept whole (space, comma, ?) is not split and stays

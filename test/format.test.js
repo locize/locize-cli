@@ -71,6 +71,18 @@ describe('format', () => {
     ])
   })
 
+  it('keeps a key that ends with a dot', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    const strings = { done: 'Done', 'Saved.': 'Your changes were saved.' }
+    const dir = writeFixture(JSON.stringify(strings, null, 4))
+    try {
+      await format({ format: 'json', referenceLanguage: 'en', fileOrDirectory: dir })
+      expect(JSON.parse(fs.readFileSync(path.join(dir, 'en', 'common.json'), 'utf8'))).toEqual(strings)
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
   it('skips the diff for an already formatted file', async () => {
     const logs = []
     vi.spyOn(console, 'log').mockImplementation((...args) => logs.push(args.join(' ')))

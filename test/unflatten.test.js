@@ -12,6 +12,12 @@ describe('unflatten', () => {
     const result = unflatten(flat)
     expect(result).toEqual({ arr: ['a', 'b'] })
   })
+  // an empty last part was taken for array index 0: "Saved." became { Saved: [] }
+  it('keeps the trailing dots of a key on its last part', () => {
+    const flat = { 'Saved.': 'Saved!', 'Loading...': 'Loading', 'form.Sent.': 'Sent!', 'form.name': 'Name' }
+    expect(unflatten(flat, true)).toEqual({ 'Saved.': 'Saved!', 'Loading...': 'Loading', form: { 'Sent.': 'Sent!', name: 'Name' } })
+    expect(unflatten(flat)).toEqual(unflatten(flat, true))
+  })
   it('returns empty object for empty input', () => {
     expect(unflatten({})).toEqual({})
   })
