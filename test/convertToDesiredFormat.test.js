@@ -20,6 +20,24 @@ describe('convertToDesiredFormat', () => {
     )
   })
 
+  // a key next to a key it is the parent of ("button" and "button.tooltip") cannot be nested
+  it('keeps a namespace flat when nesting it would drop a key (json and nested)', async () => {
+    const data = { button: 'Save', 'button.tooltip': 'Save your changes', title: 'Settings', 'title.short.label': 'Prefs', 'nav.home': 'Home' }
+    for (const format of ['json', 'nested']) {
+      const result = await convertToDesiredFormat({ format }, 'common', 'en', data)
+      expect(JSON.parse(result)).toEqual(data)
+    }
+    // the dotted key first: the plain key was the one dropped
+    const reversed = await convertToDesiredFormat({ format: 'json' }, 'common', 'en', { 'a.b': 'y', a: 'x' })
+    expect(JSON.parse(reversed)).toEqual({ 'a.b': 'y', a: 'x' })
+  })
+
+  it('still nests a namespace without such keys, and still skips a __proto__ key', async () => {
+    const result = await convertToDesiredFormat({ format: 'json' }, 'common', 'en', { 'a.b': 'x', 'a.c': 'y', '__proto__.polluted': 'z' })
+    expect(JSON.parse(result)).toEqual({ a: { b: 'x', c: 'y' } })
+    expect(({}).polluted).toBeUndefined()
+  })
+
   it('restores inline-element tokens as real elements in xliff 1.2 exports', async () => {
     const opt = {
       format: 'xliff12',

@@ -71,6 +71,18 @@ describe('format', () => {
     ])
   })
 
+  it('keeps every key of a file with a key and a dotted key of the same stem', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    const strings = { button: 'Save', 'button.tooltip': 'Save your changes', title: 'Settings', 'title.short': 'Prefs' }
+    const dir = writeFixture(JSON.stringify(strings, null, 4))
+    try {
+      await format({ format: 'json', referenceLanguage: 'en', fileOrDirectory: dir })
+      expect(JSON.parse(fs.readFileSync(path.join(dir, 'en', 'common.json'), 'utf8'))).toEqual(strings)
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
   it('skips the diff for an already formatted file', async () => {
     const logs = []
     vi.spyOn(console, 'log').mockImplementation((...args) => logs.push(args.join(' ')))

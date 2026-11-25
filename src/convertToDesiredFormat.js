@@ -38,6 +38,17 @@ const splitMarks = (data) => {
   return { values, fuzzy }
 }
 
+// a key next to a key it is the parent of ("button" and "button.tooltip") cannot be nested, unflatten
+// keeps only one of them: write such a namespace flat (as shouldUnflatten does for yaml) and lose nothing
+const unflattenIfLossless = (data, testNatural) => {
+  const nested = unflatten(data, testNatural)
+  const kept = flatten(nested)
+  // a key unflatten skips on purpose (a __proto__ segment) nests to nothing even on its own
+  const lost = Object.keys(data).some((k) => !Object.prototype.hasOwnProperty.call(kept, k) &&
+    Object.keys(unflatten({ [k]: data[k] }, testNatural)).length > 0)
+  return lost ? data : nested
+}
+
 const convertToDesiredFormat = async (
   opt,
   namespace,
@@ -49,13 +60,13 @@ const convertToDesiredFormat = async (
   const isEmpty = !data || Object.keys(data).length === 0
   if (opt.format === 'json') {
     try {
-      data = unflatten(data, true)
+      data = unflattenIfLossless(data, true)
     } catch (err) {}
     return JSON.stringify(data, null, 2)
   }
   if (opt.format === 'nested') {
     try {
-      data = unflatten(data)
+      data = unflattenIfLossless(data)
     } catch (err) {}
     return JSON.stringify(data, null, 2)
   }
