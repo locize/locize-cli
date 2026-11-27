@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Unreleased
+
+- `json`, `nested` and nested / Rails YAML exports warn about conflicting key
+  paths (such as `button` and `button.tooltip`) and empty key segments (a
+  trailing dot as in `Saved.`, or `..` as in `errors..required`) that can lose
+  values. YAML also warns when it keeps conflicting keys flat. Each issue is
+  reported once per namespace, with at most ten listed per warning. Output
+  behavior is unchanged: use `--format flat` for flat JSON or `--format yaml`
+  for flat YAML (without Rails wrappers) to preserve the keys.
+
 ## [12.10.9](https://github.com/locize/locize-cli/compare/v12.10.8...v12.10.9) - 2026-11-08
 
 - `sync --delete-remote-namespace` no longer deletes a namespace whose name has a space, a

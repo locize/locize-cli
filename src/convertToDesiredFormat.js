@@ -11,6 +11,7 @@ import fluentConv from 'fluent_conv'
 import tmexchange from 'tmexchange'
 import laravelphp from 'laravelphp'
 import javaProperties from '@js.properties/properties'
+import colors from 'colors'
 import unflatten from './unflatten.js'
 import getRemoteNamespace from './getRemoteNamespace.js'
 import removeUndefinedFromArrays from './removeUndefinedFromArrays.js'
@@ -38,6 +39,52 @@ const splitMarks = (data) => {
   return { values, fuzzy }
 }
 
+// every language of a namespace repeats the same keys: one command run (one opt) reports an issue once per namespace
+const reportedNestedIssues = new WeakMap()
+const MAX_LISTED_ISSUES = 10
+
+// keys that unflatten cannot nest without losing a value: a key below another key's value (`button` and
+// `button.tooltip`), and an empty segment after the first (`Saved.`, `errors..required`), which unflatten turns into
+// an array index that JSON and YAML drop
+const warnNestedKeys = (opt, data, namespace, { testNatural = false, format = 'JSON', nested = true } = {}) => {
+  const split = (key) => testNatural && /( |,|\?)/.test(key) ? [key] : key.split('.')
+  const keys = Object.keys(data || {})
+  const paths = new Map(keys.map((key) => [JSON.stringify(split(key)), key]))
+  if (!reportedNestedIssues.has(opt)) reportedNestedIssues.set(opt, new Set())
+  const reported = reportedNestedIssues.get(opt)
+  const issues = []
+  const report = (issue) => {
+    const id = JSON.stringify([namespace, issue])
+    if (reported.has(id)) return
+    reported.add(id)
+    issues.push(issue)
+  }
+  for (const key of keys) {
+    const parts = split(key)
+    if (nested && parts.slice(1).includes('')) {
+      report(`key ${JSON.stringify(key)} ${parts[parts.length - 1] === '' ? 'ends with a dot' : 'contains ".."'}`)
+    }
+    for (let index = 1; index < parts.length; index++) {
+      const parent = paths.get(JSON.stringify(parts.slice(0, index)))
+      if (parent !== undefined) report(`keys ${JSON.stringify(parent)} and ${JSON.stringify(key)} conflict`)
+    }
+  }
+  if (!issues.length) return
+  const label = format === 'JSON' ? 'nested JSON' : format
+  const listed = issues.slice(0, MAX_LISTED_ISSUES).join('; ') +
+    (issues.length > MAX_LISTED_ISSUES ? `; and ${issues.length - MAX_LISTED_ISSUES} more` : '')
+  const advice = nested
+    ? `Values may be lost; use --format ${format === 'JSON' ? 'flat' : 'yaml'} to preserve these keys.`
+    : 'Keys are kept flat; rename conflicting keys for nested output.'
+  console.warn(colors.yellow(`Warning: ${label} export of namespace ${JSON.stringify(namespace)}: ${listed}. ${advice}`))
+}
+
+const prepareNestedYaml = (opt, data, namespace, format) => {
+  const nested = shouldUnflatten(data)
+  warnNestedKeys(opt, data, namespace, { format, nested })
+  return nested ? unflatten(data) : data
+}
+
 const convertToDesiredFormat = async (
   opt,
   namespace,
@@ -48,12 +95,14 @@ const convertToDesiredFormat = async (
   opt.getNamespace = opt.getNamespace || getRemoteNamespace
   const isEmpty = !data || Object.keys(data).length === 0
   if (opt.format === 'json') {
+    warnNestedKeys(opt, data, namespace, { testNatural: true })
     try {
       data = unflatten(data, true)
     } catch (err) {}
     return JSON.stringify(data, null, 2)
   }
   if (opt.format === 'nested') {
+    warnNestedKeys(opt, data, namespace)
     try {
       data = unflatten(data)
     } catch (err) {}
@@ -136,7 +185,7 @@ const convertToDesiredFormat = async (
     opt.format === 'yml-nested'
   ) {
     if (isEmpty) return ''
-    return yaml.stringify(shouldUnflatten(data) ? unflatten(data) : data)
+    return yaml.stringify(prepareNestedYaml(opt, data, namespace, opt.format))
   }
   if (
     opt.format === 'yaml-rails' ||
@@ -144,7 +193,7 @@ const convertToDesiredFormat = async (
   ) {
     if (isEmpty) return ''
     const newData = {}
-    newData[lng] = shouldUnflatten(data) ? unflatten(data) : data
+    newData[lng] = prepareNestedYaml(opt, data, namespace, opt.format)
     return yaml.stringify(removeUndefinedFromArrays(newData))
   }
   if (
@@ -154,7 +203,7 @@ const convertToDesiredFormat = async (
     if (isEmpty) return ''
     const newDataNs = {}
     newDataNs[lng] = {}
-    newDataNs[lng][namespace] = shouldUnflatten(data) ? unflatten(data) : data
+    newDataNs[lng][namespace] = prepareNestedYaml(opt, data, namespace, opt.format)
     return yaml.stringify(removeUndefinedFromArrays(newDataNs))
   }
   if (opt.format === 'android') {

@@ -127,6 +127,10 @@ locize download --cdn-type pro
 
 or add a format like (json, nested, flat, xliff2, xliff21, xliff22, xliff12, xlf2, xlf21, xlf22, xlf12, android, yaml, yaml-rails, yaml-rails-ns, yaml-nested, yml, yml-rails, yml-nested, csv, xlsx, po, strings, resx, fluent, tmx, laravel, properties, xcstrings)
 
+JSON and nested exports warn when keys conflict as paths (for example `button` and `button.tooltip`) or a split key ends in a dot or contains `..` (for example `Saved.` or `errors..required`). Each issue is reported once per namespace. The export still uses the requested format and may lose data; use `--format flat` to preserve the keys. Warnings can only detect keys present in the input, not keys already lost from a published export.
+
+Nested and Rails YAML exports warn about the same issues: some conflicts are kept flat, while other conflicts, trailing dots and `..` may lose values. Use `--format yaml` for flat YAML; it does not include the Rails language or namespace wrappers.
+
 *Special formats:*
 - use yaml-rails to have the language code in the resulting yaml as root object
 - use yaml-rails-ns to have the namespace in the resulting yaml as first key scope
