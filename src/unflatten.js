@@ -53,13 +53,16 @@ const unflatten = (data, testNatural) => {
               }
             }
           }
-          if (obj && typeof obj !== 'string' && obj[lastPart] === undefined) {
+          // an object only: below a string, `constructor` or `toString` resolves to a built-in (2026-11-27)
+          if (obj && typeof obj === 'object' && obj[lastPart] === undefined) {
             obj[lastPart] = data[i]
           }
         }
         return r
       }
-      return r[e] || (r[e] = (!isNumber || hasLeadingZero || tooHighNumberToBeAnArrayIndex) ? (keys.length - 1 === j ? data[i] : {}) : [])
+      // own properties only (2026-11-27): an inherited name such as `constructor` or `toString` would hand the walk a
+      // shared built-in (`Object`, `Object.prototype.toString`) to write on, and its value would be lost
+      return (Object.prototype.hasOwnProperty.call(r, e) && r[e]) || (r[e] = (!isNumber || hasLeadingZero || tooHighNumberToBeAnArrayIndex) ? (keys.length - 1 === j ? data[i] : {}) : [])
     }, result)
   }
   const arrsToConvert = Object.keys(shouldConvertArray)

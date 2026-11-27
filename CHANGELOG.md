@@ -14,6 +14,10 @@ Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
   formats point to `--format yml`. `laravel` and `fluent` warn as well and ask
   to rename the keys, as they have no flat format. YAML no longer warns when it
   keeps a namespace flat, since nothing is lost.
+- Nested exports (`json`, `nested`, YAML, `laravel`, `fluent`) keep keys named
+  like built-in object properties (`constructor`, `toString`, `valueOf`, also
+  as a path segment such as `constructor.title`), which were dropped before.
+  Such keys no longer write onto JavaScript built-ins in the CLI process.
 
 ## [12.11.0](https://github.com/locize/locize-cli/compare/v12.10.9...v12.11.0) - 2026-11-27
 

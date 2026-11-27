@@ -33,4 +33,12 @@ describe('unflatten', () => {
   it('keeps a key it does not split (a space) even when it names __proto__', () => {
     expect(unflatten({ 'Never write obj.__proto__ here': 'v' }, true)['Never write obj.__proto__ here']).toBe('v')
   })
+
+  it('writes inherited names such as constructor or toString as own keys and leaves the built-ins alone', () => {
+    const res = unflatten({ 'constructor.unflattenOwnOne': 'a', toString: 'b', 'valueOf.unflattenOwnTwo': 'c', 'a.constructor.unflattenOwnThree': 'd' })
+    expect(JSON.stringify(res)).toBe('{"constructor":{"unflattenOwnOne":"a"},"toString":"b","valueOf":{"unflattenOwnTwo":"c"},"a":{"constructor":{"unflattenOwnThree":"d"}}}')
+    expect([Object.unflattenOwnOne, Object.prototype.valueOf.unflattenOwnTwo, Object.unflattenOwnThree]).toEqual([undefined, undefined, undefined])
+    expect(unflatten({ s: 'x', 's.constructor.unflattenOwnFour.': 'e' })).toEqual({ s: 'x' })
+    expect(String['unflattenOwnFour.']).toBeUndefined()
+  })
 })
