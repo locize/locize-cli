@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Unreleased
+## [12.11.1](https://github.com/locize/locize-cli/compare/v12.11.0...v12.11.1) - 2026-11-27
 
 - The export warning from 12.11.0 now compares the written output with the
   input, so it names exactly the keys an export loses: no warning when a value
