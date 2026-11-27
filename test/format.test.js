@@ -50,8 +50,7 @@ describe('format', () => {
     try {
       await format({ format: 'json', referenceLanguage: 'en', fileOrDirectory: dir })
       expect(warn).toHaveBeenCalledOnce()
-      expect(warn.mock.calls[0][0]).toContain('keys "button" and "button.tooltip" conflict')
-      expect(warn.mock.calls[0][0]).toContain('key "Saved." ends with a dot')
+      expect(warn.mock.calls[0][0]).toContain('loses 2 keys: "Saved.", "button.tooltip" (below "button")')
       expect(JSON.parse(fs.readFileSync(path.join(dir, 'en', 'common.json'), 'utf8'))).toEqual({ Saved: [], button: 'Save' })
     } finally {
       fs.rmSync(dir, { recursive: true, force: true })

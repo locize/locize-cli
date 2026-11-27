@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
+## Unreleased
+
+- The export warning from 12.11.0 now compares the written output with the
+  input, so it names exactly the keys an export loses: no warning when a value
+  survives (such as `msg.Saved.` next to `msg.Saved`, or a namespace that stays
+  flat), and a warning for keys like `offset.-1` or `size.1e3` too. `yml-*`
+  formats point to `--format yml`. `laravel` and `fluent` warn as well and ask
+  to rename the keys, as they have no flat format. YAML no longer warns when it
+  keeps a namespace flat, since nothing is lost.
+
 ## [12.11.0](https://github.com/locize/locize-cli/compare/v12.10.9...v12.11.0) - 2026-11-27
 
 - `json`, `nested` and nested / Rails YAML exports warn about conflicting key

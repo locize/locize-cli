@@ -39,51 +39,50 @@ const splitMarks = (data) => {
   return { values, fuzzy }
 }
 
-// every language of a namespace repeats the same keys: one command run (one opt) reports an issue once per namespace
-const reportedNestedIssues = new WeakMap()
-const MAX_LISTED_ISSUES = 10
+const MAX_LISTED_KEYS = 10
 
-// keys that unflatten cannot nest without losing a value: a key below another key's value (`button` and
-// `button.tooltip`), and an empty segment after the first (`Saved.`, `errors..required`), which unflatten turns into
-// an array index that JSON and YAML drop
-const warnNestedKeys = (opt, data, namespace, { testNatural = false, format = 'JSON', nested = true } = {}) => {
-  const split = (key) => testNatural && /( |,|\?)/.test(key) ? [key] : key.split('.')
-  const keys = Object.keys(data || {})
-  const paths = new Map(keys.map((key) => [JSON.stringify(split(key)), key]))
-  if (!reportedNestedIssues.has(opt)) reportedNestedIssues.set(opt, new Set())
-  const reported = reportedNestedIssues.get(opt)
-  const issues = []
-  const report = (issue) => {
-    const id = JSON.stringify([namespace, issue])
-    if (reported.has(id)) return
+// flattens what the export writes: unlike `flat`, an empty key (`{ "": { "leading": … } }`) gives `.leading`; an
+// empty object or array stays a value, as `flat` keeps it in the input
+const flattenOutput = (value, prefix, out = {}) => {
+  if (value === null || typeof value !== 'object' || (prefix !== undefined && Object.keys(value).length === 0)) {
+    out[prefix] = value
+  } else {
+    Object.keys(value).forEach((k) => flattenOutput(value[k], prefix === undefined ? k : `${prefix}.${k}`, out))
+  }
+  return out
+}
+
+// unflatten drops a value it cannot nest: a key below another key's value (`button` and `button.tooltip`), or a
+// segment it reads as an array index that is none (`Saved.`, `errors..required`, `offset.-1`). Flattening the result
+// again finds exactly those keys. Every language repeats the same keys, so one command run (one opt) reports a key
+// once per namespace
+const warnLostKeys = (opt, namespace, data, nested) => {
+  // JSON, YAML and Fluent drop the non-index properties of an array; laravel writes them as PHP array keys
+  const kept = flattenOutput(opt.format === 'laravel' ? nested : JSON.parse(JSON.stringify(nested)))
+  const reported = (opt.reportedLostKeys ||= new Set())
+  const lost = Object.keys(data || {}).filter((key) => {
+    const id = JSON.stringify([namespace, key])
+    if (JSON.stringify(kept[key]) === JSON.stringify(data[key]) || reported.has(id)) return false
     reported.add(id)
-    issues.push(issue)
+    return true
+  })
+  if (!lost.length) return nested
+  const named = (key) => {
+    let parent = key.indexOf('.')
+    while (parent > 0 && !Object.prototype.hasOwnProperty.call(data, key.slice(0, parent))) parent = key.indexOf('.', parent + 1)
+    return JSON.stringify(key) + (parent > 0 ? ` (below ${JSON.stringify(key.slice(0, parent))})` : '')
   }
-  for (const key of keys) {
-    const parts = split(key)
-    if (nested && parts.slice(1).includes('')) {
-      report(`key ${JSON.stringify(key)} ${parts[parts.length - 1] === '' ? 'ends with a dot' : 'contains ".."'}`)
-    }
-    for (let index = 1; index < parts.length; index++) {
-      const parent = paths.get(JSON.stringify(parts.slice(0, index)))
-      if (parent !== undefined) report(`keys ${JSON.stringify(parent)} and ${JSON.stringify(key)} conflict`)
-    }
-  }
-  if (!issues.length) return
-  const label = format === 'JSON' ? 'nested JSON' : format
-  const listed = issues.slice(0, MAX_LISTED_ISSUES).join('; ') +
-    (issues.length > MAX_LISTED_ISSUES ? `; and ${issues.length - MAX_LISTED_ISSUES} more` : '')
-  const advice = nested
-    ? `Values may be lost; use --format ${format === 'JSON' ? 'flat' : 'yaml'} to preserve these keys.`
-    : 'Keys are kept flat; rename conflicting keys for nested output.'
-  console.warn(colors.yellow(`Warning: ${label} export of namespace ${JSON.stringify(namespace)}: ${listed}. ${advice}`))
+  const listed = lost.slice(0, MAX_LISTED_KEYS).map(named).join(', ') +
+    (lost.length > MAX_LISTED_KEYS ? `, and ${lost.length - MAX_LISTED_KEYS} more` : '')
+  // json, nested, yaml-*, yml-* have a flat sibling format; laravel and fluent have none
+  const flatFormat = ['json', 'nested'].includes(opt.format) ? 'flat' : /^ya?ml/.test(opt.format) ? opt.format.split('-')[0] : null
+  const them = lost.length === 1 ? 'it' : 'them'
+  const advice = flatFormat ? `Use --format ${flatFormat} to keep ${them}.` : `Rename ${them} to keep ${them}.`
+  console.warn(colors.yellow(`Warning: the ${opt.format} export of namespace ${JSON.stringify(namespace)} loses ${lost.length} key${lost.length === 1 ? '' : 's'}: ${listed}. ${advice}`))
+  return nested
 }
 
-const prepareNestedYaml = (opt, data, namespace, format) => {
-  const nested = shouldUnflatten(data)
-  warnNestedKeys(opt, data, namespace, { format, nested })
-  return nested ? unflatten(data) : data
-}
+const prepareNestedYaml = (opt, namespace, data) => shouldUnflatten(data) ? warnLostKeys(opt, namespace, data, unflatten(data)) : data
 
 const convertToDesiredFormat = async (
   opt,
@@ -94,19 +93,12 @@ const convertToDesiredFormat = async (
 ) => {
   opt.getNamespace = opt.getNamespace || getRemoteNamespace
   const isEmpty = !data || Object.keys(data).length === 0
-  if (opt.format === 'json') {
-    warnNestedKeys(opt, data, namespace, { testNatural: true })
+  if (opt.format === 'json' || opt.format === 'nested') {
+    let nested
     try {
-      data = unflatten(data, true)
-    } catch (err) {}
-    return JSON.stringify(data, null, 2)
-  }
-  if (opt.format === 'nested') {
-    warnNestedKeys(opt, data, namespace)
-    try {
-      data = unflatten(data)
-    } catch (err) {}
-    return JSON.stringify(data, null, 2)
+      nested = unflatten(data, opt.format === 'json')
+    } catch (err) {} // some key mixes make unflatten throw: the namespace is then written flat, nothing is lost
+    return JSON.stringify(nested ? warnLostKeys(opt, namespace, data, nested) : data, null, 2)
   }
   if (opt.format === 'flat') {
     return JSON.stringify(flatten(data), null, 2)
@@ -185,7 +177,7 @@ const convertToDesiredFormat = async (
     opt.format === 'yml-nested'
   ) {
     if (isEmpty) return ''
-    return yaml.stringify(prepareNestedYaml(opt, data, namespace, opt.format))
+    return yaml.stringify(prepareNestedYaml(opt, namespace, data))
   }
   if (
     opt.format === 'yaml-rails' ||
@@ -193,7 +185,7 @@ const convertToDesiredFormat = async (
   ) {
     if (isEmpty) return ''
     const newData = {}
-    newData[lng] = prepareNestedYaml(opt, data, namespace, opt.format)
+    newData[lng] = prepareNestedYaml(opt, namespace, data)
     return yaml.stringify(removeUndefinedFromArrays(newData))
   }
   if (
@@ -203,7 +195,7 @@ const convertToDesiredFormat = async (
     if (isEmpty) return ''
     const newDataNs = {}
     newDataNs[lng] = {}
-    newDataNs[lng][namespace] = prepareNestedYaml(opt, data, namespace, opt.format)
+    newDataNs[lng][namespace] = prepareNestedYaml(opt, namespace, data)
     return yaml.stringify(removeUndefinedFromArrays(newDataNs))
   }
   if (opt.format === 'android') {
@@ -241,7 +233,7 @@ const convertToDesiredFormat = async (
         String.fromCharCode(32)
       )
     })
-    return fluentConv.js2ftl(unflatten(data))
+    return fluentConv.js2ftl(warnLostKeys(opt, namespace, data, unflatten(data)))
   }
   if (opt.format === 'tmx') {
     const refNs = await opt.getNamespace(opt, opt.referenceLanguage, namespace)
@@ -266,7 +258,7 @@ const convertToDesiredFormat = async (
     return await tmexchange.js2tmx(js2TmxData)
   }
   if (opt.format === 'laravel') {
-    return await laravelphp.js2laravel(unflatten(data))
+    return await laravelphp.js2laravel(warnLostKeys(opt, namespace, data, unflatten(data)))
   }
   if (opt.format === 'properties') {
     return javaProperties.stringifyFromProperties(data, { eol: '\n' })

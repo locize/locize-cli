@@ -127,9 +127,7 @@ locize download --cdn-type pro
 
 or add a format like (json, nested, flat, xliff2, xliff21, xliff22, xliff12, xlf2, xlf21, xlf22, xlf12, android, yaml, yaml-rails, yaml-rails-ns, yaml-nested, yml, yml-rails, yml-nested, csv, xlsx, po, strings, resx, fluent, tmx, laravel, properties, xcstrings)
 
-JSON and nested exports warn when keys conflict as paths (for example `button` and `button.tooltip`) or a split key ends in a dot or contains `..` (for example `Saved.` or `errors..required`). Each issue is reported once per namespace. The export still uses the requested format and may lose data; use `--format flat` to preserve the keys. Warnings can only detect keys present in the input, not keys already lost from a published export.
-
-Nested and Rails YAML exports warn about the same issues: some conflicts are kept flat, while other conflicts, trailing dots and `..` may lose values. Use `--format yaml` for flat YAML; it does not include the Rails language or namespace wrappers.
+The json, nested, nested and Rails YAML, laravel and fluent exports nest keys at their dots and warn, once per namespace, about every key that nesting loses, usually a key below another key's value (for example `button.tooltip` next to `button`) or a key ending in a dot or containing `..` (for example `Saved.` or `errors..required`). In `json`, a key with a space, comma or `?` stays whole. Nested and Rails YAML write the whole namespace flat when a key has a space, comma or `?`, or sits directly below another key's value. The export still uses the requested format; use `--format flat` for flat JSON, or `--format yaml` / `--format yml` for flat YAML (without the Rails language or namespace wrappers), to keep every key. Laravel and Fluent have no flat format: rename such keys. Warnings can only detect keys present in the input, not keys already lost from a published export.
 
 *Special formats:*
 - use yaml-rails to have the language code in the resulting yaml as root object
