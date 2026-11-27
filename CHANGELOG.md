@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 Project versioning adheres to [Semantic Versioning](http://semver.org/).
 Change log format is based on [Keep a Changelog](http://keepachangelog.com/).
 
-## Unreleased
+## [12.11.0](https://github.com/locize/locize-cli/compare/v12.10.9...v12.11.0) - 2026-11-27
 
 - `json`, `nested` and nested / Rails YAML exports warn about conflicting key
   paths (such as `button` and `button.tooltip`) and empty key segments (a
